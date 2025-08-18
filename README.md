@@ -1,15 +1,16 @@
 # xsoar-cli
 -----
-This tool is made to help provide a smoother workflow for developers, but also for power users to get useful information out of XSOAR from
-the terminal. It is mostly useful if you are using a CICD workflow to deploy your XSOAR content, and most of the functionality assumest that
-you have your content stored in a [content repository](https://github.com/demisto/content-ci-cd-template).
+This tool is made to help provide a smoother workflow for developers, but also for power users to get useful information out of XSOAR from the terminal. It is mostly useful if you are using a CICD workflow to deploy your XSOAR content, and most of the functionality assumes that you have your content stored in a [content repository](https://github.com/demisto/content-ci-cd-template).
 
 Pull Requests are very welcome and appreciated!
 
+*IMPORTANT NOTES*
+This CLI tool is made to be run from the root of a content repository. Some commands depend on files located in your content repository or expects a certain directory structure to be available from your currently working directory.
 
-*IMPORTANT NOTE*
-This CLI tools is made to be run from the root of a content repository. Some commands depends on files located in your
-content repository or expects a certain directory structure to be available from your currently working directory.
+## Requirements
+- XSOAR servers version 6 or 8
+- Python 3 (only tested Python 3.12)
+- AWS SDK for Python (Boto3). You need to be authenticated to AWS in order to use commands that interact with your artifacts repository. Only AWS S3 supported for now.
 
 ## Installation
 ```
@@ -19,7 +20,10 @@ pip install xsoar-cli
 ```
 pip install --upgrade xsoar-cli
 ```
-
+## Uninstalling
+```
+pip uninstall xsoar-cli
+```
 
 ## Configuration
 The xsoar-cli config file is located in `~/.config/xsoar-cli/config.json`. To create a configuration file from template, please run
@@ -28,10 +32,8 @@ xsoar-cli config create
 ```
 Open up the newly created configuration file and add values that correspond with your environment.
 
-*IMPORTANT NOTES* 
-- The configuration key `"custom_pack_authors": ["SOMEONE"]` is needed in order for `xsoar-cli` to be able to determine which content packs 
-are your own custom content packs and which are supplied from Palo Alto upstream. Use whatever values you may have set in pack_metadata.json
- in the content packs in your content repository.
+*IMPORTANT NOTES*
+- The configuration key `"custom_pack_authors": ["SOMEONE"]` is needed in order for `xsoar-cli` to be able to determine which content packs are your own custom content packs and which are supplied from Palo Alto upstream. Use whatever values you may have set in pack_metadata.json in the content packs in your content repository.
 
 ## Usage
 ```
