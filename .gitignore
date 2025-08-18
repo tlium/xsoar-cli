@@ -1,0 +1,8 @@
+**/__pycache__
+dist
+build
+venv
+xsoar_config.json
+.venv
+.coverage
+.pytest_cache

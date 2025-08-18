@@ -1,0 +1,88 @@
+id: Empty
+version: 13
+contentitemexportablefields:
+  contentitemfields:
+    packID: Not_applicable
+    packName: Not_applicable
+    itemVersion: 1.1.1
+    fromServerVersion: 6.10.0
+    toServerVersion: ""
+    definitionid: ""
+    prevname: ""
+vcShouldKeepItemLegacyProdMachine: false
+name: Empty
+description: This playbook is completely empty
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 3955fb12-c3f9-4903-8638-455c8205f1bd
+    type: start
+    task:
+      id: 3955fb12-c3f9-4903-8638-455c8205f1bd
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      "#none#":
+        - "1"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 430,
+          "y": -110
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "1":
+    id: "1"
+    taskid: c6b0c271-ebd0-40eb-83b0-9a615ce6fa30
+    type: title
+    task:
+      id: c6b0c271-ebd0-40eb-83b0-9a615ce6fa30
+      version: -1
+      name: Done
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 430,
+          "y": 70
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+system: true
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 245,
+        "width": 380,
+        "x": 430,
+        "y": -110
+      }
+    }
+  }
+inputs: []
+outputs: []
+quiet: true

@@ -1,0 +1,15 @@
+{
+    "custom_packs": [
+        {
+            "id": "Some_pack",
+            "version": "2.0.0",
+            "_comment": "Some bogus comment"
+        }
+    ],
+    "marketplace_packs": [
+        {
+            "id": "Some_other_pack",
+            "version": "2.0.0"
+        }
+    ]
+}

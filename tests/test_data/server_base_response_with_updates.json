@@ -1,0 +1,14 @@
+[
+    {
+        "id": "Some_pack",
+        "currentVersion": "2.0.0",
+        "latest": "6.6.6",
+        "author": "MyOrg"
+    },
+    {
+        "id": "Some_other_pack",
+        "currentVersion": "2.0.0",
+        "latest": "6.6.6",
+        "author": "PaloAlto"
+    }
+]

@@ -1,0 +1,15 @@
+# This file is intentionally invalid JSON because JSON does not support comments
+{
+    "custom_packs": [
+        {
+            "id": "Some_pack"  # syntax error: missing ","
+            "version": "2.0.0"
+        }
+    ],
+    "marketplace_packs": [
+        {
+            "id": "Some_other_pack",
+            "version": "2.0.0"
+        }
+    ]
+}

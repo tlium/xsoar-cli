@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xsoar-cli"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [{ name = "Torbjørn Lium", email = "torben@lium.org" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "xsoar-client>=1.0.9",
+    "click==8.1.8",
+    "PyYaml>=6.0.2",
+    "xsoar-dependency-graph>=0.0.3",
+]
+
+[project.urls]
+Documentation = "https://github.com/tlium/xsoar-cli#readme"
+Issues = "https://github.com/tliumb/xsoar-cli/issues"
+Source = "https://github.com/tlium/xsoar-cli"
+
+[tool.hatch.version]
+path = "src/xsoar_cli/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = ["mypy>=1.0.0"]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/xsoar_cli tests}"
+
+[tool.coverage.run]
+source_pkgs = ["xsoar_cli", "tests"]
+branch = true
+parallel = true
+omit = ["src/xsoar_cli/__about__.py"]
+
+[project.scripts]
+xsoar-cli = "xsoar_cli.cli:cli"
+
+[tool.coverage.paths]
+xsoar_cli = ["src/xsoar_cli", "*/xsoar-cli/src/xsoar_cli"]
+tests = ["tests", "*/xsoar-cli/tests"]
+
+[tool.coverage.report]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[tool.pyright]
+venvPath = "."
+venv = "venv"

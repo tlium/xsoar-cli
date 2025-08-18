@@ -1,0 +1,67 @@
+contentitemexportablefields:
+  contentitemfields:
+    definitionid: ''
+    fromServerVersion: 6.10.0
+    itemVersion: 1.1.1
+    packID: Not_applicable
+    packName: Not_applicable
+    prevname: ''
+    toServerVersion: ''
+description: This playbook is completely empty
+id: Empty
+inputs: []
+name: Empty
+outputs: []
+quiet: true
+starttaskid: '0'
+system: true
+tasks:
+  '0':
+    continueonerrortype: ''
+    id: '0'
+    ignoreworker: false
+    isautoswitchedtoquietmode: false
+    isoversize: false
+    nexttasks:
+      '#none#':
+      - '1'
+    note: false
+    quietmode: 0
+    separatecontext: false
+    skipunavailable: false
+    task:
+      brand: ''
+      id: 3955fb12-c3f9-4903-8638-455c8205f1bd
+      iscommand: false
+      name: ''
+      version: -1
+    taskid: 3955fb12-c3f9-4903-8638-455c8205f1bd
+    timertriggers: []
+    type: start
+    view: "{\n  \"position\": {\n    \"x\": 430,\n    \"y\": -110\n  }\n}"
+  '1':
+    continueonerrortype: ''
+    id: '1'
+    ignoreworker: false
+    isautoswitchedtoquietmode: false
+    isoversize: false
+    note: false
+    quietmode: 0
+    separatecontext: false
+    skipunavailable: false
+    task:
+      brand: ''
+      id: c6b0c271-ebd0-40eb-83b0-9a615ce6fa30
+      iscommand: false
+      name: Done
+      type: title
+      version: -1
+    taskid: c6b0c271-ebd0-40eb-83b0-9a615ce6fa30
+    timertriggers: []
+    type: title
+    view: "{\n  \"position\": {\n    \"x\": 430,\n    \"y\": 70\n  }\n}"
+vcShouldKeepItemLegacyProdMachine: false
+version: 13
+view: "{\n  \"linkLabelsPosition\": {},\n  \"paper\": {\n    \"dimensions\": {\n \
+  \     \"height\": 245,\n      \"width\": 380,\n      \"x\": 430,\n      \"y\": -110\n\
+  \    }\n  }\n}"
