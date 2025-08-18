@@ -80,6 +80,7 @@ def parse_config(config: dict, ctx: click.Context) -> None:
     ctx.obj = {}
     ctx.obj["default_environment"] = config["default_environment"]
     ctx.obj["custom_pack_authors"] = config["custom_pack_authors"]
+    ctx.obj["default_new_case_type"] = config["default_new_case_type"]
     ctx.obj["server_envs"] = {}
     for key in config["server_config"]:
         ctx.obj["server_envs"][key] = Client(
