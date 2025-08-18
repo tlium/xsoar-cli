@@ -66,6 +66,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
+@click.command()
 @click.pass_context
 @load_config
 def create(ctx: click.Context, environment: str, casetype: str, name: str, details: str) -> None:
