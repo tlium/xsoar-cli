@@ -1,9 +1,14 @@
 # xsoar-cli
 -----
 This tool is made to help provide a smoother workflow for developers, but also for power users to get useful information out of XSOAR from
-the terminal. Merge requests are very welcome and appreciated!
+the terminal. It is mostly useful if you are using a CICD workflow to deploy your XSOAR content, and most of the functionality assumest that
+you have your content stored in a [content repository](https://github.com/demisto/content-ci-cd-template).
 
-*IMPORTANT NOTE* This CLI tools is made to be run from the root of a content repository. Some commands depends on files located in your
+Pull Requests are very welcome and appreciated!
+
+
+*IMPORTANT NOTE*
+This CLI tools is made to be run from the root of a content repository. Some commands depends on files located in your
 content repository or expects a certain directory structure to be available from your currently working directory.
 
 ## Installation
@@ -22,9 +27,11 @@ The xsoar-cli config file is located in `~/.config/xsoar-cli/config.json`. To cr
 xsoar-cli config create
 ```
 Open up the newly created configuration file and add values that correspond with your environment.
-*IMPORTANT NOTE*: the configuration key `"custom_pack_authors": ["SOMEONE"]` is needed in order for `xsoar-cli` to be able to
-determine which content packs are your own custom content packs and which are supplied from Palo Alto upstream. Use whateve values you may have set in
-pack_metadata.json in the content packs in your content repository.
+
+*IMPORTANT NOTES* 
+- The configuration key `"custom_pack_authors": ["SOMEONE"]` is needed in order for `xsoar-cli` to be able to determine which content packs 
+are your own custom content packs and which are supplied from Palo Alto upstream. Use whatever values you may have set in pack_metadata.json
+ in the content packs in your content repository.
 
 ## Usage
 ```
@@ -37,10 +44,11 @@ For more information on a specific command execute `xsoar-cli <command> --help.`
 ### Commands
 1. [case](src/xsoar_cli/case/README.md)
 2. [config](src/xsoar_cli/config/README.md)
-3. [manifest](src/xsoar_cli/manifest/README.md)
-4. [pack](src/xsoar_cli/pack/README.md)
-5. [playbook](src/xsoar_cli/playbook/README.md)
-6. [plugins](src/xsoar_cli/plugins/README.md)
+3. [graph](src/xsoar_cli/graph/README.md)
+4. [manifest](src/xsoar_cli/manifest/README.md)
+5. [pack](src/xsoar_cli/pack/README.md)
+6. [playbook](src/xsoar_cli/playbook/README.md)
+7. [plugins](src/xsoar_cli/plugins/README.md)
 
 ## Plugin System
 
