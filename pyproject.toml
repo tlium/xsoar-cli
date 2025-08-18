@@ -23,7 +23,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    "xsoar-client>=1.0.9",
+    "xsoar-client>=1.0.0",
     "click==8.1.8",
     "PyYaml>=6.0.2",
     "xsoar-dependency-graph>=0.0.3",
