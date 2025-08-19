@@ -1,0 +1,34 @@
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create and activate virtual environment
+        run: |
+          python3.12 -m venv venv
+          source venv/bin/activate
+
+      - name: Install requirements
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
+
+      - name: Install xsoar-cli
+        run: pip install -e .
+
+      - name: Create example plugin
+        run: xsoar-cli plugins create-example
+
+      - name: Run unit tests
+        run: pytest
