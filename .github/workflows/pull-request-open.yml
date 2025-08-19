@@ -27,5 +27,8 @@ jobs:
       - name: Install xsoar-cli
         run: pip install -e .
 
+      - name: Create example plugin
+        run: xsoar-cli plugins create-example
+
       - name: Run unit tests
         run: pytest
