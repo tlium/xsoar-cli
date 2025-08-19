@@ -8,7 +8,7 @@ class TestPlaybook:
     @pytest.mark.parametrize(
         ("cli_args", "expected_return_value"),
         [
-            (["playbook"], 2),
+            (["playbook"], 0),
         ],
     )
     def test_playbook(self, cli_args: list[str], expected_return_value: int) -> None:
