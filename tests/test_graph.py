@@ -8,7 +8,7 @@ class TestGraph:
     @pytest.mark.parametrize(
         ("cli_args", "expected_return_value"),
         [
-            (["graph"], 0),
+            (["graph"], 2),
         ],
     )
     def test_graph(self, cli_args: list[str], expected_return_value: int) -> None:

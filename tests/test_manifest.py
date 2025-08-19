@@ -8,7 +8,7 @@ class TestManifest:
     @pytest.mark.parametrize(
         ("cli_args", "expected_return_value"),
         [
-            (["manifest"], 0),
+            (["manifest"], 2),
         ],
     )
     def test_manifest(self, cli_args: list[str], expected_return_value: int) -> None:

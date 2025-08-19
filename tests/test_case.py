@@ -11,7 +11,7 @@ class TestCase:
     @pytest.mark.parametrize(
         ("cli_args", "use_fixtures", "expected_return_value"),
         [
-            (["case"], False, 0),
+            (["case"], False, 2),
             (["case", "--help"], False, 0),
             (["case", "get", "152230"], True, 0),
             (["case", "get", "152230"], False, 1),

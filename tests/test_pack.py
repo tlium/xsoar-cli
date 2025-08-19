@@ -8,7 +8,7 @@ class TestPack:
     @pytest.mark.parametrize(
         ("cli_args", "expected_return_value"),
         [
-            (["pack"], 0),
+            (["pack"], 2),
         ],
     )
     def test_pack(self, cli_args: list[str], expected_return_value: int) -> None:

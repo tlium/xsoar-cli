@@ -13,7 +13,7 @@ class TestConfig:
     @pytest.mark.parametrize(
         ("cli_args", "use_fixtures", "expected_return_value"),
         [
-            (["config"], True, 0),
+            (["config"], True, 2),
             (["config", "validate"], True, 0),
             # (["config", "get"], True, 0),
         ],

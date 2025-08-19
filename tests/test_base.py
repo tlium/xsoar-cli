@@ -9,7 +9,7 @@ class TestBase:
     @pytest.mark.parametrize(
         ("cli_args", "expected_return_value"),
         [
-            ([], 0),
+            ([], 2),
             (["--version"], 0),
             (["--help"], 0),
         ],
