@@ -1,7 +1,7 @@
 import json
+from collections.abc import Callable
 from functools import update_wrapper
 from pathlib import Path
-from typing import Callable
 
 import click
 from xsoar_client.xsoar_client import Client
@@ -90,6 +90,6 @@ def parse_config(config: dict, ctx: click.Context) -> None:
             custom_pack_authors=config["custom_pack_authors"],
             xsiam_auth_id=config["server_config"][key].get("xsiam_auth_id", ""),
             server_version=config["server_config"][key]["server_version"],
-            artifacts_location=config["server_config"][key]["artifacts_location"],
-            s3_bucket_name=config["server_config"][key]["s3_bucket_name"],
+            artifacts_location=config["server_config"][key].get("artifacts_location", None),
+            s3_bucket_name=config["server_config"][key].get("s3_bucket_name", None),
         )
