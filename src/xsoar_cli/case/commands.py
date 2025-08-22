@@ -57,7 +57,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     # Ensure that playbooks run immediately when the case is created
     data["createInvestigation"] = True
 
-    xsoar_dest_client: Client = ctx.obj["server_envs"][dest]
+    xsoar_dest_client: Client = ctx.obj["server_envs"][dest]["xsoar_client"]
     case_data = xsoar_dest_client.create_case(data=data)
     click.echo(json.dumps(case_data, indent=4))
 
