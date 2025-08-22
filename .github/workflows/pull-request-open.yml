@@ -33,5 +33,5 @@ jobs:
       - name: Create example plugin
         run: xsoar-cli plugins create-example
 
-      - name: Run unit tests and report coverage
-        run: pytest -rP --cov-report term-missing --cov=xsoar-cli tests/
+      - name: Run unit tests
+        run: pytest
