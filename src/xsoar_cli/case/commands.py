@@ -66,8 +66,8 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
-@click.option("--additional-fields", default=None, help='Additional fields on the form "my field=my_value,another field=another value"')
-@click.option("--additional-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
+@click.option("--custom-fields", default=None, help='Additional fields on the form "my field=my_value,another field=another value"')
+@click.option("--custom-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
 @click.command()
@@ -78,8 +78,8 @@ def create(  # noqa: PLR0913
     environment: str | None,
     casetype: str,
     name: str,
-    additional_fields: str | None,
-    additional_fields_delimiter: str | None,
+    custom_fields: str | None,
+    custom_fields_delimiter: str | None,
     details: str,
 ) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
@@ -88,16 +88,13 @@ def create(  # noqa: PLR0913
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     if not casetype:
         casetype = ctx.obj["default_new_case_type"]
-    fields_data = {
+    data = {
         "createInvestigation": True,
         "name": name,
         "type": casetype,
         "details": details,
+        "CustomFields": parse_string_to_dict(custom_fields, custom_fields_delimiter),
     }
-    extra_fields = parse_string_to_dict(additional_fields, additional_fields_delimiter)
-
-    data = fields_data | extra_fields
-
     case_data = xsoar_client.create_case(data=data)
     case_id = case_data["id"]
     click.echo(f"Created XSOAR case {case_id}")
