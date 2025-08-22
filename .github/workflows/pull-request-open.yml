@@ -5,14 +5,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.12
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
       - name: Create and activate virtual environment
         run: |
@@ -21,7 +25,6 @@ jobs:
 
       - name: Install requirements
         run: |
-          pip install -r requirements.txt
           pip install -r requirements_dev.txt
 
       - name: Install xsoar-cli
@@ -30,5 +33,5 @@ jobs:
       - name: Create example plugin
         run: xsoar-cli plugins create-example
 
-      - name: Run unit tests
-        run: pytest
+      - name: Run unit tests and report coverage
+        run: pytest -rP --cov-report term-missing --cov=xsoar-cli tests/
