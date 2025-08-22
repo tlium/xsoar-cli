@@ -8,6 +8,16 @@ import click
 from xsoar_client.xsoar_client import Client
 
 
+def parse_string_to_dict(input_string: str | None, delimiter: str) -> dict:
+    if not input_string:
+        return {}
+    # Parse a string into a python dictionary
+    pairs = [pair.split("=", 1) for pair in input_string.split(delimiter)]
+    # Filter pairs that have exactly 2 parts (key and value) after splitting by "="
+    valid_pairs = [pair for pair in pairs if len(pair) == 2]
+    return {key.strip(): value.strip() for key, value in valid_pairs}
+
+
 def get_config_file_template_contents() -> dict:
     return {
         "default_environment": "dev",

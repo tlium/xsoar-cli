@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import load_config, validate_environments
+from xsoar_cli.utilities import load_config, parse_string_to_dict, validate_environments
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -66,12 +66,26 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
+@click.option(
+    "--custom-fields",
+    default=None,
+    help='Additional fields on the form "myfield=my_value,anotherfield=another value". Use machine name for field names, e.g mycustomfieldname.',
+)
+@click.option("--custom-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
 @click.command()
 @click.pass_context
 @load_config
-def create(ctx: click.Context, environment: str | None, casetype: str, name: str, details: str) -> None:
+def create(  # noqa: PLR0913
+    ctx: click.Context,
+    environment: str | None,
+    casetype: str,
+    name: str,
+    custom_fields: str | None,
+    custom_fields_delimiter: str | None,
+    details: str,
+) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
     if not environment:
         environment = ctx.obj["default_environment"]
@@ -83,6 +97,7 @@ def create(ctx: click.Context, environment: str | None, casetype: str, name: str
         "name": name,
         "type": casetype,
         "details": details,
+        "CustomFields": parse_string_to_dict(custom_fields, custom_fields_delimiter),
     }
     case_data = xsoar_client.create_case(data=data)
     case_id = case_data["id"]
