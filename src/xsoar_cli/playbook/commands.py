@@ -19,12 +19,12 @@ def playbook(ctx: click.Context) -> None:
     """Download/attach/detach playbooks"""
 
 
-@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
-def download(ctx: click.Context, environment: str, name: str) -> None:
+def download(ctx: click.Context, environment: str | None, name: str) -> None:
     """Download and reattach playbook.
 
     We try to detect output path to $(cwd)/Packs/<Pack ID>/Playbooks/<name>.yml
@@ -32,7 +32,8 @@ def download(ctx: click.Context, environment: str, name: str) -> None:
     then demisto-sdk format --assume-yes --no-validate --no-graph is done on the downloaded playbook before the item
     is re-attached in XSOAR.
     """
-
+    if not environment:
+        environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]
     # Maybe we should search for the playbook before attempting download in
     # case user specifies a cutsom playbook and not a system playbook

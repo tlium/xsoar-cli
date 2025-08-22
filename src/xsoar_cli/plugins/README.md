@@ -346,7 +346,7 @@ def my_command(ctx: click.Context):
     # Access configuration
     config = ctx.obj
     # Access XSOAR clients
-    dev_client = ctx.obj["server_envs"]["dev"]
+    dev_client = ctx.obj["server_envs"]["dev"]["xsoar_client"]
 ```
 
 ### 5. Logging
