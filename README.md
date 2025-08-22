@@ -1,12 +1,12 @@
 # xsoar-cli
 
-[![PyPI version](https://badge.fury.io/py/xsoar-cli.svg)](https://badge.fury.io/py/xsoar-cli) [![Python](https://img.shields.io/pypi/pyversions/xsoar-cli.svg)](https://pypi.org/project/xsoar-cli/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/xsoar-cli.svg)](https://badge.fury.io/py/xsoar-cli) [![Python](https://img.shields.io/pypi/pyversions/xsoar-cli.svg)](https://pypi.org/project/xsoar-cli/) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A command-line interface for managing Palo Alto Networks XSOAR (Cortex XSOAR) that streamlines content development and deployment workflows.
 
 **Key Features:**
 - **Content Management**: Validate and deploy content packs with declarative manifests
-- **Case Operations**: Retrieve case details and clone cases between environments  
+- **Case Operations**: Retrieve case details and clone cases between environments
 - **Playbook Development**: Download playbooks for local editing and testing
 - **Dependency Analysis**: Generate visual graphs of content pack dependencies
 - **Plugin System**: Extend functionality with custom commands
@@ -142,7 +142,7 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 ### Commands
 
 - **[case](src/xsoar_cli/case/README.md)** - Retrieve case details and clone cases between environments
-- **[config](src/xsoar_cli/config/README.md)** - Create, validate, and manage CLI configuration files  
+- **[config](src/xsoar_cli/config/README.md)** - Create, validate, and manage CLI configuration files
 - **[graph](src/xsoar_cli/graph/README.md)** - Generate visual dependency graphs for content packs
 - **[manifest](src/xsoar_cli/manifest/README.md)** - Validate and deploy content using declarative manifests
 - **[pack](src/xsoar_cli/pack/README.md)** - Manage content pack operations and information
