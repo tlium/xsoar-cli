@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import load_config, validate_environments
+from xsoar_cli.utilities import load_config, parse_string_to_dict, validate_environments
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -66,24 +66,38 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
+@click.option("--additional-fields", default=None, help='Additional fields on the form "my field=my_value,another field=another value"')
+@click.option("--additional-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
 @click.command()
 @click.pass_context
 @load_config
-def create(ctx: click.Context, environment: str | None, casetype: str, name: str, details: str) -> None:
+def create(  # noqa: PLR0913
+    ctx: click.Context,
+    environment: str | None,
+    casetype: str,
+    name: str,
+    additional_fields: str | None,
+    additional_fields_delimiter: str | None,
+    details: str,
+) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
     if not environment:
         environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     if not casetype:
         casetype = ctx.obj["default_new_case_type"]
-    data = {
+    fields_data = {
         "createInvestigation": True,
         "name": name,
         "type": casetype,
         "details": details,
     }
+    extra_fields = parse_string_to_dict(additional_fields, additional_fields_delimiter)
+
+    data = fields_data | extra_fields
+
     case_data = xsoar_client.create_case(data=data)
     case_id = case_data["id"]
     click.echo(f"Created XSOAR case {case_id}")
