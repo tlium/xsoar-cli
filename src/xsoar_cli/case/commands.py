@@ -74,7 +74,7 @@ def clone(  # noqa: PLR0913
     data.pop("modified")
     # Ensure that playbooks run immediately when the case is created
     data["createInvestigation"] = True
-    if data["CustomFields"]:
+    if "CustomFields" in data:
         data["CustomFields"] = data["CustomFields"] | parse_string_to_dict(custom_fields, custom_fields_delimiter)
 
     xsoar_dest_client: Client = ctx.obj["server_envs"][dest]["xsoar_client"]
