@@ -40,6 +40,31 @@ def manifest() -> None:
 
 
 @click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.argument("manifest_path", type=str)
+@click.command()
+@click.pass_context
+@load_config
+def generate(ctx: click.Context, environment: str, manifest_path: str) -> None:
+    """Generate a new xsoar_config.json manifest from installed content packs.
+
+    This command assumes that you do not have any custom content packs uploaded to XSOAR.
+    All packs will be added as "marketplace_packs" in the manifest.
+    """
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    installed_packs = xsoar_client.get_installed_packs()
+    manifest_data = {
+        "marketplace_packs": [],
+    }
+    for item in installed_packs:
+        tmpobj = {
+            "id": item["id"],
+            "version": item["currentVersion"],
+        }
+        manifest_data["marketplace_packs"].append(tmpobj)
+    write_manifest(manifest_path, manifest_data)
+
+
+@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
 @click.argument("manifest", type=str)
 @click.command()
 @click.pass_context
@@ -198,3 +223,4 @@ manifest.add_command(deploy)
 manifest.add_command(diff)
 manifest.add_command(update)
 manifest.add_command(validate)
+manifest.add_command(generate)
