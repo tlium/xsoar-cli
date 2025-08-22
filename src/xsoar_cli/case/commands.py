@@ -40,7 +40,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     if not valid_envs:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
         ctx.exit(1)
-    xsoar_source_client: Client = ctx.obj["server_envs"][source]
+    xsoar_source_client: Client = ctx.obj["server_envs"][source]["xsoar_client"]
     results = xsoar_source_client.get_case(casenumber)
     data = results["data"][0]
     # Dbot mirror info is irrelevant. This will be added again if applicable by XSOAR after ticket creation in dev.
