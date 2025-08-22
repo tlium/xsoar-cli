@@ -66,7 +66,11 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
-@click.option("--custom-fields", default=None, help='Additional fields on the form "my field=my_value,another field=another value"')
+@click.option(
+    "--custom-fields",
+    default=None,
+    help='Additional fields on the form "myfield=my_value,anotherfield=another value". Use machine name for field names, e.g mycustomfieldname.',
+)
 @click.option("--custom-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
