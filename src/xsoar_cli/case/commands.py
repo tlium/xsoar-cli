@@ -83,10 +83,13 @@ def create(  # noqa: PLR0913
     casetype: str,
     name: str,
     custom_fields: str | None,
-    custom_fields_delimiter: str | None,
+    custom_fields_delimiter: str,
     details: str,
 ) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
+    if custom_fields and "=" not in custom_fields:
+        click.echo('Malformed custom fields. Must be on the form "myfield=myvalue"')
+        ctx.exit(1)
     if not environment:
         environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
