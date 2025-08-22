@@ -15,11 +15,13 @@ def case() -> None:
 
 
 @click.argument("casenumber", type=int)
-@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command(help="Get basic information about a single case in XSOAR")
 @click.pass_context
 @load_config
-def get(ctx: click.Context, casenumber: int, environment: str) -> None:
+def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
+    if not environment:
+        environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     response = xsoar_client.get_case(casenumber)
     if response["total"] == 0 and not response["data"]:
@@ -62,15 +64,17 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     click.echo(json.dumps(case_data, indent=4))
 
 
-@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
 @click.command()
 @click.pass_context
 @load_config
-def create(ctx: click.Context, environment: str, casetype: str, name: str, details: str) -> None:
+def create(ctx: click.Context, environment: str | None, casetype: str, name: str, details: str) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
+    if not environment:
+        environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     if not casetype:
         casetype = ctx.obj["default_new_case_type"]

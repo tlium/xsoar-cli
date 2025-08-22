@@ -15,13 +15,15 @@ def pack(ctx: click.Context) -> None:
     """Various content pack related commands."""
 
 
-@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
 @click.argument("pack_id", type=str)
 @click.pass_context
 @load_config
-def delete(ctx: click.Context, environment: str, pack_id: str) -> None:
+def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
     """Deletes a content pack from the XSOAR server."""
+    if not environment:
+        environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     if not xsoar_client.is_installed(pack_id=pack_id):
         click.echo(f"Pack ID {pack_id} is not installed. Cannot delete.")
@@ -30,12 +32,14 @@ def delete(ctx: click.Context, environment: str, pack_id: str) -> None:
     click.echo(f"Deleted pack {pack_id} from XSOAR {environment}")
 
 
-@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
 @click.pass_context
 @load_config
-def get_outdated(ctx: click.Context, environment: str) -> None:
+def get_outdated(ctx: click.Context, environment: str | None) -> None:
     """Prints out a list of outdated content packs."""
+    if not environment:
+        environment = ctx.obj["default_environment"]
     xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     click.echo("Fetching outdated packs. This may take a little while...", err=True)
     outdated_packs = xsoar_client.get_outdated_packs()
