@@ -67,7 +67,11 @@ def load_config(f: Callable) -> Callable:
             ctx.exit(1)
         config = get_config_file_contents(config_file_path)
         parse_config(config, ctx)
-        if "environment" in ctx.params and ctx.params["environment"] not in ctx.obj["server_envs"]:
+        if (
+            "environment" in ctx.params
+            and ctx.params["environment"] not in ctx.obj["server_envs"]
+            and ctx.params["environment"] is not None
+        ):
             click.echo(f"Invalid environment: {ctx.params['environment']}")
             click.echo(f"Available environments as defined in config file are: {list(ctx.obj['server_envs'])}")
             ctx.exit(1)
