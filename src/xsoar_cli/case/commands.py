@@ -20,7 +20,7 @@ def case() -> None:
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str) -> None:
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     response = xsoar_client.get_case(casenumber)
     if response["total"] == 0 and not response["data"]:
         click.echo(f"Cannot find case ID {casenumber}")
@@ -40,7 +40,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     if not valid_envs:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
         ctx.exit(1)
-    xsoar_source_client: Client = ctx.obj["server_envs"][source]
+    xsoar_source_client: Client = ctx.obj["server_envs"][source]["xsoar_client"]
     results = xsoar_source_client.get_case(casenumber)
     data = results["data"][0]
     # Dbot mirror info is irrelevant. This will be added again if applicable by XSOAR after ticket creation in dev.
@@ -57,7 +57,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     # Ensure that playbooks run immediately when the case is created
     data["createInvestigation"] = True
 
-    xsoar_dest_client: Client = ctx.obj["server_envs"][dest]
+    xsoar_dest_client: Client = ctx.obj["server_envs"][dest]["xsoar_client"]
     case_data = xsoar_dest_client.create_case(data=data)
     click.echo(json.dumps(case_data, indent=4))
 
@@ -71,7 +71,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 @load_config
 def create(ctx: click.Context, environment: str, casetype: str, name: str, details: str) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     if not casetype:
         casetype = ctx.obj["default_new_case_type"]
     data = {

@@ -1,3 +1,4 @@
+import contextlib
 import json
 from collections.abc import Callable
 from functools import update_wrapper
@@ -75,6 +76,29 @@ def load_config(f: Callable) -> Callable:
     return update_wrapper(wrapper, f)
 
 
+def fail_if_no_artifacts_provider(f: Callable) -> Callable:
+    """
+    This function is only to be used as a decorator for various xsoar-cli subcommands, and only AFTER the load_config decorator has been called.
+    The intention is to fail gracefully if any subcommand is executed which requires an artifacts provider."
+    """
+
+    @click.pass_context
+    def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:  # noqa: ANN002, ANN003
+        if "environment" in ctx.params:  # noqa: SIM108
+            key = ctx.params["environment"]
+        else:
+            key = ctx.obj["default_environment"]
+
+        with contextlib.suppress(KeyError):
+            location = ctx.obj["server_envs"][key].get("artifacts_location", None)
+            if not location:
+                click.echo("Command requires artifacts repository, but no artifacts_location defined in config.")
+                ctx.exit(1)
+        return ctx.invoke(f, *args, **kwargs)
+
+    return update_wrapper(wrapper, f)
+
+
 def parse_config(config: dict, ctx: click.Context) -> None:
     # Set the two XSOAR client objects in Click Context for use in later functions
     ctx.obj = {}
@@ -83,7 +107,8 @@ def parse_config(config: dict, ctx: click.Context) -> None:
     ctx.obj["default_new_case_type"] = config["default_new_case_type"]
     ctx.obj["server_envs"] = {}
     for key in config["server_config"]:
-        ctx.obj["server_envs"][key] = Client(
+        ctx.obj["server_envs"][key] = {}
+        ctx.obj["server_envs"][key]["xsoar_client"] = Client(
             api_token=config["server_config"][key]["api_token"],
             server_url=config["server_config"][key]["base_url"],
             verify_ssl=config["server_config"][key]["verify_ssl"],
@@ -93,3 +118,4 @@ def parse_config(config: dict, ctx: click.Context) -> None:
             artifacts_location=config["server_config"][key].get("artifacts_location", None),
             s3_bucket_name=config["server_config"][key].get("s3_bucket_name", None),
         )
+        ctx.obj["server_envs"][key]["artifacts_location"] = config["server_config"][key].get("artifacts_location", None)
