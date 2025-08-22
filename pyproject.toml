@@ -7,13 +7,15 @@ name = "xsoar-cli"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10, <3.13"
 license = "MIT"
 keywords = []
 authors = [{ name = "Torbjørn Lium", email = "torben@lium.org" }]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
