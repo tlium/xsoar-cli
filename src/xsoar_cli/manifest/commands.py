@@ -46,7 +46,7 @@ def manifest() -> None:
 @load_config
 def update(ctx: click.Context, environment: str, manifest: str) -> None:
     """Update manifest on disk with latest available content pack versions."""
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     manifest_data = load_manifest(manifest)
     click.echo("Fetching outdated packs from XSOAR server. This may take a minute...", nl=False)
     results = xsoar_client.get_outdated_packs()
@@ -89,7 +89,7 @@ def update(ctx: click.Context, environment: str, manifest: str) -> None:
 def validate(ctx: click.Context, environment: str, manifest: str) -> None:
     """Validate manifest JSON and all pack availability. Validates upstream pack availability by doing HTTP CONNECT.
     Custom pack availability is implementation dependant."""
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     manifest_data = load_manifest(manifest)
     click.echo("Manifest is valid JSON")
     keys = ["custom_packs", "marketplace_packs"]
@@ -129,7 +129,7 @@ def validate(ctx: click.Context, environment: str, manifest: str) -> None:
 def diff(ctx: click.Context, manifest: str, environment: str) -> None:
     """Prints out the differences (if any) between what is defined in the xsoar_config.json manifest and what is actually
     installed on the XSOAR server."""
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     manifest_data = load_manifest(manifest)
     installed_packs = xsoar_client.get_installed_packs()
     all_good = True
@@ -170,7 +170,7 @@ def deploy(ctx: click.Context, environment: str, manifest: str, verbose: bool, y
     if not should_continue:
         ctx.exit()
 
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     manifest_data = load_manifest(manifest)
     click.echo("Fetching installed packs...", err=True)
     installed_packs = xsoar_client.get_installed_packs()
@@ -191,7 +191,7 @@ def deploy(ctx: click.Context, environment: str, manifest: str, verbose: bool, y
                 # Print message that install is skipped
 
     if none_installed:
-        click.echo("No packs to install. XSOAR server is up to date with manifest.")
+        click.echo("No packs to install. All packs and versions in manifest is already installed on XSOAR server.")
 
 
 manifest.add_command(deploy)

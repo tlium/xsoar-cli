@@ -8,7 +8,13 @@ if TYPE_CHECKING:
 
 import contextlib
 
-from xsoar_cli.utilities import get_config_file_contents, get_config_file_path, get_config_file_template_contents, load_config
+from xsoar_cli.utilities import (
+    fail_if_no_artifacts_provider,
+    get_config_file_contents,
+    get_config_file_path,
+    get_config_file_template_contents,
+    load_config,
+)
 
 
 @click.group(help="Create/validate etc")
@@ -35,6 +41,7 @@ def show(ctx: click.Context, masked: bool) -> None:
 @click.option("--only-test-environment", default=None, show_default=True, help="Environment as defined in config file")
 @click.pass_context
 @load_config
+@fail_if_no_artifacts_provider
 def validate(ctx: click.Context, only_test_environment: str) -> None:
     """Validates that the configuration file is JSON and tests connectivity for each XSOAR Client environment defined."""
     return_code = 0
@@ -44,7 +51,7 @@ def validate(ctx: click.Context, only_test_environment: str) -> None:
             # what the user specified in option
             continue
         click.echo(f'Testing "{server_env}" environment...', nl=False)
-        xsoar_client: Client = ctx.obj["server_envs"][server_env]
+        xsoar_client: Client = ctx.obj["server_envs"][server_env]["xsoar_client"]
         try:
             xsoar_client.test_connectivity()
         except ConnectionError as ex:
@@ -53,6 +60,9 @@ def validate(ctx: click.Context, only_test_environment: str) -> None:
             return_code = 1
             continue
         click.echo("OK")
+    if ctx.obj["default_environment"] not in ctx.obj["server_envs"]:
+        click.echo(f'Error: default environment "{ctx.obj["default_environment"]}" not found in server config.')
+        return_code = 1
     ctx.exit(return_code)
 
 

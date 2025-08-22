@@ -40,20 +40,20 @@ class MyPlugin(XSOARPlugin):
     @property
     def name(self) -> str:
         return "myplugin"
-    
-    @property 
+
+    @property
     def version(self) -> str:
         return "1.0.0"
-    
+
     @property
     def description(self) -> str:
         return "My custom plugin"
-    
+
     def get_command(self) -> click.Command:
         @click.command(help="My custom command")
         def mycommand():
             click.echo("Hello from my plugin!")
-        
+
         return mycommand
 ```
 
@@ -75,23 +75,23 @@ class MyCustomPlugin(XSOARPlugin):
     @property
     def name(self) -> str:
         return "mycustom"
-    
+
     @property
     def version(self) -> str:
         return "1.0.0"
-    
+
     @property
     def description(self) -> str:
         return "A custom plugin with multiple commands"
-    
+
     def get_command(self) -> click.Command:
         """Return the main command group for this plugin."""
-        
+
         @click.group(help="My custom commands")
         def mycustom():
             """Main command group for my custom plugin."""
             pass
-        
+
         @click.command(help="Greet someone")
         @click.option("--name", default="World", help="Name to greet")
         @click.option("--times", default=1, help="Number of times to greet")
@@ -99,7 +99,7 @@ class MyCustomPlugin(XSOARPlugin):
             """Greet someone multiple times."""
             for i in range(times):
                 click.echo(f"Hello, {name}!")
-        
+
         @click.command(help="Show current status")
         @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
         def status(verbose: bool):
@@ -108,7 +108,7 @@ class MyCustomPlugin(XSOARPlugin):
             if verbose:
                 click.echo(f"Description: {self.description}")
                 click.echo("Status: Active")
-        
+
         @click.command(help="Process a file")
         @click.argument("filename", type=click.Path(exists=True))
         @click.option("--output", "-o", help="Output file")
@@ -118,18 +118,18 @@ class MyCustomPlugin(XSOARPlugin):
             if output:
                 click.echo(f"Output will be saved to: {output}")
             # Your processing logic here
-        
+
         # Add commands to the group
         mycustom.add_command(greet)
         mycustom.add_command(status)
         mycustom.add_command(process)
-        
+
         return mycustom
-    
+
     def initialize(self):
         """Initialize the plugin."""
         click.echo("My custom plugin initialized!")
-    
+
     def cleanup(self):
         """Cleanup when the plugin is unloaded."""
         pass
@@ -176,7 +176,7 @@ from xsoar_cli.utilities import load_config
 @load_config
 def my_command(ctx: click.Context):
     # Access XSOAR client
-    xsoar_client = ctx.obj["server_envs"]["dev"]
+    xsoar_client = ctx.obj["server_envs"]["dev"]["xsoar_client"]
     # Use the client...
 ```
 
@@ -284,11 +284,11 @@ class MyPlugin(XSOARPlugin):
         @click.group()
         def myplugin():
             pass
-        
+
         @click.command()
         def case():  # ✅ Namespaced as 'myplugin case'
             click.echo("My case command")
-        
+
         myplugin.add_command(case)
         return myplugin
 ```
@@ -297,7 +297,7 @@ class MyPlugin(XSOARPlugin):
 
 These command names are reserved by the core CLI:
 - `case` - Case/incident management
-- `config` - Configuration management  
+- `config` - Configuration management
 - `graph` - Dependency graphs
 - `manifest` - Manifest operations
 - `pack` - Content pack operations
@@ -330,7 +330,7 @@ def get_command(self) -> click.Command:
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise click.Abort()
-    
+
     return mycommand
 ```
 

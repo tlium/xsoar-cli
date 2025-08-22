@@ -20,7 +20,7 @@ def case() -> None:
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str) -> None:
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     response = xsoar_client.get_case(casenumber)
     if response["total"] == 0 and not response["data"]:
         click.echo(f"Cannot find case ID {casenumber}")
@@ -71,7 +71,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 @load_config
 def create(ctx: click.Context, environment: str, casetype: str, name: str, details: str) -> None:
     """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
-    xsoar_client: Client = ctx.obj["server_envs"][environment]
+    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
     if not casetype:
         casetype = ctx.obj["default_new_case_type"]
     data = {
