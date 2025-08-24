@@ -33,14 +33,30 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @click.argument("casenumber", type=int)
 @click.option("--source", default="prod", show_default=True, help="Source environment")
 @click.option("--dest", default="dev", show_default=True, help="Destination environment")
+@click.option(
+    "--custom-fields",
+    default=None,
+    help='Additional fields on the form "myfield=my_value,anotherfield=another value". Use machine name for field names, e.g mycustomfieldname.',
+)
+@click.option("--custom-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.command()
 @click.pass_context
 @load_config
-def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
+def clone(  # noqa: PLR0913
+    ctx: click.Context,
+    casenumber: int,
+    source: str,
+    dest: str,
+    custom_fields: str | None,
+    custom_fields_delimiter: str,
+) -> None:
     """Clones a case from source to destination environment."""
     valid_envs = validate_environments(source, dest, ctx=ctx)
     if not valid_envs:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
+        ctx.exit(1)
+    if custom_fields and "=" not in custom_fields:
+        click.echo('Malformed custom fields. Must be on the form "myfield=myvalue"')
         ctx.exit(1)
     xsoar_source_client: Client = ctx.obj["server_envs"][source]["xsoar_client"]
     results = xsoar_source_client.get_case(casenumber)
@@ -58,6 +74,8 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     data.pop("modified")
     # Ensure that playbooks run immediately when the case is created
     data["createInvestigation"] = True
+    if "CustomFields" in data:
+        data["CustomFields"] = data["CustomFields"] | parse_string_to_dict(custom_fields, custom_fields_delimiter)
 
     xsoar_dest_client: Client = ctx.obj["server_envs"][dest]["xsoar_client"]
     case_data = xsoar_dest_client.create_case(data=data)
