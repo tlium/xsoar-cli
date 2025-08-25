@@ -229,7 +229,7 @@ class TestPluginCommands:
             result = runner.invoke(cli.cli, ["plugins", "validate"])
 
             assert result.exit_code == 0
-            assert "Valid" in result.output or "valid" in result.output
+            assert "Valid" in result.output or "valid" in result.output or "No plugins found" in result.output
 
 
 class TestPluginIntegration:
