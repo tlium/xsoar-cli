@@ -151,59 +151,7 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 
 ## Plugin System
 
-xsoar-cli supports a plugin system that allows you to extend the CLI with custom commands. Plugins are Python files that you place in `~/.local/xsoar-cli/plugins/` and they're automatically discovered and loaded.
-
-### Quick Start with Plugins
-
-1. **Create an example plugin**:
-   ```bash
-   xsoar-cli plugins create-example
-   ```
-
-2. **List available plugins**:
-   ```bash
-   xsoar-cli plugins list
-   ```
-
-3. **Test the example plugin**:
-   ```bash
-   xsoar-cli example hello --name "World"
-   ```
-
-### Plugin Management Commands
-
-- `xsoar-cli plugins list` - List all plugins
-- `xsoar-cli plugins info <plugin>` - Show plugin information
-- `xsoar-cli plugins validate` - Validate all plugins
-- `xsoar-cli plugins reload <plugin>` - Reload a specific plugin
-- `xsoar-cli plugins create-example` - Create an example plugin
-- `xsoar-cli plugins open` - Open the plugins directory
-
-### Creating Your Own Plugins
-
-Create a Python file in `~/.local/xsoar-cli/plugins/` that inherits from `XSOARPlugin`:
-
-```python
-import click
-from xsoar_cli.plugins import XSOARPlugin
-
-class MyPlugin(XSOARPlugin):
-    @property
-    def name(self) -> str:
-        return "myplugin"
-
-    @property
-    def version(self) -> str:
-        return "1.0.0"
-
-    def get_command(self) -> click.Command:
-        @click.command(help="My custom command")
-        def mycommand():
-            click.echo("Hello from my plugin!")
-        return mycommand
-```
-
-For detailed documentation, see [Plugin System Documentation](src/xsoar_cli/plugins/README.md).
+xsoar-cli supports a plugin system that allows you to extend the CLI with custom commands. For complete documentation, examples, and usage instructions, see [Plugin System Documentation](src/xsoar_cli/plugins/README.md).
 
 ## Troubleshooting
 
