@@ -8,8 +8,8 @@ for the xsoar-cli application from a local directory.
 import importlib.util
 import logging
 import sys
+import types
 from pathlib import Path
-from typing import Dict, List, Optional, Type
 
 import click
 
@@ -24,7 +24,7 @@ class PluginManager:
     from the ~/.local/xsoar-cli/plugins directory.
     """
 
-    def __init__(self, plugins_dir: Optional[Path] = None):
+    def __init__(self, plugins_dir: Path | None = None) -> None:
         """
         Initialize the plugin manager.
 
@@ -36,9 +36,9 @@ class PluginManager:
         else:
             self.plugins_dir = plugins_dir
 
-        self.loaded_plugins: Dict[str, XSOARPlugin] = {}
-        self.failed_plugins: Dict[str, Exception] = {}
-        self.command_conflicts: List[Dict[str, str]] = []
+        self.loaded_plugins: dict[str, XSOARPlugin] = {}
+        self.failed_plugins: dict[str, Exception] = {}
+        self.command_conflicts: list[dict[str, str]] = []
 
         # Ensure plugins directory exists
         self.plugins_dir.mkdir(parents=True, exist_ok=True)
@@ -48,7 +48,7 @@ class PluginManager:
         if plugins_dir_str not in sys.path:
             sys.path.insert(0, plugins_dir_str)
 
-    def discover_plugins(self) -> List[str]:
+    def discover_plugins(self) -> list[str]:
         """
         Discover available plugins by scanning the plugins directory for Python files.
 
@@ -71,7 +71,7 @@ class PluginManager:
         logger.info(f"Discovered {len(plugin_names)} plugin files: {plugin_names}")
         return plugin_names
 
-    def _load_module_from_file(self, module_name: str, file_path: Path):
+    def _load_module_from_file(self, module_name: str, file_path: Path) -> types.ModuleType:
         """
         Load a Python module from a file path.
 
@@ -98,7 +98,7 @@ class PluginManager:
         spec.loader.exec_module(module)
         return module
 
-    def _find_plugin_classes(self, module) -> List[Type[XSOARPlugin]]:
+    def _find_plugin_classes(self, module: types.ModuleType) -> list[type[XSOARPlugin]]:
         """
         Find all XSOARPlugin classes in a module.
 
@@ -119,7 +119,7 @@ class PluginManager:
 
         return plugin_classes
 
-    def load_plugin(self, plugin_name: str) -> Optional[XSOARPlugin]:
+    def load_plugin(self, plugin_name: str) -> XSOARPlugin | None:
         """
         Load a single plugin by name.
 
@@ -177,7 +177,7 @@ class PluginManager:
             logger.error(f"Failed to load plugin '{plugin_name}': {e}")
             raise PluginLoadError(f"Failed to load plugin '{plugin_name}': {e}")
 
-    def load_all_plugins(self, ignore_errors: bool = True) -> Dict[str, XSOARPlugin]:
+    def load_all_plugins(self, *, ignore_errors: bool = True) -> dict[str, XSOARPlugin]:
         """
         Load all discovered plugins.
 
@@ -268,7 +268,7 @@ class PluginManager:
         for plugin_name in plugin_names:
             self.unload_plugin(plugin_name)
 
-    def get_plugin_info(self) -> Dict[str, Dict[str, str]]:
+    def get_plugin_info(self) -> dict[str, dict[str, str]]:
         """
         Get information about all loaded plugins.
 
@@ -284,7 +284,7 @@ class PluginManager:
             }
         return info
 
-    def get_failed_plugins(self) -> Dict[str, str]:
+    def get_failed_plugins(self) -> dict[str, str]:
         """
         Get information about plugins that failed to load.
 
@@ -293,7 +293,7 @@ class PluginManager:
         """
         return {name: str(error) for name, error in self.failed_plugins.items()}
 
-    def get_command_conflicts(self) -> List[Dict[str, str]]:
+    def get_command_conflicts(self) -> list[dict[str, str]]:
         """
         Get information about command conflicts.
 
@@ -302,7 +302,7 @@ class PluginManager:
         """
         return self.command_conflicts.copy()
 
-    def reload_plugin(self, plugin_name: str) -> Optional[XSOARPlugin]:
+    def reload_plugin(self, plugin_name: str) -> XSOARPlugin | None:
         """
         Reload a plugin by unloading and loading it again.
 
@@ -326,74 +326,3 @@ class PluginManager:
 
         # Load again
         return self.load_plugin(plugin_name)
-
-    def create_example_plugin(self) -> None:
-        """
-        Create an example plugin file in the plugins directory.
-        """
-        example_content = '''"""
-Example XSOAR CLI Plugin
-
-This is an example plugin that demonstrates how to create custom commands
-for the xsoar-cli application.
-
-The XSOARPlugin class is automatically injected into the plugin namespace,
-so you don't need to import it.
-"""
-
-import click
-
-
-class ExamplePlugin(XSOARPlugin):
-    """Example plugin implementation."""
-
-    @property
-    def name(self) -> str:
-        return "example"
-
-    @property
-    def version(self) -> str:
-        return "1.0.0"
-
-    @property
-    def description(self) -> str:
-        return "An example plugin demonstrating the plugin system"
-
-    def get_command(self) -> click.Command:
-        """Return the Click command for this plugin."""
-
-        @click.group(help="Example plugin commands")
-        def example():
-            pass
-
-        @click.command(help="Say hello")
-        @click.option("--name", default="World", help="Name to greet")
-        def hello(name: str):
-            click.echo(f"Hello, {name}! This is from the example plugin.")
-
-        @click.command(help="Show plugin info")
-        def info():
-            click.echo(f"Plugin: {self.name}")
-            click.echo(f"Version: {self.version}")
-            click.echo(f"Description: {self.description}")
-
-        example.add_command(hello)
-        example.add_command(info)
-
-        return example
-
-    def initialize(self):
-        """Initialize the plugin."""
-        click.echo("Example plugin initialized!")
-
-    def cleanup(self):
-        """Cleanup plugin resources."""
-        pass
-'''
-
-        example_file = self.plugins_dir / "example_plugin.py"
-        if not example_file.exists():
-            example_file.write_text(example_content)
-            logger.info(f"Created example plugin at: {example_file}")
-        else:
-            logger.info(f"Example plugin already exists at: {example_file}")

@@ -169,7 +169,7 @@ Please include:
 - Consider how features work with different authentication methods
 
 ### Plugin Development
-- Look at examples in the `examples/` directory
+- Look at the plugin documentation in `src/xsoar_cli/plugins/README.md`
 - Follow the plugin architecture in `src/xsoar_cli/plugins/`
 - Test plugin loading and command registration
 

@@ -164,22 +164,6 @@ class ValidPlugin(XSOARPlugin):
             assert len(manager.failed_plugins) == 1
             assert "invalid_plugin" in manager.failed_plugins
 
-    def test_create_example_plugin(self):
-        """Test creating example plugin."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            plugins_dir = Path(temp_dir) / "plugins"
-            manager = PluginManager(plugins_dir=plugins_dir)
-
-            manager.create_example_plugin()
-
-            example_file = plugins_dir / "example_plugin.py"
-            assert example_file.exists()
-
-            # Check that the example plugin can be loaded
-            plugin = manager.load_plugin("example_plugin")
-            assert plugin is not None
-            assert plugin.name == "example"
-
 
 class TestPluginCommands:
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
@@ -205,21 +189,6 @@ class TestPluginCommands:
 
         assert result.exit_code == 0
         assert "test_plugin" in result.output
-
-    @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    @patch("xsoar_cli.plugins.commands.PluginManager")
-    def test_plugins_create_example_command(self, mock_manager_class):
-        """Test the plugins create-example command."""
-        runner = CliRunner()
-
-        mock_manager = MagicMock()
-        mock_manager_class.return_value = mock_manager
-        mock_manager.plugins_dir = Path("/test/plugins")
-
-        result = runner.invoke(cli.cli, ["plugins", "create-example"])
-
-        assert result.exit_code == 0
-        mock_manager.create_example_plugin.assert_called_once()
 
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     @patch("xsoar_cli.plugins.commands.PluginManager")
