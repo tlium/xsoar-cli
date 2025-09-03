@@ -132,4 +132,5 @@ def parse_config(config: dict, ctx: click.Context) -> None:
             artifacts_location=config["server_config"][key].get("artifacts_location", None),
             s3_bucket_name=config["server_config"][key].get("s3_bucket_name", None),
         )
+        ctx.obj["server_envs"][key]["xsoar_client"].artifact_provider.check_s3_connection()
         ctx.obj["server_envs"][key]["artifacts_location"] = config["server_config"][key].get("artifacts_location", None)
