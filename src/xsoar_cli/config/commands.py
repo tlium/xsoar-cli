@@ -39,10 +39,11 @@ def show(ctx: click.Context, masked: bool) -> None:
 
 @click.command()
 @click.option("--only-test-environment", default=None, show_default=True, help="Environment as defined in config file")
+@click.option("--stacktrace", is_flag=True, default=False, help="Print full stack trace on config validation failure.")
 @click.pass_context
 @load_config
 @fail_if_no_artifacts_provider
-def validate(ctx: click.Context, only_test_environment: str) -> None:
+def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -> None:
     """Validates that the configuration file is JSON and tests connectivity for each XSOAR Client environment defined."""
     return_code = 0
     for server_env in ctx.obj["server_envs"]:
@@ -55,7 +56,8 @@ def validate(ctx: click.Context, only_test_environment: str) -> None:
         try:
             xsoar_client.test_connectivity()
         except ConnectionError as ex:
-            raise RuntimeError from ex
+            if stacktrace:
+                raise ConnectionError from ex
             click.echo("FAILED")
             return_code = 1
             continue
