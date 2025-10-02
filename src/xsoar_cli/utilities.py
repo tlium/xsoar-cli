@@ -33,7 +33,7 @@ def get_config_file_template_contents() -> dict:
                 "server_version": 6,
             },
             "prod": {
-                "base_url": "https://api-<YOUR_XSIAM_DOMAIN_HERE>.com",
+                "base_url": "https://api-xsoar-v8.example.com",
                 "api_token": "YOUR API TOKEN HERE",
                 "artifacts_location": "S3",
                 "s3_bucket_name": "xsoar-cicd-prod",
