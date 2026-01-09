@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 import contextlib
 
 from xsoar_cli.utilities import (
-    fail_if_no_artifacts_provider,
     get_config_file_contents,
     get_config_file_path,
     get_config_file_template_contents,
@@ -42,7 +41,6 @@ def show(ctx: click.Context, masked: bool) -> None:
 @click.option("--stacktrace", is_flag=True, default=False, help="Print full stack trace on config validation failure.")
 @click.pass_context
 @load_config
-@fail_if_no_artifacts_provider
 def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -> None:
     """Validates that the configuration file is JSON and tests connectivity for each XSOAR Client environment defined."""
     return_code = 0
