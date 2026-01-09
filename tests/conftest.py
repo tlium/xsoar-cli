@@ -1,8 +1,46 @@
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from xsoar_cli.utilities import get_config_file_template_contents
+
+
+@pytest.fixture
+def mock_manifest_base():
+    """Fixture that loads the valid base manifest file."""
+    manifest_path = Path(__file__).parent / "test_data" / "manifest_base.json"
+    with patch("xsoar_cli.manifest.commands.load_manifest") as mock_load_manifest:
+        with manifest_path.open("r") as f:
+            mock_load_manifest.return_value = json.load(f)
+        yield mock_load_manifest
+
+
+@pytest.fixture
+def mock_manifest_invalid():
+    """Fixture that simulates loading an invalid manifest (JSON decode error)."""
+    with patch("xsoar_cli.manifest.commands.load_manifest") as mock_load_manifest:
+        mock_load_manifest.side_effect = SystemExit(1)
+        yield mock_load_manifest
+
+
+@pytest.fixture
+def mock_manifest_with_pack_not_on_server():
+    """Fixture that loads the manifest with a pack not on the server."""
+    manifest_path = Path(__file__).parent / "test_data" / "manifest_with_pack_not_on_server.json"
+    with patch("xsoar_cli.manifest.commands.load_manifest") as mock_load_manifest:
+        with manifest_path.open("r") as f:
+            mock_load_manifest.return_value = json.load(f)
+        yield mock_load_manifest
+
+
+@pytest.fixture
+def mock_xsoar_client_is_pack_available():
+    """Fixture that mocks the is_pack_available method to return True for all packs."""
+    with patch("xsoar_client.xsoar_client.Client.is_pack_available") as mock_is_available:
+        mock_is_available.return_value = True
+        yield mock_is_available
 
 
 @pytest.fixture
