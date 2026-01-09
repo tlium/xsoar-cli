@@ -39,7 +39,7 @@ def get_config_file_template_contents() -> dict:
                 "s3_bucket_name": "xsoar-cicd-prod",
                 "verify_ssl": False,
                 "server_version": 8,
-                "xsiam_auth_id": 123
+                "xsiam_auth_id": 123,
             },
         },
     }
@@ -133,5 +133,7 @@ def parse_config(config: dict, ctx: click.Context) -> None:
             artifacts_location=config["server_config"][key].get("artifacts_location", None),
             s3_bucket_name=config["server_config"][key].get("s3_bucket_name", None),
         )
-        ctx.obj["server_envs"][key]["xsoar_client"].artifact_provider.test_connection()
+        artifact_provider = ctx.obj["server_envs"][key]["xsoar_client"].artifact_provider
+        if artifact_provider.artifacts_repo and hasattr(artifact_provider, "test_connection"):
+            artifact_provider.test_connection()
         ctx.obj["server_envs"][key]["artifacts_location"] = config["server_config"][key].get("artifacts_location", None)
