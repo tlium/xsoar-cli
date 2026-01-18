@@ -5,6 +5,9 @@ from functools import update_wrapper
 from pathlib import Path
 
 import click
+from xsoar_client.artifact_providers.azure import AzureArtifactProvider
+from xsoar_client.artifact_providers.s3 import S3ArtifactProvider
+from xsoar_client.config import ClientConfig
 from xsoar_client.xsoar_client import Client
 
 
@@ -123,17 +126,33 @@ def parse_config(config: dict, ctx: click.Context) -> None:
     ctx.obj["server_envs"] = {}
     for key in config["server_config"]:
         ctx.obj["server_envs"][key] = {}
-        ctx.obj["server_envs"][key]["xsoar_client"] = Client(
-            api_token=config["server_config"][key]["api_token"],
-            server_url=config["server_config"][key]["base_url"],
-            verify_ssl=config["server_config"][key]["verify_ssl"],
-            custom_pack_authors=config["custom_pack_authors"],
-            xsiam_auth_id=config["server_config"][key].get("xsiam_auth_id", ""),
-            server_version=config["server_config"][key]["server_version"],
-            artifacts_location=config["server_config"][key].get("artifacts_location", None),
-            s3_bucket_name=config["server_config"][key].get("s3_bucket_name", None),
+        server_version = config["server_config"][key]["server_version"]
+        custom_pack_authors = config["custom_pack_authors"]
+
+        server_url = config["server_config"][key]["base_url"]
+        api_token = config["server_config"][key]["api_token"]
+        verify_ssl = config["server_config"][key]["verify_ssl"]
+        xsiam_auth_id = config["server_config"][key].get("xsiam_auth_id", "")
+
+        xsoar_client_config = ClientConfig(
+            server_version=server_version,
+            custom_pack_authors=custom_pack_authors,
+            api_token=api_token,
+            server_url=server_url,
+            xsiam_auth_id=xsiam_auth_id,
+            verify_ssl=verify_ssl,
         )
-        artifact_provider = ctx.obj["server_envs"][key]["xsoar_client"].artifact_provider
-        if artifact_provider.artifacts_repo and hasattr(artifact_provider, "test_connection"):
-            artifact_provider.test_connection()
-        ctx.obj["server_envs"][key]["artifacts_location"] = config["server_config"][key].get("artifacts_location", None)
+
+        artifacts_location = config["server_config"][key].get("artifacts_location", None)
+        if artifacts_location == "S3":
+            bucket_name = config["server_config"][key].get("s3_bucket_name", None)
+            artifact_provider = S3ArtifactProvider(bucket_name=bucket_name)
+        elif artifacts_location == "Azure":
+            url = config["server_config"][key]["azure_blobstore_url"]
+            container_name = config["server_config"][key]["azure_container_name"]
+            artifact_provider = AzureArtifactProvider(storage_account_url=url, container_name=container_name)
+        else:
+            artifact_provider = None
+        xsoar_client = Client(config=xsoar_client_config, artifact_provider=artifact_provider)
+
+        ctx.obj["server_envs"][key]["xsoar_client"] = xsoar_client
