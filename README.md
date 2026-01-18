@@ -42,10 +42,10 @@ This CLI tool is made to be run from the root of a content repository. Some comm
 - XSOAR servers version 6 or 8
 - Python 3.9+ (only tested with Python 3.12, earlier versions may work but are not guaranteed)
 
-### Additional Requirements (depending on usage)
-- **AWS SDK for Python (Boto3)** - Only required when working with custom content packs stored in S3. You can use marketplace packs and other functionality without AWS setup.
+### Additional Requirements 
+- **AWS SDK for Python (Boto3)** - Only required when working with custom content packs stored in S3.
+- **Azure SDK for Python**
 
-**Note:** AWS S3 is currently the only available artifacts repository provider for custom packs. Pull requests for new providers are welcome!
 
 ## Installation
 
@@ -94,8 +94,9 @@ After creating the config file, edit it with your XSOAR server details:
         "xsoar8": {
             "base_url": "https://xsoar-v8.example.com",
             "api_token": "YOUR API TOKEN HERE",
-            "artifacts_location": "S3",
-            "s3_bucket_name": "xsoar-cicd-prod",
+            "artifacts_location": "Azure",
+            "azure_blobstore_url": "https://some/url",
+            "azure_container_name": "some-container-name",
             "verify_ssl": false,
             "server_version": 8,
             "xsiam_auth_id": 123
@@ -113,8 +114,10 @@ After creating the config file, edit it with your XSOAR server details:
 - **server_config**: Define multiple XSOAR environments (xsoar6, xsoar8, etc.)
   - **base_url**: Your XSOAR server URL
   - **api_token**: API token for authentication (see XSOAR documentation for creating API keys)
-  - **artifacts_location**: Where artifacts are stored (currently only "S3" is supported)
-  - **s3_bucket_name**: S3 bucket where your custom content packs are stored
+  - **artifacts_location**: Where artifacts are stored ("Azure" and "S3" is currently supported)
+  - **s3_bucket_name**: S3 bucket where your custom content packs are stored (only applicable if using "S3" artifacts location)
+  - **azure_blobstore_url** URL to your Azure BlobStore location (only applicable if using "Azure" artifats location)
+  - **azure_container_name** Name of the container where blobs should be stored (only applicable if using "Azure" artifats location)
   - **verify_ssl**: SSL certificate verification - use `false` for self-signed certificates, or path to CA bundle
   - **server_version**: XSOAR server version (6 or 8)
   - **xsiam_auth_id**: Required for XSOAR 8 (XSIAM) - the authentication ID for API access
