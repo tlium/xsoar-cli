@@ -150,7 +150,8 @@ def parse_config(config: dict, ctx: click.Context) -> None:
         elif artifacts_location == "Azure":
             url = config["server_config"][key]["azure_blobstore_url"]
             container_name = config["server_config"][key]["azure_container_name"]
-            artifact_provider = AzureArtifactProvider(storage_account_url=url, container_name=container_name)
+            access_token = config["server_config"][key].get("azure_storage_access_token", "")
+            artifact_provider = AzureArtifactProvider(storage_account_url=url, container_name=container_name, access_token=access_token)
         else:
             artifact_provider = None
         xsoar_client = Client(config=xsoar_client_config, artifact_provider=artifact_provider)
