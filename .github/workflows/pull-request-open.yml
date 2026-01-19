@@ -1,34 +1,34 @@
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+    pull_request:
+        types: [opened, synchronize, reopened]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version: ["3.10", "3.11", "3.12"]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  cache: "pip"
 
-      - name: Create and activate virtual environment
-        run: |
-          python3.12 -m venv venv
-          source venv/bin/activate
+            - name: Create and activate virtual environment
+              run: |
+                  python3.12 -m venv venv
+                  source venv/bin/activate
 
-      - name: Install requirements
-        run: |
-          pip install -r requirements_dev.txt
+            - name: Install requirements
+              run: |
+                  pip install -r requirements_dev.txt
 
-      - name: Install xsoar-cli
-        run: pip install -e .
+            - name: Install xsoar-cli
+              run: pip install -e .
 
-      - name: Run unit tests
-        run: pytest
+            - name: Run unit tests
+              run: pytest
