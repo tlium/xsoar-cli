@@ -32,6 +32,9 @@ def show(ctx: click.Context, masked: bool) -> None:
     if not masked:
         for key in config["server_config"]:
             config["server_config"][key]["api_token"] = "MASKED"  # noqa: S105
+            if "azure_storage_access_token" in config["server_config"][key]:
+                config["server_config"][key]["azure_storage_access_token"] = "*****"  # noqa: S105
+
     print(json.dumps(config, indent=4))
     ctx.exit()
 
