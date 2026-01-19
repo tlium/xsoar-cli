@@ -73,15 +73,15 @@ The xsoar-cli config file is located in `~/.config/xsoar-cli/config.json`. To cr
 xsoar-cli config create
 ```
 
-### Configuration File Structure
+### Sample configuration file using AWS S3 as artifacs repository for custom content packs
 
 After creating the config file, edit it with your XSOAR server details:
 
 ```json
 {
     "default_environment": "xsoar6",
-    "default_new_case_type": "",
-    "custom_pack_authors": ["SOMEONE"],
+    "default_new_case_type": "My case type",
+    "custom_pack_authors": ["My_Org"],
     "server_config": {
         "xsoar6": {
             "base_url": "https://xsoar-v6.example.com",
@@ -91,18 +91,60 @@ After creating the config file, edit it with your XSOAR server details:
             "verify_ssl": "/path/to/your/CA_bundle.pem",
             "server_version": 6
         },
+    }
+}
+```
+
+### Sample configuration file using Azure BlobStorage as artifacs repository for custom content packs
+```json
+{
+    "default_environment": "xsoar8",
+    "default_new_case_type": "My case type",
+    "custom_pack_authors": ["My_Org"],
+    "server_config": {
         "xsoar8": {
             "base_url": "https://xsoar-v8.example.com",
             "api_token": "YOUR API TOKEN HERE",
             "artifacts_location": "Azure",
             "azure_blobstore_url": "https://some/url",
             "azure_container_name": "some-container-name",
+            "azure_storage_access_token": "my-access-token",
             "verify_ssl": false,
             "server_version": 8,
             "xsiam_auth_id": 123
         }
     }
 }
+
+```
+
+### Full configuration file with multiple environments 
+```json
+{
+    "default_environment": "dev",
+    "default_new_case_type": "My case type",
+    "custom_pack_authors": ["My_Org"],
+    "server_config": {
+        "dev": {
+            "base_url": "https://your.dev.domain",
+            "api_token": "YOUR API TOKEN HERE",
+            "artifacts_location": "S3",
+            "s3_bucket_name": "xsoar-cicd",
+            "verify_ssl": "/path/to/your/CA_bundle.pem",
+            "server_version": 6
+        },
+        "prod": {
+            "base_url": "https://your.prod.domain",
+            "api_token": "YOUR API TOKEN HERE",
+            "artifacts_location": "S3",
+            "s3_bucket_name": "xsoar-cicd",
+            "verify_ssl": false,
+            "server_version": 8,
+            "xsiam_auth_id": 123
+        }
+    }
+}
+
 ```
 
 ### Configuration Options
@@ -114,7 +156,7 @@ After creating the config file, edit it with your XSOAR server details:
 - **server_config**: Define multiple XSOAR environments (xsoar6, xsoar8, etc.)
   - **base_url**: Your XSOAR server URL
   - **api_token**: API token for authentication (see XSOAR documentation for creating API keys)
-  - **artifacts_location**: Where artifacts are stored ("Azure" and "S3" is currently supported)
+  - **artifacts_location**: Where artifacts are stored ("Azure" and "S3" is currently supported). Set this to an empty string to use `xsoar-cli` without an artifacts repository.
   - **s3_bucket_name**: S3 bucket where your custom content packs are stored (only applicable if using "S3" artifacts location)
   - **azure_blobstore_url** URL to your Azure BlobStore location (only applicable if using "Azure" artifats location)
   - **azure_container_name** Name of the container where blobs should be stored (only applicable if using "Azure" artifats location)
