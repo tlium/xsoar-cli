@@ -138,6 +138,8 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
         manifest_path = manifest_arg.resolve()
         repo_path = manifest_path.parent
         pack_metadata_path = Path(f"{repo_path}/Packs/{pack['id']}/pack_metadata.json")
+        if not pack_metadata_path.is_file():
+            return False
         with Path.open(pack_metadata_path, encoding="utf-8") as f:
             pack_metadata = json.load(f)
         if pack_metadata["currentVersion"] == pack["version"]:
@@ -153,8 +155,10 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
                 available = xsoar_client.is_pack_available(pack_id=pack["id"], version=pack["version"], custom=custom)
                 # We check if a pack is found in local filesystem regardless of whether it's an upstream pack or not.
                 # This should cause any significantly negative performance penalties.
-                if not available and not found_in_local_filesystem():
-                    click.echo(f"\nFailed to reach pack {pack['id']} version {pack['version']}")
+                if not available:
+                    if custom and found_in_local_filesystem():
+                        continue
+                    click.echo(f"\nFailed to reach find {pack['id']} version {pack['version']}")
                     sys.exit(1)
                 click.echo(".", nl=False)
             print()
@@ -172,8 +176,10 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
                     available = xsoar_client.is_pack_available(pack_id=pack["id"], version=pack["version"], custom=custom)
                     # We check if a pack is found in local filesystem regardless of whether it's an upstream pack or not.
                     # This should cause any significantly negative performance penalties.
-                    if not available and not found_in_local_filesystem():
-                        click.echo(f"\nFailed to reach pack {pack['id']} version {pack['version']}")
+                    if not available:
+                        if custom and found_in_local_filesystem():
+                            continue
+                        click.echo(f"\nFailed to find pack {pack['id']} version {pack['version']}")
                         sys.exit(1)
                     click.echo(".", nl=False)
                     found_diff = True
@@ -231,15 +237,17 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
     \b
     Prompts for confirmation prior to pack installation.
     """
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    if not environment:
+        active_env = config.default_environment
     should_continue = True
     if not yes:
         should_continue = click.confirm(
-            f"WARNING: this operation will attempt to deploy all packs defined in the manifest to XSOAR {environment} environment. Continue?",
+            f"WARNING: this operation will attempt to deploy all packs defined in the manifest to XSOAR {active_env} environment. Continue?",
         )
     if not should_continue:
         ctx.exit()
-    config = get_xsoar_config(ctx)
-    xsoar_client: Client = config.get_client(environment)
     manifest_data = load_manifest(manifest)
     click.echo("Fetching installed packs...", err=True)
     installed_packs = xsoar_client.get_installed_packs()
