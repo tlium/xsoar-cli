@@ -63,9 +63,9 @@ class XSOARConfig:
     """Main configuration object for XSOAR CLI."""
 
     def __init__(self, config_dict: dict):
-        self.default_environment = config_dict["default_environment"]
-        self.custom_pack_authors = config_dict["custom_pack_authors"]
-        self.default_new_case_type = config_dict["default_new_case_type"]
+        self.default_environment: str = config_dict["default_environment"]
+        self.custom_pack_authors: list[str] = config_dict["custom_pack_authors"]
+        self.default_new_case_type: str = config_dict["default_new_case_type"]
 
         # Build environment configs
         self._environments: dict[str, EnvironmentConfig] = {}
