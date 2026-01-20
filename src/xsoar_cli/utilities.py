@@ -1,14 +1,17 @@
-import contextlib
 import json
 from collections.abc import Callable
 from functools import update_wrapper
 from pathlib import Path
+from typing import cast
 
 import click
-from xsoar_client.artifact_providers.azure import AzureArtifactProvider
-from xsoar_client.artifact_providers.s3 import S3ArtifactProvider
-from xsoar_client.config import ClientConfig
-from xsoar_client.xsoar_client import Client
+
+from xsoar_cli.configuration import XSOARConfig
+
+
+def get_xsoar_config(ctx: click.Context) -> XSOARConfig:
+    """Helper to get typed config from context."""
+    return cast(XSOARConfig, ctx.obj)
 
 
 def parse_string_to_dict(input_string: str | None, delimiter: str) -> dict:
@@ -49,7 +52,8 @@ def get_config_file_template_contents() -> dict:
 
 
 def validate_environments(*args, **kwargs) -> bool:  # noqa: ANN002, ANN003
-    return all(env in kwargs["ctx"].obj["server_envs"] for env in args)
+    config = get_xsoar_config(kwargs["ctx"])
+    return all(config.has_environment(env) for env in args)
 
 
 def get_config_file_path() -> Path:
@@ -79,16 +83,18 @@ def load_config(f: Callable) -> Callable:
                 'Config file not found. Please create a template config file using "xsoar-cli config create" and replace placeholder values before retrying.',
             )
             ctx.exit(1)
-        config = get_config_file_contents(config_file_path)
-        parse_config(config, ctx)
-        if (
-            "environment" in ctx.params
-            and ctx.params["environment"] not in ctx.obj["server_envs"]
-            and ctx.params["environment"] is not None
-        ):
-            click.echo(f"Invalid environment: {ctx.params['environment']}")
-            click.echo(f"Available environments as defined in config file are: {list(ctx.obj['server_envs'])}")
-            ctx.exit(1)
+
+        config_dict = get_config_file_contents(config_file_path)
+        ctx.obj = XSOARConfig(config_dict)
+
+        # Validate environment if provided
+        if "environment" in ctx.params and ctx.params["environment"] is not None:
+            config = get_xsoar_config(ctx)
+            if not config.has_environment(ctx.params["environment"]):
+                click.echo(f"Invalid environment: {ctx.params['environment']}")
+                click.echo(f"Available environments as defined in config file are: {config.environment_names}")
+                ctx.exit(1)
+
         return ctx.invoke(f, *args, **kwargs)
 
     return update_wrapper(wrapper, f)
@@ -102,58 +108,13 @@ def fail_if_no_artifacts_provider(f: Callable) -> Callable:
 
     @click.pass_context
     def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:  # noqa: ANN002, ANN003
-        if "environment" in ctx.params:  # noqa: SIM108
-            key = ctx.params["environment"]
-        else:
-            key = ctx.obj["default_environment"]
+        config = get_xsoar_config(ctx)
+        environment = ctx.params.get("environment")
 
-        with contextlib.suppress(KeyError):
-            location = ctx.obj["server_envs"][key].get("artifacts_location", None)
-            if not location:
-                click.echo("Command requires artifacts repository, but no artifacts_location defined in config.")
-                ctx.exit(1)
+        if not config.environment_has_artifacts(environment):
+            click.echo("Command requires artifacts repository, but no artifacts_location defined in config.")
+            ctx.exit(1)
+
         return ctx.invoke(f, *args, **kwargs)
 
     return update_wrapper(wrapper, f)
-
-
-def parse_config(config: dict, ctx: click.Context) -> None:
-    # Set the two XSOAR client objects in Click Context for use in later functions
-    ctx.obj = {}
-    ctx.obj["default_environment"] = config["default_environment"]
-    ctx.obj["custom_pack_authors"] = config["custom_pack_authors"]
-    ctx.obj["default_new_case_type"] = config["default_new_case_type"]
-    ctx.obj["server_envs"] = {}
-    for key in config["server_config"]:
-        ctx.obj["server_envs"][key] = {}
-        server_version = config["server_config"][key]["server_version"]
-        custom_pack_authors = config["custom_pack_authors"]
-
-        server_url = config["server_config"][key]["base_url"]
-        api_token = config["server_config"][key]["api_token"]
-        verify_ssl = config["server_config"][key]["verify_ssl"]
-        xsiam_auth_id = config["server_config"][key].get("xsiam_auth_id", "")
-
-        xsoar_client_config = ClientConfig(
-            server_version=server_version,
-            custom_pack_authors=custom_pack_authors,
-            api_token=api_token,
-            server_url=server_url,
-            xsiam_auth_id=xsiam_auth_id,
-            verify_ssl=verify_ssl,
-        )
-
-        artifacts_location = config["server_config"][key].get("artifacts_location", None)
-        if artifacts_location == "S3":
-            bucket_name = config["server_config"][key].get("s3_bucket_name", None)
-            artifact_provider = S3ArtifactProvider(bucket_name=bucket_name)
-        elif artifacts_location == "Azure":
-            url = config["server_config"][key]["azure_blobstore_url"]
-            container_name = config["server_config"][key]["azure_container_name"]
-            access_token = config["server_config"][key].get("azure_storage_access_token", "")
-            artifact_provider = AzureArtifactProvider(storage_account_url=url, container_name=container_name, access_token=access_token)
-        else:
-            artifact_provider = None
-        xsoar_client = Client(config=xsoar_client_config, artifact_provider=artifact_provider)
-
-        ctx.obj["server_envs"][key]["xsoar_client"] = xsoar_client

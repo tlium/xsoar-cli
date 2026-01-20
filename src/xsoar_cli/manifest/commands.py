@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 import click
 
-from xsoar_cli.utilities import load_config
+from xsoar_cli.utilities import get_xsoar_config, load_config
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -50,9 +50,8 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
     This command assumes that you do not have any custom content packs uploaded to XSOAR.
     All packs will be added as "marketplace_packs" in the manifest.
     """
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     installed_packs = xsoar_client.get_installed_packs()
     manifest_data = {
         "marketplace_packs": [],
@@ -73,9 +72,8 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
 @load_config
 def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     """Update manifest on disk with latest available content pack versions."""
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     manifest_data = load_manifest(manifest)
     click.echo("Fetching outdated packs from XSOAR server. This may take a minute...", nl=False)
     results = xsoar_client.get_outdated_packs()
@@ -94,7 +92,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     click.echo(f"Total number of outdated content packs: {len(results)}")
 
     for pack in results:
-        key = "custom_packs" if pack["author"] in ctx.obj["custom_pack_authors"] else "marketplace_packs"
+        key = "custom_packs" if pack["author"] in config.custom_pack_authors else "marketplace_packs"
         index = next((i for i, item in enumerate(manifest_data[key]) if item["id"] == pack["id"]), None)
         if index is None:
             msg = f"Pack {pack['id']} not found in manifest."
@@ -111,7 +109,12 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.option("--mode", type=click.Choice(["full", "diff"]), default="diff", help="Validate the full manifest, or only the definitions that diff with installed versions")
+@click.option(
+    "--mode",
+    type=click.Choice(["full", "diff"]),
+    default="diff",
+    help="Validate the full manifest, or only the definitions that diff with installed versions",
+)
 @click.argument("manifest", type=str)
 @click.command()
 @click.pass_context
@@ -119,14 +122,12 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
 def validate(ctx: click.Context, environment: str | None, mode: str, manifest: str) -> None:
     """Validate manifest JSON and content pack availability by doing HTTP CONNECT to the appropriate artifacts repository.
     Custom pack availability is implementation dependant."""
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
 
     manifest_data = load_manifest(manifest)
     click.echo("Manifest is valid JSON")
     keys = ["custom_packs", "marketplace_packs"]
-
 
     def found_in_local_filesystem() -> bool:
         # If we are in a merge request and the merge request contains a new pack as well
@@ -196,9 +197,8 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
 def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     """Prints out the differences (if any) between what is defined in the xsoar_config.json manifest and what is actually
     installed on the XSOAR server."""
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     manifest_data = load_manifest(manifest)
     installed_packs = xsoar_client.get_installed_packs()
     all_good = True
@@ -238,9 +238,8 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
         )
     if not should_continue:
         ctx.exit()
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     manifest_data = load_manifest(manifest)
     click.echo("Fetching installed packs...", err=True)
     installed_packs = xsoar_client.get_installed_packs()

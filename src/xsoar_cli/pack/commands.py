@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import load_config
+from xsoar_cli.utilities import get_xsoar_config, load_config
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -22,9 +22,8 @@ def pack(ctx: click.Context) -> None:
 @load_config
 def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
     """Deletes a content pack from the XSOAR server."""
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     if not xsoar_client.is_installed(pack_id=pack_id):
         click.echo(f"Pack ID {pack_id} is not installed. Cannot delete.")
         sys.exit(1)
@@ -38,9 +37,8 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
 @load_config
 def get_outdated(ctx: click.Context, environment: str | None) -> None:
     """Prints out a list of outdated content packs."""
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     click.echo("Fetching outdated packs. This may take a little while...", err=True)
     outdated_packs = xsoar_client.get_outdated_packs()
     if not outdated_packs:

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import load_config, parse_string_to_dict, validate_environments
+from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -20,9 +20,8 @@ def case() -> None:
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     response = xsoar_client.get_case(casenumber)
     if response["total"] == 0 and not response["data"]:
         click.echo(f"Cannot find case ID {casenumber}")
@@ -58,7 +57,8 @@ def clone(  # noqa: PLR0913
     if custom_fields and "=" not in custom_fields:
         click.echo('Malformed custom fields. Must be on the form "myfield=myvalue"')
         ctx.exit(1)
-    xsoar_source_client: Client = ctx.obj["server_envs"][source]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_source_client: Client = config.get_client(source)
     results = xsoar_source_client.get_case(casenumber)
     data = results["data"][0]
     # Dbot mirror info is irrelevant. This will be added again if applicable by XSOAR after ticket creation in dev.
@@ -77,7 +77,7 @@ def clone(  # noqa: PLR0913
     if "CustomFields" in data:
         data["CustomFields"] = data["CustomFields"] | parse_string_to_dict(custom_fields, custom_fields_delimiter)
 
-    xsoar_dest_client: Client = ctx.obj["server_envs"][dest]["xsoar_client"]
+    xsoar_dest_client: Client = config.get_client(dest)
     case_data = xsoar_dest_client.create_case(data=data)
     click.echo(json.dumps(case_data, indent=4))
 
@@ -108,11 +108,10 @@ def create(  # noqa: PLR0913
     if custom_fields and "=" not in custom_fields:
         click.echo('Malformed custom fields. Must be on the form "myfield=myvalue"')
         ctx.exit(1)
-    if not environment:
-        environment = ctx.obj["default_environment"]
-    xsoar_client: Client = ctx.obj["server_envs"][environment]["xsoar_client"]
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
     if not casetype:
-        casetype = ctx.obj["default_new_case_type"]
+        casetype = config.default_new_case_type
     data = {
         "createInvestigation": True,
         "name": name,
