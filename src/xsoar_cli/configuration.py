@@ -37,11 +37,6 @@ class EnvironmentConfig:
         )
 
         artifact_provider = self._create_artifact_provider()
-        if artifact_provider:
-            try:
-                artifact_provider.test_connection()
-            except Exception as ex:
-                raise click.ClickException(f"Failed to connect to artifacts repository. Error was: {ex!s}") from ex
         return Client(config=xsoar_client_config, artifact_provider=artifact_provider)
 
     def _create_artifact_provider(self) -> S3ArtifactProvider | AzureArtifactProvider | None:
