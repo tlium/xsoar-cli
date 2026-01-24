@@ -100,19 +100,33 @@ def load_config(f: Callable) -> Callable:
     return update_wrapper(wrapper, f)
 
 
-def fail_if_no_artifacts_provider(f: Callable) -> Callable:
-    """
-    This function is only to be used as a decorator for various xsoar-cli subcommands, and only AFTER the load_config decorator has been called.
-    The intention is to fail gracefully if any subcommand is executed which requires an artifacts provider."
-    """
+def validate_artifacts_provider(f: Callable) -> Callable:
+    """Decorator that validates artifact provider configuration and connectivity."""
 
     @click.pass_context
-    def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:  # noqa: ANN002, ANN003
+    def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
         config = get_xsoar_config(ctx)
         environment = ctx.params.get("environment")
 
+        # Exit early if no artifacts provider is configured
         if not config.environment_has_artifacts(environment):
-            click.echo("Command requires artifacts repository, but no artifacts_location defined in config.")
+            return ctx.invoke(f, *args, **kwargs)
+
+        # Test artifact provider connectivity
+        env_name = environment or config.default_environment
+        env_config = config._environments[env_name]
+
+        try:
+            # Try to get the client (which creates the artifact provider)
+            client = env_config.client
+            # Test the artifact provider connection
+            if client.artifact_provider:
+                client.artifact_provider.test_connection()
+
+        except RuntimeError as e:
+            click.echo(f"Artifact repository connection failed: {e}")
+            click.echo()
+            click.echo("Run 'xsoar-cli config validate' to test your configuration")
             ctx.exit(1)
 
         return ctx.invoke(f, *args, **kwargs)

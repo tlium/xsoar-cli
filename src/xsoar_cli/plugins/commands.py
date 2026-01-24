@@ -124,7 +124,7 @@ def info(plugin_name: str):
                 command = plugin.get_command()
                 click.echo(f"  Command: {command.name}")
                 if hasattr(command, "commands"):
-                    subcommands = list(command.commands.keys())
+                    subcommands = list(command.commands.keys())  # ty: ignore[unresolved-attribute]
                     if subcommands:
                         click.echo(f"  Subcommands: {', '.join(subcommands)}")
             except Exception as e:

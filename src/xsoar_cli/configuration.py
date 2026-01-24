@@ -38,7 +38,7 @@ class EnvironmentConfig:
         artifact_provider = self._create_artifact_provider()
         return Client(config=xsoar_client_config, artifact_provider=artifact_provider)
 
-    def _create_artifact_provider(self):
+    def _create_artifact_provider(self) -> S3ArtifactProvider | AzureArtifactProvider | None:
         """Create the appropriate artifact provider based on config."""
         artifacts_location = self._config.get("artifacts_location")
 
