@@ -2,7 +2,6 @@
 
 from typing import Optional
 
-import click
 from xsoar_client.artifact_providers.azure import AzureArtifactProvider
 from xsoar_client.artifact_providers.s3 import S3ArtifactProvider
 from xsoar_client.config import ClientConfig
