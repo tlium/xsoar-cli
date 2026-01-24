@@ -1,4 +1,5 @@
 import json
+import traceback
 from typing import TYPE_CHECKING
 
 import click
@@ -54,17 +55,33 @@ def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -
             # Ignore environment if --only-test-environment option is given and environment does not match
             # what the user specified in option
             continue
-        click.echo(f'Testing "{server_env}" environment...', nl=False)
+        click.echo(f'Testing "{server_env}" environment')
         xsoar_client: Client = config.get_client(server_env)
+        click.echo("  - XSOAR connectivity: ", nl=False)
         try:
             xsoar_client.test_connectivity()
+            click.echo("OK")
         except ConnectionError as ex:
             if stacktrace:
-                raise ConnectionError from ex
-            click.echo("FAILED")
+                # Print the original cause if available, otherwise the main message
+                error_msg = str(ex.__cause__) if ex.__cause__ else str(ex)
+                click.echo(error_msg)
+            else:
+                click.echo("FAILED")
             return_code = 1
-            continue
-        click.echo("OK")
+        if config.environment_has_artifacts(server_env):
+            click.echo("  - Artifacts repository: ", nl=False)
+            try:
+                xsoar_client.artifact_provider.test_connection()
+                click.echo("OK")
+            except Exception as ex:
+                if stacktrace:
+                    # Print the original cause if available, otherwise the main message
+                    error_msg = str(ex.__cause__) if ex.__cause__ else str(ex)
+                    click.echo(error_msg)
+                else:
+                    click.echo("FAILED")
+                return_code = 1
     if not config.has_environment(config.default_environment):
         click.echo(f'Error: default environment "{config.default_environment}" not found in server config.')
         return_code = 1
