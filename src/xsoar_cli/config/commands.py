@@ -72,8 +72,11 @@ def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -
         if config.environment_has_artifacts(server_env):
             click.echo("  - Artifacts repository: ", nl=False)
             try:
-                xsoar_client.artifact_provider.test_connection()
-                click.echo("OK")
+                if xsoar_client.artifact_provider:
+                    xsoar_client.artifact_provider.test_connection()
+                    click.echo("OK")
+                else:
+                    click.echo("No artifact provider configured")
             except Exception as ex:
                 if stacktrace:
                     # Print the original cause if available, otherwise the main message
