@@ -5,7 +5,14 @@ from typing import TYPE_CHECKING, Any
 
 import click
 
-from xsoar_cli.utilities import get_xsoar_config, load_config, validate_artifacts_provider
+from xsoar_cli.utilities import (
+    find_installed_packs_not_in_manifest,
+    find_packs_in_manifest_not_installed,
+    find_version_mismatch,
+    get_xsoar_config,
+    load_config,
+    validate_artifacts_provider,
+)
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -210,19 +217,52 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     xsoar_client: Client = config.get_client(environment)
     manifest_data = load_manifest(manifest)
     installed_packs = xsoar_client.get_installed_packs()
-    all_good = True
-    for key in manifest_data:
-        for pack in manifest_data[key]:
-            installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
-            if not installed:
-                click.echo(f"Pack {pack['id']} is not installed")
-                all_good = False
-            elif installed["currentVersion"] != pack["version"]:
-                msg = f"Manifest states {pack['id']} version {pack['version']} but version {installed['currentVersion']} is installed"
-                click.echo(msg)
-                all_good = False
-    if all_good:
+    # Detect install content packs not defined in manifest
+    # Find content packs defined in manifest but that are not defined
+    # Find installed content packs that are outdated
+    results = {}
+    results["undefined_in_manifest"] = find_installed_packs_not_in_manifest(installed_packs, manifest_data)
+    results["not_installed"] = find_packs_in_manifest_not_installed(installed_packs, manifest_data)
+    results["mismatch"] = find_version_mismatch(installed_packs, manifest_data)
+    found_diff = False
+    for key in results:
+        if results[key]:
+            found_diff = True
+
+    if not found_diff:
         click.echo("All packs up to date.")
+        ctx.exit(0)
+
+    # Example output string:
+    #
+    # Installed packs missing manifest definition:
+    #  - AnsibleTower version 1.1.6
+    #  - CDC_Databricks version 2.0.0
+    #  - CDC_Testing version 1.0.15
+    #
+    #  Packs where install version does not match manifest definition:
+    #    - Base version 1.41.60 installed when version 1.41.58 defined in manifest
+
+    msg = ""
+    if results["undefined_in_manifest"]:
+        msg += "Installed packs missing manifest definition:\n"
+        for item in results["undefined_in_manifest"]:
+            msg += f"  - {item['id']} version {item['currentVersion']}\n"
+        msg += "\n"
+
+    if results["not_installed"]:
+        msg += "Packs not installed but defined in manifest:\n"
+        for item in results["not_installed"]:
+            msg += f"  - {item['id']} version {item['version']}\n"
+        msg += "\n\n"
+
+    if results["mismatch"]:
+        msg += "Packs where install version does not match manifest definition:\n"
+        for item in results["mismatch"]:
+            # mpobj = {pack["id"]: {"manifest version": pack["version"], "installed version": installed["currentVersion"]}}
+            msg += f"  - {item['id']} version {item['installed_version']} installed when version {item['manifest_version']} defined in manifest\n"
+
+    click.echo(msg)
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
