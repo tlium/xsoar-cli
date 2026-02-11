@@ -132,3 +132,22 @@ def validate_artifacts_provider(f: Callable) -> Callable:
         return ctx.invoke(f, *args, **kwargs)
 
     return update_wrapper(wrapper, f)
+
+
+def find_installed_packs_not_in_manifest(installed_packs, manifest_data]) -> list[dict[str, str]]:
+    missing_packs = []
+    for installed_pack in installed_packs:
+        for key in manifest_data:
+            installed = next((item for item in manifest_data[key] if item["id"] == installed_pack["id"]), {})
+            if installed:
+                break
+        if not installed:
+            missing_packs.append(installed_pack)
+    return missing_packs
+
+def find_packs_in_manifest_not_installed(installed_packs, manifest_data):
+    pass
+
+
+def find_outdated_packs(installed_packs, manifest_data):
+    pass
