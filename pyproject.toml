@@ -7,7 +7,7 @@ name = "xsoar-cli"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.10, <=3.14"
 license = "MIT"
 keywords = []
 authors = [{ name = "Torbjørn Lium", email = "torben@lium.org" }]
