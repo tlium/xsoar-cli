@@ -128,7 +128,21 @@ def set_credentials(ctx: click.Context, environment: str, apitoken: str, key_id:
     config_file.write_text(json.dumps(config_data, indent=4))
 
 
+@click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
+@click.argument("sastoken", type=str)
+@click.command()
+@click.pass_context
+@load_config
+def set_azure_token(ctx: click.Context, environment: str, sastoken: str) -> None:  # noqa: ARG001
+    """Set individual credentials for an environment in the config file."""
+    config_file = get_config_file_path()
+    config_data = json.loads(config_file.read_text())
+    config_data["server_config"][environment]["azure_storage_access_token"] = sastoken
+    config_file.write_text(json.dumps(config_data, indent=4))
+
+
 config.add_command(create)
 config.add_command(validate)
 config.add_command(show)
 config.add_command(set_credentials)
+config.add_command(set_azure_token)
