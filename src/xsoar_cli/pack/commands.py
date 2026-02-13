@@ -45,11 +45,11 @@ def get_outdated(ctx: click.Context, environment: str | None) -> None:
         click.echo("No outdated packs found")
         sys.exit(0)
     id_header = "Pack ID"
-    installed_header = "Installed version"
-    latest_header = "Latest version"
-    click.echo(f"{id_header:<50}{installed_header:>17}{latest_header:>17}")
+    installed_header = "Installed"
+    latest_header = "Latest"
+    click.echo(f"{id_header:<52}{installed_header:>14}{latest_header:>14}")
     for pack in outdated_packs:
-        msg = f"{pack['id']:<50}{pack['currentVersion']:>17}{pack['latest']:>17}"
+        msg = f"{pack['id']:<52}{pack['currentVersion']:>14}{pack['latest']:>14}"
         click.echo(msg)
 
 
