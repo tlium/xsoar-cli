@@ -123,7 +123,7 @@ def validate_artifacts_provider(f: Callable) -> Callable:
             if client.artifact_provider:
                 client.artifact_provider.test_connection()
 
-        except RuntimeError as e:
+        except Exception as e:
             click.echo(f"Artifact repository connection failed: {e}")
             click.echo()
             click.echo("Run 'xsoar-cli config validate' to test your configuration")
