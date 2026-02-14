@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import get_xsoar_config, load_config
+from xsoar_cli.utilities import get_xsoar_config, load_config, validate_artifacts_provider
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -35,6 +35,7 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
 @click.command()
 @click.pass_context
 @load_config
+@validate_artifacts_provider
 def get_outdated(ctx: click.Context, environment: str | None) -> None:
     """Prints out a list of outdated content packs."""
     config = get_xsoar_config(ctx)
