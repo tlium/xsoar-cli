@@ -209,7 +209,6 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
 @click.command()
 @click.pass_context
 @load_config
-@validate_artifacts_provider
 def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     """Prints out the differences (if any) between what is defined in the xsoar_config.json manifest and what is actually
     installed on the XSOAR server."""
