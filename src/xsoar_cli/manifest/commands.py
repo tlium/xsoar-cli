@@ -209,7 +209,6 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
 @click.command()
 @click.pass_context
 @load_config
-@validate_artifacts_provider
 def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     """Prints out the differences (if any) between what is defined in the xsoar_config.json manifest and what is actually
     installed on the XSOAR server."""
@@ -222,8 +221,11 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     # Find installed content packs that are outdated
     results = {}
     results["undefined_in_manifest"] = find_installed_packs_not_in_manifest(installed_packs, manifest_data)
+    # print(f'{results["undefined_in_manifest"]=}')
     results["not_installed"] = find_packs_in_manifest_not_installed(installed_packs, manifest_data)
+    # print(f'{results["not_installed"]=}')
     results["mismatch"] = find_version_mismatch(installed_packs, manifest_data)
+    # print(f'{results["mismatch"]=}')
     found_diff = False
     for key in results:
         if results[key]:
