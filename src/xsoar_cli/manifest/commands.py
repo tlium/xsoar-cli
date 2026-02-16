@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import click
+from packaging.version import Version
 
 from xsoar_cli.utilities import (
     find_installed_packs_not_in_manifest,
@@ -83,37 +84,44 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     manifest_data = load_manifest(manifest)
-    click.echo("Fetching outdated packs from XSOAR server. This may take a minute...", nl=False)
-    results = xsoar_client.get_outdated_packs()
-    click.echo("done.")
-    if not results:
-        click.echo("No packs eligible for upgrade.")
-        sys.exit(0)
+    click.echo("Fetching outdated packs from XSOAR server. This may take a minute...")
+    outdated_installed_packs = xsoar_client.get_outdated_packs()
+    print(json.dumps(manifest_data, indent=4))
 
-    item1 = "Pack ID"
-    item2 = "Installed version"
-    item3 = "Latest available version"
-    header = f"{item1:50}{item2:20}{item3:20}"
-    click.echo(header)
-    for pack in results:
-        click.echo(f"{pack['id']:50}{pack['currentVersion']:20}{pack['latest']:20}")
-    click.echo(f"Total number of outdated content packs: {len(results)}")
+    changes_made = False
+    for key in ["custom_packs", "marketplace_packs"]:
+        custom = key == "custom_packs"
+        for index, manifest_pack in enumerate(manifest_data[key]):
+            if custom:
+                latest = xsoar_client.artifact_provider.get_latest_version(manifest_pack["id"])  # ty: ignore[possibly-missing-attribute]
+            else:
+                pack = next((item for item in outdated_installed_packs if item["id"] == manifest_pack["id"]), None)
+                if not pack:
+                    # We have a content pack defined in the manifest which isn't installed on the XSOAR server. Ignore
+                    # this pack and continue evaluation
+                    continue
+                latest = pack["latest"]
+            if Version(latest) == Version(manifest_pack["version"]):
+                # No updates for pack if latest matches manifest definition
+                continue
 
-    for pack in results:
-        key = "custom_packs" if pack["author"] in config.custom_pack_authors else "marketplace_packs"
-        index = next((i for i, item in enumerate(manifest_data[key]) if item["id"] == pack["id"]), None)
-        if index is None:
-            msg = f"Pack {pack['id']} not found in manifest."
-            click.echo(msg)
-            sys.exit(1)
-        comment = manifest_data[key][index].get("_comment", None)
-        if comment is not None:
-            print(f"WARNING: comment found in manifest for {pack['id']}: {comment}")
-        msg = f"Upgrade {pack['id']} from {pack['currentVersion']} to {pack['latest']}?"
-        should_upgrade = click.confirm(msg, default=True)
-        if should_upgrade:
-            manifest_data[key][index]["version"] = pack["latest"]
-    write_manifest(manifest, manifest_data)
+            # Check if there is a _comment key for the pack and print comment
+            # as warning
+            comment = manifest_data[key][index].get("_comment", None)
+            if comment is not None:
+                print(f"WARNING: comment found in manifest for {manifest_pack['id']}: {comment}")
+
+            # Prompt user if pack should be upgraded
+            msg = f"Upgrade {manifest_pack['id']} from {manifest_pack['version']} to {latest}?"
+            should_upgrade = click.confirm(msg, default=True)
+            if should_upgrade:
+                manifest_data[key][index]["version"] = latest
+                changes_made = True
+
+    if not changes_made:
+        click.echo("No changes made to manifest or no content packs applicable for update.")
+    else:
+        write_manifest(manifest, manifest_data)
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
