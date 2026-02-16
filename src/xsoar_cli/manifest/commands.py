@@ -86,7 +86,6 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     manifest_data = load_manifest(manifest)
     click.echo("Fetching outdated packs from XSOAR server. This may take a minute...")
     outdated_installed_packs = xsoar_client.get_outdated_packs()
-    print(json.dumps(manifest_data, indent=4))
 
     changes_made = False
     for key in ["custom_packs", "marketplace_packs"]:
