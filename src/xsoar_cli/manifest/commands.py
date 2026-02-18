@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import click
+from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 
 from xsoar_cli.utilities import (
@@ -92,7 +93,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
         custom = key == "custom_packs"
         for index, manifest_pack in enumerate(manifest_data[key]):
             if custom:
-                latest = xsoar_client.artifact_provider.get_latest_version(manifest_pack["id"])  # ty: ignore[possibly-missing-attribute]
+                latest = xsoar_client.artifact_provider.get_latest_version(manifest_pack["id"])  # ty: ignore[unresolved-attribute]
             else:
                 pack = next((item for item in outdated_installed_packs if item["id"] == manifest_pack["id"]), None)
                 if not pack:
@@ -290,10 +291,12 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
     \b
     Prompts for confirmation prior to pack installation.
     """
+    # Initialize client and determine target environment
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    if not environment:
-        active_env = config.default_environment
+    active_env = environment or config.default_environment
+
+    # Prompt for confirmation unless --yes flag is provided
     should_continue = True
     if not yes:
         should_continue = click.confirm(
@@ -301,26 +304,48 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
         )
     if not should_continue:
         ctx.exit()
+
+    # Load manifest and fetch currently installed packs from server
     manifest_data = load_manifest(manifest)
     click.echo("Fetching installed packs...", err=True)
     installed_packs = xsoar_client.get_installed_packs()
     click.echo("done.")
-    none_installed = True
-    for key in manifest_data:
+
+    # Process both custom and marketplace packs
+    installed_any = False
+    for key in ["custom_packs", "marketplace_packs"]:
         custom = key == "custom_packs"
         for pack in manifest_data[key]:
+            # Check if pack needs installation (missing or version mismatch)
             installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
             if not installed or installed["currentVersion"] != pack["version"]:
-                # Install pack
                 click.echo(f"Installing {pack['id']} version {pack['version']}...", nl=False)
-                xsoar_client.deploy_pack(pack_id=pack["id"], pack_version=pack["version"], custom=custom)
-                click.echo("OK.")
-                none_installed = False
+                try:
+                    xsoar_client.deploy_pack(pack_id=pack["id"], pack_version=pack["version"], custom=custom)
+                except RuntimeError as ex:
+                    click.echo("FAILED")
+                    # Extract and format the original API exception
+                    original_exception = ex.__cause__
+
+                    if isinstance(original_exception, ApiException) and original_exception.body:
+                        try:
+                            error_body = json.loads(original_exception.body)
+                            error_message = error_body.get("error", "Unknown error")
+                            click.echo(f"ERROR: {error_message}")
+                        except json.JSONDecodeError:
+                            # Body exists but isn't valid JSON
+                            click.echo(str(original_exception))
+                    else:
+                        # Not an ApiException or no body available
+                        click.echo(str(original_exception))
+                    ctx.exit(1)
+                else:
+                    click.echo("OK.")
+                    installed_any = True
             elif verbose:
                 click.echo(f"Not installing {pack['id']} version {pack['version']}. Already installed.")
-                # Print message that install is skipped
 
-    if none_installed:
+    if not installed_any:
         click.echo("No packs to install. All packs and versions in manifest is already installed on XSOAR server.")
 
 
