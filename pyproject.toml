@@ -25,7 +25,7 @@ dependencies = [
     "xsoar-client>=2.0.0",
     "click==8.1.8",
     "PyYaml>=6.0.2",
-    "xsoar-dependency-graph>=0.0.3",
+    "xsoar-dependency-graph",
 ]
 
 [project.urls]
@@ -56,3 +56,7 @@ tests = ["tests", "*/xsoar-cli/tests"]
 
 [tool.coverage.report]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[tool.uv.sources]
+xsoar-dependency-graph = { path = "../xsoar-dependency-graph", editable = true }
+xsoar-client = { path = "../xsoar-client", editable = true }
