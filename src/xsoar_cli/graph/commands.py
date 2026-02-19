@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import click
@@ -44,7 +43,7 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: Path, environmen
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     installed_content = xsoar_client.get_installed_expired_packs()
-    cg: ContentGraph = ContentGraph(repo_path=Path(repo_path), installed_content=installed_content)
+    cg: ContentGraph = ContentGraph(repo_path=Path(repo_path), installed_content=installed_content)  # ty: ignore[invalid-argument-type]
     packs_list = [Path(item) for item in packs]
     cg.create_content_graph(pack_paths=packs_list)
     cg.plot_connected_components()
