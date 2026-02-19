@@ -7,7 +7,7 @@ name = "xsoar-cli"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
-requires-python = ">=3.10, <=3.14"
+requires-python = ">=3.10"
 license = "MIT"
 keywords = []
 authors = [{ name = "Torbjørn Lium", email = "torben@lium.org" }]
@@ -18,14 +18,15 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    "xsoar-client>=2.0.0",
     "click==8.1.8",
     "PyYaml>=6.0.2",
-    "xsoar-dependency-graph>=0.0.3",
+    "xsoar-client>=2.0.5",
+    "xsoar-dependency-graph>=0.2.1",
 ]
 
 [project.urls]
