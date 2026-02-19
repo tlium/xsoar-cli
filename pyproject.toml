@@ -58,5 +58,5 @@ tests = ["tests", "*/xsoar-cli/tests"]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.uv.sources]
-xsoar-dependency-graph = { path = "../xsoar-dependency-graph", editable = true }
 xsoar-client = { path = "../xsoar-client", editable = true }
+xsoar-dependency-graph = { path = "../xsoar-dependency-graph", editable = true }
