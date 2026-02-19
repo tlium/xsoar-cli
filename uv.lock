@@ -8,15 +8,15 @@ resolution-markers = [
 
 [[package]]
 name = "azure-core"
-version = "1.38.1"
+version = "1.38.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/9b/23893febea484ad8183112c9419b5eb904773adb871492b5fa8ff7b21e09/azure_core-1.38.1.tar.gz", hash = "sha256:9317db1d838e39877eb94a2240ce92fa607db68adf821817b723f0d679facbf6", size = 363323, upload-time = "2026-02-11T02:03:06.051Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/fe/5c7710bc611a4070d06ba801de9a935cc87c3d4b689c644958047bdf2cba/azure_core-1.38.2.tar.gz", hash = "sha256:67562857cb979217e48dc60980243b61ea115b77326fa93d83b729e7ff0482e7", size = 363734, upload-time = "2026-02-18T19:33:05.6Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/88/aaea2ad269ce70b446660371286272c1f6ba66541a7f6f635baf8b0db726/azure_core-1.38.1-py3-none-any.whl", hash = "sha256:69f08ee3d55136071b7100de5b198994fc1c5f89d2b91f2f43156d20fcf200a4", size = 217930, upload-time = "2026-02-11T02:03:07.548Z" },
+    { url = "https://files.pythonhosted.org/packages/42/23/6371a551800d3812d6019cd813acd985f9fac0fedc1290129211a73da4ae/azure_core-1.38.2-py3-none-any.whl", hash = "sha256:074806c75cf239ea284a33a66827695ef7aeddac0b4e19dda266a93e4665ead9", size = 217957, upload-time = "2026-02-18T19:33:07.696Z" },
 ]
 
 [[package]]
@@ -52,30 +52,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.42.47"
+version = "1.42.52"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/fe/3363024b6dda5968401f45d8b345ed95ce4fd536d58f799988b4b28184ad/boto3-1.42.47.tar.gz", hash = "sha256:74812a2e29de7c2bd19e446d765cb887394f20f1517388484b51891a410f33b2", size = 112884, upload-time = "2026-02-11T20:49:49.196Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/ed/8eacb8ec7bf264079608be5f9a2a57e31e7fed7a791bb3b15500ca9274a5/boto3-1.42.52.tar.gz", hash = "sha256:ff4a4afb832f63a1358e11fe6eb321da0f4767979c6721dd32fb02e6eabcebf5", size = 112811, upload-time = "2026-02-18T21:54:57.804Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/7b/884e30adab2339ce5cce7b800f5fa619254d36e89e50a8cf39a5524edc35/boto3-1.42.47-py3-none-any.whl", hash = "sha256:ed881ed246027028af566acbb80f008aa619be4d3fdbcc4ad3c75dbe8c34bfaf", size = 140608, upload-time = "2026-02-11T20:49:47.664Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/2a/de34ad6c43c56fe6dd5824bff2cd7fdef5edd9de0617cbd217040318ba97/boto3-1.42.52-py3-none-any.whl", hash = "sha256:7b3e0c4bfd8815a3df64fbe98fc9f87dfb12bd7a783cf63dfc2f166c66798c9d", size = 140556, upload-time = "2026-02-18T21:54:56.609Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.42.47"
+version = "1.42.52"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/a6/d15f5dfe990abd76dbdb2105a7697e0d948e04c41dfd97c058bc76c7cebd/botocore-1.42.47.tar.gz", hash = "sha256:c26e190c1b4d863ba7b44dc68cc574d8eb862ddae5f0fe3472801daee12a0378", size = 14952255, upload-time = "2026-02-11T20:49:40.157Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/37/7044e09d416ff746d23c7456e8c30ddade1154ecd08814b17ab7e2c20fb0/botocore-1.42.52.tar.gz", hash = "sha256:3bdef10aee4cee13ff019b6a1423a2ce3ca17352328d9918157a1829e5cc9be1", size = 14917923, upload-time = "2026-02-18T21:54:48.06Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/5e/50e3a59b243894088eeb949a654fb21d9ab7d0d703034470de016828d85a/botocore-1.42.47-py3-none-any.whl", hash = "sha256:c60f5feaf189423e17755aca3f1d672b7466620dd2032440b32aaac64ae8cac8", size = 14625351, upload-time = "2026-02-11T20:49:36.143Z" },
+    { url = "https://files.pythonhosted.org/packages/94/67/bbd723d489b25ff9f94a734e734986bb8343263dd024a3846291028c26d0/botocore-1.42.52-py3-none-any.whl", hash = "sha256:c3a0b7138a4c5a534da0eb2444c19763b4d03ba2190c0602c49315e54efd7252", size = 14588731, upload-time = "2026-02-18T21:54:45.532Z" },
 ]
 
 [[package]]
@@ -1538,13 +1538,14 @@ dependencies = [
 requires-dist = [
     { name = "click", specifier = "==8.1.8" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "xsoar-client", editable = "../xsoar-client" },
-    { name = "xsoar-dependency-graph", editable = "../xsoar-dependency-graph" },
+    { name = "xsoar-client", specifier = ">=2.0.5" },
+    { name = "xsoar-dependency-graph", specifier = ">=0.2.1" },
 ]
 
 [[package]]
 name = "xsoar-client"
-source = { editable = "../xsoar-client" }
+version = "2.0.5"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-identity" },
     { name = "azure-storage-blob" },
@@ -1552,19 +1553,15 @@ dependencies = [
     { name = "demisto-py" },
     { name = "requests" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "azure-identity", specifier = ">=1.25.1" },
-    { name = "azure-storage-blob", specifier = ">=12.28.0" },
-    { name = "boto3", specifier = ">=1.36.17" },
-    { name = "demisto-py", specifier = ">=3.2.22" },
-    { name = "requests", specifier = ">=2.8.0" },
+sdist = { url = "https://files.pythonhosted.org/packages/0f/4f/8430608341acc75ac79f010ec5be8a6cac66eb80778de697d0b735505aa4/xsoar_client-2.0.5.tar.gz", hash = "sha256:fd691608aee7f2b71520fec38dd492bba4af2589786fe460ff2b0e2daebd0967", size = 36244, upload-time = "2026-02-18T08:27:22.397Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4b/3a/7c43155129083ffba492a6e3fa086f65df44840281c6a3206ed59cc8468a/xsoar_client-2.0.5-py3-none-any.whl", hash = "sha256:8f9d1c02e542bbb6bdf30eacf86d6af160c7b85b7722d60463063520a72bc2b6", size = 10156, upload-time = "2026-02-18T08:27:20.928Z" },
 ]
 
 [[package]]
 name = "xsoar-dependency-graph"
-source = { editable = "../xsoar-dependency-graph" }
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
     { name = "networkx" },
@@ -1576,14 +1573,7 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "matplotlib", specifier = ">=3.0.0" },
-    { name = "networkx", specifier = "<3.0.0" },
-    { name = "numpy", specifier = ">=2.0.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-datadir", specifier = ">=1.8.0" },
-    { name = "pyyaml", specifier = ">=6.0.0" },
-    { name = "scipy", specifier = ">=1.0.0" },
+sdist = { url = "https://files.pythonhosted.org/packages/5d/f2/e7d7b087d556b216a3f878ae91f00a138dc2a0ae23b4f55bb1d7a11df4ef/xsoar_dependency_graph-0.2.1.tar.gz", hash = "sha256:cd7bf33dccb3dfc1fec90f3ae274fdc96038e501bb6112de522ff8761d0b2551", size = 58291, upload-time = "2026-02-19T19:41:04.61Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/81/9d1e81f2f70c1c7938656a424d6e270326643569818ff8d43708fdfba694/xsoar_dependency_graph-0.2.1-py2.py3-none-any.whl", hash = "sha256:9c88baf4f9db27f50340b987121d8ac0f6ccd59f46aa5ab19ac3e5027bc99902", size = 15850, upload-time = "2026-02-19T19:41:03.146Z" },
 ]
