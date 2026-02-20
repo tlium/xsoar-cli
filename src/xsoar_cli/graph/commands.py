@@ -24,12 +24,15 @@ def graph() -> None:
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "-urp", "--upstream-repo-path", required=False, type=click.Path(exists=True), help="Path to local clone of Palo Alto content repository"
+)
 @click.option("-rp", "--repo-path", required=True, type=click.Path(exists=True), help="Path to content repository")
 @click.argument("packs", nargs=-1, required=False, type=click.Path(exists=True))
 @click.command()
 @click.pass_context
 @load_config
-def generate(ctx: click.Context, packs: tuple[Path], repo_path: Path, environment: str | None) -> None:
+def generate(ctx: click.Context, packs: tuple[Path], repo_path: Path, upstream_repo_path: Path, environment: str | None) -> None:
     """BETA
 
     Generates a XSOAR dependency graph for one or more content packs. If no packs are defined in the [PACKS] argument,
