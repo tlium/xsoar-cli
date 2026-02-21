@@ -33,10 +33,7 @@ def graph() -> None:
 @click.command()
 @click.pass_context
 @load_config
-<<<<<<< HEAD
 @validate_xsoar_connectivity
-=======
->>>>>>> main
 def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_repo_path: str, environment: str | None) -> None:
     """BETA
 

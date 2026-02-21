@@ -7,6 +7,7 @@ from typing import cast
 import click
 
 from xsoar_cli.configuration import XSOARConfig
+from xsoar_cli.connection_errors import ConnectionErrorHandler
 
 
 def get_xsoar_config(ctx: click.Context) -> XSOARConfig:
@@ -113,7 +114,12 @@ def validate_xsoar_connectivity(f: Callable) -> Callable:
         env_config = config._environments[env_name]
 
         client = env_config.client
-        client.test_connectivity()
+        try:
+            client.test_connectivity()
+        except ConnectionError as ex:
+            handler = ConnectionErrorHandler()
+            click.echo(f"Connection failed: {handler.get_message(ex)}")
+            ctx.exit(1)
         return ctx.invoke(f, *args, **kwargs)
 
     return update_wrapper(wrapper, f)
