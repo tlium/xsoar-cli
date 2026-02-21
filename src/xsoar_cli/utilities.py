@@ -100,6 +100,25 @@ def load_config(f: Callable) -> Callable:
     return update_wrapper(wrapper, f)
 
 
+def validate_xsoar_connectivity(f: Callable) -> Callable:
+    """Decorator that validates XSOAR server connectivity."""
+
+    @click.pass_context
+    def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
+        config = get_xsoar_config(ctx)
+        environment = ctx.params.get("environment")
+
+        # Test artifact provider connectivity
+        env_name = environment or config.default_environment
+        env_config = config._environments[env_name]
+
+        client = env_config.client
+        client.test_connectivity()
+        return ctx.invoke(f, *args, **kwargs)
+
+    return update_wrapper(wrapper, f)
+
+
 def validate_artifacts_provider(f: Callable) -> Callable:
     """Decorator that validates artifact provider configuration and connectivity."""
 

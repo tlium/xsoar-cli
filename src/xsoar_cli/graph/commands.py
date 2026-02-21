@@ -7,6 +7,7 @@ from xsoar_dependency_graph.xsoar_dependency_graph import ContentGraph
 from xsoar_cli.utilities import (
     get_xsoar_config,
     load_config,
+    validate_xsoar_connectivity,
 )
 
 
@@ -29,7 +30,8 @@ def graph() -> None:
 @click.command()
 @click.pass_context
 @load_config
-def generate(ctx: click.Context, packs: tuple[Path], repo_path: Path, environment: str | None) -> None:
+@validate_xsoar_connectivity
+def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_repo_path: str, environment: str | None) -> None:
     """BETA
 
     Generates a XSOAR dependency graph for one or more content packs. If no packs are defined in the [PACKS] argument,
