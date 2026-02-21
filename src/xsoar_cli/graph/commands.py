@@ -24,12 +24,15 @@ def graph() -> None:
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "-urp", "--upstream-repo-path", required=False, type=click.Path(exists=True), help="Path to local clone of Palo Alto content repository"
+)
 @click.option("-rp", "--repo-path", required=True, type=click.Path(exists=True), help="Path to content repository")
 @click.argument("packs", nargs=-1, required=False, type=click.Path(exists=True))
 @click.command()
 @click.pass_context
 @load_config
-def generate(ctx: click.Context, packs: tuple[Path], repo_path: Path, environment: str | None) -> None:
+def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_repo_path: str, environment: str | None) -> None:
     """BETA
 
     Generates a XSOAR dependency graph for one or more content packs. If no packs are defined in the [PACKS] argument,
@@ -43,7 +46,13 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: Path, environmen
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     installed_content = xsoar_client.get_installed_expired_packs()
-    cg: ContentGraph = ContentGraph(repo_path=Path(repo_path), installed_content=installed_content)  # ty: ignore[invalid-argument-type]
+    urp = Path(upstream_repo_path)
+    rp = Path(repo_path)
+    if upstream_repo_path:
+        cg: ContentGraph = ContentGraph(repo_path=rp, upstream_repo_path=urp, installed_content=installed_content)  # ty: ignore[invalid-argument-type]
+    else:
+        cg: ContentGraph = ContentGraph(repo_path=Path(repo_path), installed_content=installed_content)  # ty: ignore[invalid-argument-type]
+
     packs_list = [Path(item) for item in packs]
     cg.create_content_graph(pack_paths=packs_list)
     cg.plot_connected_components()
