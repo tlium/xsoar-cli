@@ -48,7 +48,10 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     installed_content = xsoar_client.get_installed_expired_packs()
-    urp = Path(upstream_repo_path)
+    if upstream_repo_path:
+        urp = Path(upstream_repo_path)
+    else:
+        urp = None
     rp = Path(repo_path)
     if upstream_repo_path:
         cg: ContentGraph = ContentGraph(repo_path=rp, upstream_repo_path=urp, installed_content=installed_content)  # ty: ignore[invalid-argument-type]
