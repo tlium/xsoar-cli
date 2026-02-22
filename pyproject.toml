@@ -49,7 +49,7 @@ parallel = true
 omit = ["src/xsoar_cli/__about__.py"]
 
 [project.scripts]
-xsoar-cli = "xsoar_cli.cli:cli"
+xsoar-cli = "xsoar_cli.cli:main"
 
 [tool.coverage.paths]
 xsoar_cli = ["src/xsoar_cli", "*/xsoar-cli/src/xsoar_cli"]
