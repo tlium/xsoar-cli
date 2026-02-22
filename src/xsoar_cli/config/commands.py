@@ -1,5 +1,4 @@
 import json
-import traceback
 from typing import TYPE_CHECKING
 
 import click
