@@ -7,6 +7,7 @@ from xsoar_dependency_graph.xsoar_dependency_graph import ContentGraph
 from xsoar_cli.utilities import (
     get_xsoar_config,
     load_config,
+    validate_xsoar_connectivity,
 )
 
 
@@ -32,6 +33,7 @@ def graph() -> None:
 @click.command()
 @click.pass_context
 @load_config
+@validate_xsoar_connectivity
 def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_repo_path: str, environment: str | None) -> None:
     """BETA
 
@@ -46,7 +48,10 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     installed_content = xsoar_client.get_installed_expired_packs()
-    urp = Path(upstream_repo_path)
+    if upstream_repo_path:
+        urp = Path(upstream_repo_path)
+    else:
+        urp = None
     rp = Path(repo_path)
     if upstream_repo_path:
         cg: ContentGraph = ContentGraph(repo_path=rp, upstream_repo_path=urp, installed_content=installed_content)  # ty: ignore[invalid-argument-type]

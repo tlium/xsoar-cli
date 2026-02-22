@@ -7,6 +7,7 @@ from typing import cast
 import click
 
 from xsoar_cli.configuration import XSOARConfig
+from xsoar_cli.connection_errors import ConnectionErrorHandler
 
 
 def get_xsoar_config(ctx: click.Context) -> XSOARConfig:
@@ -95,6 +96,30 @@ def load_config(f: Callable) -> Callable:
                 click.echo(f"Available environments as defined in config file are: {config.environment_names}")
                 ctx.exit(1)
 
+        return ctx.invoke(f, *args, **kwargs)
+
+    return update_wrapper(wrapper, f)
+
+
+def validate_xsoar_connectivity(f: Callable) -> Callable:
+    """Decorator that validates XSOAR server connectivity."""
+
+    @click.pass_context
+    def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
+        config = get_xsoar_config(ctx)
+        environment = ctx.params.get("environment")
+
+        # Test artifact provider connectivity
+        env_name = environment or config.default_environment
+        env_config = config._environments[env_name]
+
+        client = env_config.client
+        try:
+            client.test_connectivity()
+        except ConnectionError as ex:
+            handler = ConnectionErrorHandler()
+            click.echo(f"Connection failed: {handler.get_message(ex)}")
+            ctx.exit(1)
         return ctx.invoke(f, *args, **kwargs)
 
     return update_wrapper(wrapper, f)
