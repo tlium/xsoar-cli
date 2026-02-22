@@ -180,11 +180,9 @@ def validate():
         for cmd_name in CORE_COMMANDS:
             temp_cli.add_command(click.Command(cmd_name, callback=lambda: None))
 
-        temp_plugin_manager = PluginManager()
-        temp_plugin_manager.load_all_plugins(ignore_errors=True)
-        temp_plugin_manager.register_plugin_commands(temp_cli)
+        plugin_manager.register_plugin_commands(temp_cli)
 
-        conflicts = temp_plugin_manager.get_command_conflicts()
+        conflicts = plugin_manager.get_command_conflicts()
         if conflicts:
             click.echo("\nCommand Conflicts Detected:")
             for conflict in conflicts:
