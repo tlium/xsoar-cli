@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import click
 import yaml
 
-from xsoar_cli.utilities import get_xsoar_config, load_config
+from xsoar_cli.utilities import get_xsoar_config, load_config, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -24,6 +24,7 @@ def playbook(ctx: click.Context) -> None:
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
+@validate_xsoar_connectivity
 def download(ctx: click.Context, environment: str | None, name: str) -> None:
     """Download and reattach playbook.
 
