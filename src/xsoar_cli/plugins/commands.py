@@ -169,13 +169,20 @@ def validate():
             click.echo(f"{plugin_name}: {e}")
             all_valid = False
 
-    # Check for command conflicts by attempting registration
+    # Check for command conflicts by attempting registration against a temporary
+    # CLI group containing only core commands. Using the real cli object is wrong
+    # because plugin commands are already registered on it at startup, which causes
+    # them to be falsely reported as conflicts.
     try:
-        from xsoar_cli.cli import cli
+        from xsoar_cli.cli import CORE_COMMANDS
+
+        temp_cli = click.Group()
+        for cmd_name in CORE_COMMANDS:
+            temp_cli.add_command(click.Command(cmd_name, callback=lambda: None))
 
         temp_plugin_manager = PluginManager()
         temp_plugin_manager.load_all_plugins(ignore_errors=True)
-        temp_plugin_manager.register_plugin_commands(cli)
+        temp_plugin_manager.register_plugin_commands(temp_cli)
 
         conflicts = temp_plugin_manager.get_command_conflicts()
         if conflicts:
@@ -194,80 +201,8 @@ def validate():
         click.echo("Some plugins have validation errors.")
 
 
-@click.command(help="Open the plugins directory")
-def open_dir():
-    """Open the plugins directory in the system file manager."""
-    plugin_manager = PluginManager()
-    plugins_dir = plugin_manager.plugins_dir
-
-    click.echo(f"Plugins directory: {plugins_dir}")
-
-    # Try to open the directory
-    import subprocess
-    import sys
-
-    try:
-        if sys.platform == "win32":
-            subprocess.run(["explorer", str(plugins_dir)], check=True)
-        elif sys.platform == "darwin":
-            subprocess.run(["open", str(plugins_dir)], check=True)
-        else:
-            subprocess.run(["xdg-open", str(plugins_dir)], check=True)
-
-        click.echo("Opened plugins directory in file manager.")
-
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        click.echo("Could not open directory automatically.")
-        click.echo(f"Please navigate to: {plugins_dir}")
-
-
 # Add all commands to the plugins group
-@click.command(help="Check for command conflicts with core CLI")
-def check_conflicts():
-    """Check for command conflicts between plugins and core CLI."""
-    plugin_manager = PluginManager()
-
-    # Load all plugins
-    plugin_manager.load_all_plugins(ignore_errors=True)
-
-    # Check conflicts by attempting registration with a temporary CLI group
-    import click
-
-    temp_cli = click.Group()
-
-    # Add core commands to temp CLI to simulate real conflicts
-    core_commands = ["case", "config", "graph", "manifest", "pack", "playbook", "plugins"]
-    for cmd_name in core_commands:
-        temp_cli.add_command(click.Command(cmd_name, callback=lambda: None))
-
-    # Attempt to register plugin commands
-    plugin_manager.register_plugin_commands(temp_cli)
-
-    conflicts = plugin_manager.get_command_conflicts()
-
-    if not conflicts:
-        click.echo("No command conflicts detected!")
-        click.echo("All plugin commands have unique names.")
-        return
-
-    click.echo(f"Found {len(conflicts)} command conflict(s):")
-    click.echo()
-
-    for conflict in conflicts:
-        click.echo(f"Plugin: {conflict['plugin_name']} (v{conflict['plugin_version']})")
-        click.echo(f"   Command: '{conflict['command_name']}'")
-        click.echo("   Conflicts with: Core CLI command")
-        click.echo()
-
-    click.echo("Solutions:")
-    click.echo("  Rename the conflicting command in your plugin")
-    click.echo("  Use a command group to namespace your commands")
-    click.echo("  Example: Instead of 'case', use 'mycase' or 'myplugin case'")
-
-
 plugins.add_command(list_plugins, name="list")
 plugins.add_command(reload)
 plugins.add_command(info)
 plugins.add_command(validate)
-plugins.add_command(check_conflicts, name="check-conflicts")
-plugins.add_command(open_dir, name="open")

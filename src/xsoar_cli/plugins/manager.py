@@ -19,18 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class PluginManager:
-    """
-    Manages the discovery, loading, and registration of XSOAR CLI plugins
-    from the ~/.local/xsoar-cli/plugins directory.
-    """
+    """Manages the discovery, loading, and registration of XSOAR CLI plugins from the plugins directory."""
 
     def __init__(self, plugins_dir: Path | None = None) -> None:
-        """
-        Initialize the plugin manager.
-
-        Args:
-            plugins_dir: Custom plugins directory. If None, uses ~/.local/xsoar-cli/plugins
-        """
+        """Defaults to ~/.local/xsoar-cli/plugins if no directory is provided."""
         if plugins_dir is None:
             self.plugins_dir = Path.home() / ".local" / "xsoar-cli" / "plugins"
         else:
@@ -49,12 +41,7 @@ class PluginManager:
             sys.path.insert(0, plugins_dir_str)
 
     def discover_plugins(self) -> list[str]:
-        """
-        Discover available plugins by scanning the plugins directory for Python files.
-
-        Returns:
-            List of plugin module names found
-        """
+        """Scans the plugins directory for Python files and returns their module names."""
         plugin_names = []
 
         if not self.plugins_dir.exists():
@@ -72,16 +59,7 @@ class PluginManager:
         return plugin_names
 
     def _load_module_from_file(self, module_name: str, file_path: Path) -> types.ModuleType:
-        """
-        Load a Python module from a file path.
-
-        Args:
-            module_name: Name to give the module
-            file_path: Path to the Python file
-
-        Returns:
-            The loaded module
-        """
+        """Loads a Python module from disk and injects XSOARPlugin into its namespace so plugins do not need to import it explicitly."""
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         if spec is None or spec.loader is None:
             raise PluginLoadError(f"Could not load module spec for {file_path}")
@@ -92,22 +70,14 @@ class PluginManager:
         # This allows plugins to use XSOARPlugin without complex imports
         from . import XSOARPlugin
 
-        module.XSOARPlugin = XSOARPlugin
+        setattr(module, "XSOARPlugin", XSOARPlugin)
 
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
         return module
 
     def _find_plugin_classes(self, module: types.ModuleType) -> list[type[XSOARPlugin]]:
-        """
-        Find all XSOARPlugin classes in a module.
-
-        Args:
-            module: The module to search
-
-        Returns:
-            List of plugin classes found
-        """
+        """Returns all XSOARPlugin subclasses found in the given module."""
         plugin_classes = []
 
         for attr_name in dir(module):
@@ -120,18 +90,7 @@ class PluginManager:
         return plugin_classes
 
     def load_plugin(self, plugin_name: str) -> XSOARPlugin | None:
-        """
-        Load a single plugin by name.
-
-        Args:
-            plugin_name: Name of the plugin module to load
-
-        Returns:
-            The loaded plugin instance, or None if loading failed
-
-        Raises:
-            PluginLoadError: If the plugin fails to load
-        """
+        """Loads and initializes a single plugin by module name. Raises PluginLoadError on failure."""
         if plugin_name in self.loaded_plugins:
             return self.loaded_plugins[plugin_name]
 
@@ -174,22 +133,11 @@ class PluginManager:
 
         except Exception as e:
             self.failed_plugins[plugin_name] = e
-            logger.error(f"Failed to load plugin '{plugin_name}': {e}")
+            logger.debug(f"Failed to load plugin '{plugin_name}': {e}")
             raise PluginLoadError(f"Failed to load plugin '{plugin_name}': {e}")
 
     def load_all_plugins(self, *, ignore_errors: bool = True) -> dict[str, XSOARPlugin]:
-        """
-        Load all discovered plugins.
-
-        Args:
-            ignore_errors: If True, continue loading other plugins when one fails
-
-        Returns:
-            Dictionary of successfully loaded plugins
-
-        Raises:
-            PluginLoadError: If ignore_errors is False and any plugin fails to load
-        """
+        """Loads all discovered plugins. By default, a failed plugin is recorded and skipped so remaining plugins can still load. Pass ignore_errors=False to abort on the first failure."""
         discovered_plugins = self.discover_plugins()
 
         for plugin_name in discovered_plugins:
@@ -198,20 +146,12 @@ class PluginManager:
             except PluginLoadError as e:
                 if not ignore_errors:
                     raise
-                logger.warning(f"Skipping failed plugin: {e}")
+                logger.debug(f"Skipping failed plugin: {e}")
 
         return self.loaded_plugins.copy()
 
     def register_plugin_commands(self, cli_group: click.Group) -> None:
-        """
-        Register all loaded plugin commands with the CLI group.
-
-        Args:
-            cli_group: The Click group to register commands with
-
-        Raises:
-            PluginRegistrationError: If a plugin command fails to register
-        """
+        """Registers each loaded plugin's command with the given Click group. Commands that conflict with an existing command are skipped and recorded in command_conflicts."""
         conflicts = []
 
         for plugin_name, plugin in self.loaded_plugins.items():
@@ -240,19 +180,14 @@ class PluginManager:
 
             except Exception as e:
                 error_msg = f"Failed to register plugin '{plugin_name}': {e}"
-                logger.error(error_msg)
+                logger.debug(error_msg)
                 raise PluginRegistrationError(error_msg)
 
         # Store conflicts for later reporting
         self.command_conflicts = conflicts
 
     def unload_plugin(self, plugin_name: str) -> None:
-        """
-        Unload a plugin and call its cleanup method.
-
-        Args:
-            plugin_name: Name of the plugin to unload
-        """
+        """Calls the plugin's cleanup method and removes it from the loaded plugins registry."""
         if plugin_name in self.loaded_plugins:
             plugin = self.loaded_plugins[plugin_name]
             try:
@@ -263,18 +198,13 @@ class PluginManager:
             logger.info(f"Unloaded plugin: {plugin_name}")
 
     def unload_all_plugins(self) -> None:
-        """Unload all plugins and call their cleanup methods."""
+        """Unloads all loaded plugins."""
         plugin_names = list(self.loaded_plugins.keys())
         for plugin_name in plugin_names:
             self.unload_plugin(plugin_name)
 
     def get_plugin_info(self) -> dict[str, dict[str, str]]:
-        """
-        Get information about all loaded plugins.
-
-        Returns:
-            Dictionary with plugin information
-        """
+        """Returns name, version, and description for each loaded plugin."""
         info = {}
         for plugin_name, plugin in self.loaded_plugins.items():
             info[plugin_name] = {
@@ -285,33 +215,15 @@ class PluginManager:
         return info
 
     def get_failed_plugins(self) -> dict[str, str]:
-        """
-        Get information about plugins that failed to load.
-
-        Returns:
-            Dictionary with plugin names and error messages
-        """
+        """Returns a mapping of plugin names to their load error messages."""
         return {name: str(error) for name, error in self.failed_plugins.items()}
 
     def get_command_conflicts(self) -> list[dict[str, str]]:
-        """
-        Get information about command conflicts.
-
-        Returns:
-            List of dictionaries with conflict information
-        """
+        """Returns any command conflicts detected during the last call to register_plugin_commands."""
         return self.command_conflicts.copy()
 
     def reload_plugin(self, plugin_name: str) -> XSOARPlugin | None:
-        """
-        Reload a plugin by unloading and loading it again.
-
-        Args:
-            plugin_name: Name of the plugin to reload
-
-        Returns:
-            The reloaded plugin instance, or None if reloading failed
-        """
+        """Unloads and reloads a plugin, clearing any previous load failure. Useful for picking up changes to a plugin file without restarting."""
         # Unload if already loaded
         if plugin_name in self.loaded_plugins:
             self.unload_plugin(plugin_name)
