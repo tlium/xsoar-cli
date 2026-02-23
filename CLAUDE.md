@@ -1,0 +1,97 @@
+# CLAUDE.md
+
+Project reference for AI assistants working with the xsoar-cli codebase.
+
+## Project Overview
+
+CLI tool for managing Palo Alto Networks XSOAR (Cortex XSOAR). Built with Python and Click. Supports XSOAR server versions 6 and 8.
+
+## Tech Stack
+
+- **Language**: Python 3.10+
+- **CLI Framework**: Click
+- **Build System**: Hatchling (`pyproject.toml`)
+- **Package Manager**: uv (`uv.lock`)
+- **Linting**: Ruff
+- **Formatting**: Black
+- **Testing**: pytest, pytest-cov
+- **CI**: GitHub Actions (Python 3.10-3.14)
+
+## Project Layout
+
+```
+src/xsoar_cli/           # Main package (src layout)
+  __about__.py            # Version (dynamic, read by hatch)
+  cli.py                  # Entry point, Click group, plugin loading
+  configuration.py        # XSOARConfig class
+  connection_errors.py    # Error handling
+  log.py                  # Logging setup
+  utilities.py            # Shared helpers, decorators
+  case/                   # Case operations command group
+  config/                 # Config management command group
+  graph/                  # Dependency graph command group
+  manifest/               # Manifest validate/deploy command group
+  pack/                   # Pack operations command group
+  playbook/               # Playbook download command group
+  plugins/                # Plugin system and manager
+tests/                    # Test suite
+  conftest.py             # Shared fixtures
+  test_*.py               # Test modules per command group
+```
+
+## Common Commands
+
+```sh
+# Install dependencies
+uv sync
+uv pip install -r requirements.txt
+uv pip install -r requirements_dev.txt
+uv pip install -e .
+
+# Run all tests
+uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=src/xsoar_cli
+
+# Run a single test file
+uv run pytest tests/test_manifest.py
+
+# Format code
+black src/ tests/
+
+# Lint
+ruff check src/ tests/
+
+# Run the CLI
+uv run xsoar-cli --help
+```
+
+## Code Conventions
+
+- Entry point: `xsoar_cli.cli:main` (defined in `pyproject.toml` under `[project.scripts]`)
+- Each command group lives in its own subpackage under `src/xsoar_cli/` with a `commands.py` module
+- Each command group has its own `README.md` documenting usage
+- Commands are registered on the root Click group in `cli.py` via `cli.add_command()`
+- The `@load_config` decorator (in `utilities.py`) handles config loading and injects `XSOARConfig` into `ctx.obj`
+- Use `click.echo()` for user-facing output, `logging` for debug/file logs
+- Ruff noqa comments are used where rules are intentionally suppressed (e.g., `# noqa: PLR0913` for many parameters, `# noqa: ANN201` for fixture return types)
+- Type hints are used throughout; `str | None` union syntax (Python 3.10+)
+- Tests use `unittest.mock.patch` to mock external dependencies (`xsoar_client`, config file I/O)
+- Test classes follow `class TestX` naming; test methods use `test_` prefix
+- Fixtures are defined in `tests/conftest.py` and requested via `request.getfixturevalue()` for conditional use
+
+## Configuration
+
+- User config lives at `~/.config/xsoar-cli/config.json`
+- Template generation: `xsoar-cli config create`
+- Supports multiple named environments under `server_config`
+- `default_environment` selects the active environment
+- `custom_pack_authors` distinguishes custom packs from marketplace packs
+
+## Plugin System
+
+- Plugins extend the CLI with custom Click commands
+- `PluginManager` in `src/xsoar_cli/plugins/manager.py` handles discovery, loading, and registration
+- Plugins are loaded after core commands; failures are warned but non-fatal
+- Core command names are captured before plugin registration to prevent conflicts
