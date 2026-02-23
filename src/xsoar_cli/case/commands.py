@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments
+from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -32,53 +32,49 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @click.argument("casenumber", type=int)
 @click.option("--source", default="prod", show_default=True, help="Source environment")
 @click.option("--dest", default="dev", show_default=True, help="Destination environment")
-@click.option(
-    "--custom-fields",
-    default=None,
-    help='Additional fields on the form "myfield=my_value,anotherfield=another value". Use machine name for field names, e.g mycustomfieldname.',
-)
-@click.option("--custom-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.command()
 @click.pass_context
 @load_config
-def clone(  # noqa: PLR0913
-    ctx: click.Context,
-    casenumber: int,
-    source: str,
-    dest: str,
-    custom_fields: str | None,
-    custom_fields_delimiter: str,
-) -> None:
+@validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
+def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     """Clones a case from source to destination environment."""
     valid_envs = validate_environments(source, dest, ctx=ctx)
     if not valid_envs:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
         ctx.exit(1)
-    if custom_fields and "=" not in custom_fields:
-        click.echo('Malformed custom fields. Must be on the form "myfield=myvalue"')
-        ctx.exit(1)
+
+    # Grab configi and set up source and destination xsoar-client objects
     config = get_xsoar_config(ctx)
     xsoar_source_client: Client = config.get_client(source)
-    results = xsoar_source_client.get_case(casenumber)
-    data = results["data"][0]
-    # Dbot mirror info is irrelevant. This will be added again if applicable by XSOAR after ticket creation in dev.
-    data.pop("dbotMirrorId")
-    data.pop("dbotMirrorInstance")
-    data.pop("dbotMirrorDirection")
-    data.pop("dbotDirtyFields")
-    data.pop("dbotCurrentDirtyFields")
-    data.pop("dbotMirrorTags")
-    data.pop("dbotMirrorLastSync")
-    data.pop("id")
-    data.pop("created")
-    data.pop("modified")
-    # Ensure that playbooks run immediately when the case is created
-    data["createInvestigation"] = True
-    if "CustomFields" in data:
-        data["CustomFields"] = data["CustomFields"] | parse_string_to_dict(custom_fields, custom_fields_delimiter)
-
     xsoar_dest_client: Client = config.get_client(dest)
-    case_data = xsoar_dest_client.create_case(data=data)
+
+    results = xsoar_source_client.get_case(casenumber)
+    # Dbot mirror info is irrelevant. This will be added again if applicable by XSOAR after ticket creation in dev.
+    # Also remove id, created, modified as these values will be meaningless in the destination environment.
+    results.pop("dbotMirrorId")
+    results.pop("dbotMirrorInstance")
+    results.pop("dbotMirrorDirection")
+    results.pop("dbotDirtyFields")
+    results.pop("dbotCurrentDirtyFields")
+    results.pop("dbotMirrorTags")
+    results.pop("dbotMirrorLastSync")
+    results.pop("id")
+    results.pop("version")
+    results.pop("created")
+    results.pop("modified")
+    results.pop("cacheVersn")
+    results.pop("sizeInBytes")
+    # results.pop("CustomFields")
+    # results.pop("attachment")
+    # results.pop("labels")
+    results.pop("owner")
+    data = json.loads(results["labels"])
+    print(json.dumps(data, indent=4))
+    ctx.exit(0)
+
+    # Ensure that playbooks run immediately when the case is created
+    results["createInvestigation"] = True
+    case_data = xsoar_dest_client.create_case(data=results)
     click.echo(json.dumps(case_data, indent=4))
 
 
