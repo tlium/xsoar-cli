@@ -4,6 +4,7 @@ dist
 build
 venv
 xsoar_config.json
+scratch
 .venv
 .coverage
 .pytest_cache
