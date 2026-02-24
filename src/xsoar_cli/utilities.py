@@ -1,4 +1,5 @@
 import json
+import logging
 from collections.abc import Callable
 from functools import update_wrapper
 from pathlib import Path
@@ -8,6 +9,8 @@ import click
 
 from xsoar_cli.configuration import XSOARConfig
 from xsoar_cli.connection_errors import ConnectionErrorHandler
+
+logger = logging.getLogger(__name__)
 
 
 def get_xsoar_config(ctx: click.Context) -> XSOARConfig:
@@ -79,6 +82,7 @@ def load_config(f: Callable) -> Callable:
     @click.pass_context
     def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:  # noqa: ANN002, ANN003
         config_file_path = get_config_file_path()
+        logger.debug("Loading config from %s", config_file_path)
         if not config_file_path.is_file():
             click.echo(
                 'Config file not found. Please create a template config file using "xsoar-cli config create" and replace placeholder values before retrying.',
@@ -87,11 +91,13 @@ def load_config(f: Callable) -> Callable:
 
         config_dict = get_config_file_contents(config_file_path)
         ctx.obj = XSOARConfig(config_dict)
+        logger.debug("Config loaded with environments: %s", ctx.obj.environment_names)
 
         # Validate environment if provided
         if "environment" in ctx.params and ctx.params["environment"] is not None:
             config = get_xsoar_config(ctx)
             if not config.has_environment(ctx.params["environment"]):
+                logger.info("Invalid environment requested: '%s'", ctx.params["environment"])
                 click.echo(f"Invalid environment: {ctx.params['environment']}")
                 click.echo(f"Available environments as defined in config file are: {config.environment_names}")
                 ctx.exit(1)
@@ -135,14 +141,17 @@ def validate_xsoar_connectivity(
 
             # Validate connectivity for each environment
             for env_name in envs_to_validate:
+                logger.debug("Testing XSOAR connectivity for environment '%s'", env_name)
                 env_config = config._environments[env_name]
                 client = env_config.client
                 try:
                     client.test_connectivity()
                 except ConnectionError as ex:
                     handler = ConnectionErrorHandler()
+                    logger.info("Connection failed for environment '%s': %s", env_name, handler.get_message(ex))
                     click.echo(f"Connection failed for '{env_name}': {handler.get_message(ex)}")
                     ctx.exit(1)
+                logger.debug("Connectivity OK for environment '%s'", env_name)
 
             return ctx.invoke(f, *args, **kwargs)
 
@@ -158,14 +167,16 @@ def validate_artifacts_provider(f: Callable) -> Callable:
     def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
         config = get_xsoar_config(ctx)
         environment = ctx.params.get("environment")
+        env_name = environment or config.default_environment
 
         # Exit early if no artifacts provider is configured
         if not config.environment_has_artifacts(environment):
+            logger.debug("No artifact provider configured for environment '%s', skipping validation", env_name)
             return ctx.invoke(f, *args, **kwargs)
 
         # Test artifact provider connectivity
-        env_name = environment or config.default_environment
         env_config = config._environments[env_name]
+        logger.debug("Testing artifact provider connectivity for environment '%s'", env_name)
 
         try:
             # Try to get the client (which creates the artifact provider)
@@ -175,11 +186,13 @@ def validate_artifacts_provider(f: Callable) -> Callable:
                 client.artifact_provider.test_connection()
 
         except Exception as e:
+            logger.info("Artifact provider connection failed for environment '%s': %s", env_name, e)
             click.echo(f"Artifact repository connection failed: {e}")
             click.echo()
             click.echo("Run 'xsoar-cli config validate' to test your configuration")
             ctx.exit(1)
 
+        logger.debug("Artifact provider connectivity OK for environment '%s'", env_name)
         return ctx.invoke(f, *args, **kwargs)
 
     return update_wrapper(wrapper, f)

@@ -103,6 +103,13 @@ uv run xsoar-cli --help
 - `default_environment` selects the active environment
 - `custom_pack_authors` distinguishes custom packs from marketplace packs
 
+## Workflow
+
+- Never start with code. Ask for clarification in case of inconsistencies or missing information. Confirm with user before generating code.
+- In case of larger modifications, do implementation in logically grouped steps. Complex modifications may be broken down further.
+- After completing each step, stop and wait for the user to review and confirm before proceeding to the next step.
+- Each step should be small enough to be comfortably reviewed -- as a rule of thumb, no more than one or two files modified per step.
+
 ## Plugin System
 
 - Plugins extend the CLI with custom Click commands

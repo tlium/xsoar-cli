@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import click
@@ -9,6 +10,8 @@ from xsoar_cli.utilities import (
     load_config,
     validate_xsoar_connectivity,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @click.group(help="(BETA) Create dependency graphs from one or more content packs")
@@ -47,9 +50,12 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
     xsoar-cli graph generate -rp ."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
+    logger.info("Generating dependency graph (environment: '%s', repo: '%s')", environment or config.default_environment, repo_path)
     installed_content = xsoar_client.get_installed_expired_packs()
+    logger.debug("Fetched %d installed/expired pack(s) from server", len(installed_content))
     if upstream_repo_path:
         urp = Path(upstream_repo_path)
+        logger.debug("Using upstream repo path: %s", urp)
     else:
         urp = None
     rp = Path(repo_path)
@@ -59,8 +65,13 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
         cg: ContentGraph = ContentGraph(repo_path=Path(repo_path), installed_content=installed_content)  # ty: ignore[invalid-argument-type]
 
     packs_list = [Path(item) for item in packs]
+    if packs_list:
+        logger.debug("Generating graph for %d specified pack(s): %s", len(packs_list), [str(p) for p in packs_list])
+    else:
+        logger.debug("No packs specified, generating graph for all packs in repo")
     cg.create_content_graph(pack_paths=packs_list)
     cg.plot_connected_components()
+    logger.info("Dependency graph generation complete")
 
 
 graph.add_command(generate)

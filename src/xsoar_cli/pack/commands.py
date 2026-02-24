@@ -1,3 +1,4 @@
+import logging
 import sys
 from typing import TYPE_CHECKING
 
@@ -7,6 +8,8 @@ from xsoar_cli.utilities import get_xsoar_config, load_config, validate_artifact
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
+
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -24,11 +27,16 @@ def pack(ctx: click.Context) -> None:
 def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
     """Deletes a content pack from the XSOAR server."""
     config = get_xsoar_config(ctx)
+    active_env = environment or config.default_environment
+    logger.info("Deleting pack '%s' from environment '%s'", pack_id, active_env)
     xsoar_client: Client = config.get_client(environment)
     if not xsoar_client.is_installed(pack_id=pack_id):
+        logger.info("Pack '%s' is not installed on '%s', aborting delete", pack_id, active_env)
         click.echo(f"Pack ID {pack_id} is not installed. Cannot delete.")
         sys.exit(1)
+    logger.debug("Pack '%s' confirmed installed, proceeding with deletion", pack_id)
     xsoar_client.delete(pack_id=pack_id)
+    logger.info("Successfully deleted pack '%s' from environment '%s'", pack_id, active_env)
     click.echo(f"Deleted pack {pack_id} from XSOAR {environment}")
 
 
@@ -41,10 +49,14 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
 def get_outdated(ctx: click.Context, environment: str | None) -> None:
     """Prints out a list of outdated content packs."""
     config = get_xsoar_config(ctx)
+    active_env = environment or config.default_environment
+    logger.info("Fetching outdated packs (environment: '%s')", active_env)
     xsoar_client: Client = config.get_client(environment)
     click.echo("Fetching outdated packs. This may take a little while...", err=True)
     outdated_packs = xsoar_client.get_outdated_packs()
+    logger.debug("Found %d outdated pack(s)", len(outdated_packs))
     if not outdated_packs:
+        logger.info("No outdated packs found on '%s'", active_env)
         click.echo("No outdated packs found")
         sys.exit(0)
     id_header = "Pack ID"
