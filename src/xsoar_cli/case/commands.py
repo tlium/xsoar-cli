@@ -33,8 +33,8 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 
 
 @click.argument("casenumber", type=int)
-@click.option("--source", default="prod", show_default=True, help="Source environment")
-@click.option("--dest", default="dev", show_default=True, help="Destination environment")
+@click.option("--source", required=True, show_default=True, help="Source environment")
+@click.option("--dest", required=True, show_default=True, help="Destination environment")
 @click.command()
 @click.pass_context
 @load_config
