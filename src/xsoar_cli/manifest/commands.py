@@ -102,21 +102,21 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     changes_made = False
     for key in ["custom_packs", "marketplace_packs"]:
         custom = key == "custom_packs"
+        pack_type = "Custom" if custom else "Marketplace"
         for index, manifest_pack in enumerate(manifest_data[key]):
             if custom:
                 latest = xsoar_client.artifact_provider.get_latest_version(manifest_pack["id"])  # ty: ignore[unresolved-attribute]
-                logger.debug("Custom pack '%s': latest artifact version is %s", manifest_pack["id"], latest)
             else:
                 pack = next((item for item in outdated_installed_packs if item["id"] == manifest_pack["id"]), None)
                 if not pack:
                     # We have a content pack defined in the manifest which isn't installed on the XSOAR server. Ignore
                     # this pack and continue evaluation
-                    logger.debug("Pack '%s' not found in outdated list, skipping", manifest_pack["id"])
+                    logger.debug("%s pack '%s' not found in outdated list, skipping", pack_type, manifest_pack["id"])
                     continue
                 latest = pack["latest"]
             if Version(latest) == Version(manifest_pack["version"]):
                 # No updates for pack if latest matches manifest definition
-                logger.debug("Pack '%s' already at latest version %s", manifest_pack["id"], latest)
+                logger.debug("%s pack '%s' already at latest version %s", pack_type, manifest_pack["id"], latest)
                 continue
 
             # Check if there is a _comment key for the pack and print comment
@@ -126,11 +126,26 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
                 print(f"WARNING: comment found in manifest for {manifest_pack['id']}: {comment}")
 
             # Prompt user if pack should be upgraded
+            logger.debug("%s pack '%s': update available from %s to %s", pack_type, manifest_pack["id"], manifest_pack["version"], latest)
             msg = f"Upgrade {manifest_pack['id']} from {manifest_pack['version']} to {latest}?"
             should_upgrade = click.confirm(msg, default=True)
             if should_upgrade:
+                logger.debug(
+                    "User accepted upgrade of %s pack '%s' from %s to %s",
+                    pack_type.lower(),
+                    manifest_pack["id"],
+                    manifest_pack["version"],
+                    latest,
+                )
                 manifest_data[key][index]["version"] = latest
                 changes_made = True
+            else:
+                logger.debug(
+                    "User declined upgrade of %s pack '%s' (staying at %s)",
+                    pack_type.lower(),
+                    manifest_pack["id"],
+                    manifest_pack["version"],
+                )
 
     if not changes_made:
         logger.info("No manifest changes made during update")
@@ -185,6 +200,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
     if mode == "full":
         for key in keys:
             custom = key == "custom_packs"
+            pack_type = "Custom" if custom else "Marketplace"
             click.echo(f"Checking {key} availability ", nl=False)
             for pack in manifest_data[key]:
                 available = xsoar_client.is_pack_available(pack_id=pack["id"], version=pack["version"], custom=custom)
@@ -192,9 +208,9 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
                 # This should cause any significantly negative performance penalties.
                 if not available:
                     if custom and found_in_local_filesystem():
-                        logger.debug("Pack '%s' %s not in artifacts but found locally, skipping", pack["id"], pack["version"])
+                        logger.debug("%s pack '%s' %s not in artifacts but found locally, skipping", pack_type, pack["id"], pack["version"])
                         continue
-                    logger.info("Validation failed: pack '%s' version %s not reachable", pack["id"], pack["version"])
+                    logger.info("Validation failed: %s pack '%s' version %s not reachable", pack_type.lower(), pack["id"], pack["version"])
                     click.echo(f"\nFailed to reach find {pack['id']} version {pack['version']}")
                     sys.exit(1)
                 click.echo(".", nl=False)
@@ -207,6 +223,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
         for key in keys:
             found_diff = False
             custom = key == "custom_packs"
+            pack_type = "Custom" if custom else "Marketplace"
             click.echo(f"Checking {key} availability ", nl=False)
             for pack in manifest_data[key]:
                 installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
@@ -216,9 +233,13 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
                     # This should cause any significantly negative performance penalties.
                     if not available:
                         if custom and found_in_local_filesystem():
-                            logger.debug("Pack '%s' %s not in artifacts but found locally, skipping", pack["id"], pack["version"])
+                            logger.debug(
+                                "%s pack '%s' %s not in artifacts but found locally, skipping", pack_type, pack["id"], pack["version"]
+                            )
                             continue
-                        logger.info("Validation failed: pack '%s' version %s not reachable", pack["id"], pack["version"])
+                        logger.info(
+                            "Validation failed: %s pack '%s' version %s not reachable", pack_type.lower(), pack["id"], pack["version"]
+                        )
                         click.echo(f"\nFailed to find pack {pack['id']} version {pack['version']}")
                         sys.exit(1)
                     click.echo(".", nl=False)
@@ -351,17 +372,18 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
     installed_any = False
     for key in ["custom_packs", "marketplace_packs"]:
         custom = key == "custom_packs"
-        logger.debug("Processing %s from manifest", key)
+        pack_type = "Custom" if custom else "Marketplace"
+        logger.debug("Processing %s packs from manifest", pack_type.lower())
         for pack in manifest_data[key]:
             # Check if pack needs installation (missing or version mismatch)
             installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
             if not installed or installed["currentVersion"] != pack["version"]:
-                logger.debug("Deploying pack '%s' version %s (custom=%s)", pack["id"], pack["version"], custom)
+                logger.debug("Deploying %s pack '%s' version %s", pack_type.lower(), pack["id"], pack["version"])
                 click.echo(f"Installing {pack['id']} version {pack['version']}...", nl=False)
                 try:
                     xsoar_client.deploy_pack(pack_id=pack["id"], pack_version=pack["version"], custom=custom)
                 except RuntimeError as ex:
-                    logger.info("Failed to deploy pack '%s' version %s: %s", pack["id"], pack["version"], ex)
+                    logger.info("Failed to deploy %s pack '%s' version %s: %s", pack_type.lower(), pack["id"], pack["version"], ex)
                     click.echo("FAILED")
                     # Extract and format the original API exception
                     original_exception = ex.__cause__
@@ -379,11 +401,11 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
                         click.echo(str(original_exception))
                     ctx.exit(1)
                 else:
-                    logger.debug("Successfully deployed pack '%s' version %s", pack["id"], pack["version"])
+                    logger.debug("Successfully deployed %s pack '%s' version %s", pack_type.lower(), pack["id"], pack["version"])
                     click.echo("OK.")
                     installed_any = True
             elif verbose:
-                logger.debug("Pack '%s' version %s already installed, skipping", pack["id"], pack["version"])
+                logger.debug("%s pack '%s' version %s already installed, skipping", pack_type, pack["id"], pack["version"])
                 click.echo(f"Not installing {pack['id']} version {pack['version']}. Already installed.")
 
     if not installed_any:
