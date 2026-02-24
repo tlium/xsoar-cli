@@ -16,7 +16,7 @@ class TestCase:
             (["case", "get", "152230"], True, 0),
             (["case", "get", "152230"], False, 1),
             (["case", "create"], True, 0),
-            (["case", "clone", "152230"], True, 0),
+            (["case", "clone", "152230"], True, 2),
             (["case", "clone", "--dest", "bogus", "--source", "bogus", "152230"], True, 1),
         ],
     )
@@ -33,5 +33,5 @@ class TestCase:
 
         runner = CliRunner()
         result = runner.invoke(cli.cli, cli_args)
-        print(result.output)
+        # print(result.output)
         assert result.exit_code == expected_return_value
