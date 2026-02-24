@@ -1,3 +1,11 @@
+# CLI entry point and module initialization.
+#
+# Initialization order matters here. Command registration and plugin loading
+# happen at module level so that the CLI group is fully populated before any
+# invocation. Logging setup is intentionally deferred to main() so that
+# importing this module (e.g. from tests) does not create a RotatingFileHandler
+# on the real log file or write "Executing:" entries for test invocations.
+
 import logging
 import logging.handlers
 import sys
@@ -18,6 +26,12 @@ from .utilities import get_config_file_contents, get_config_file_path
 
 
 class XSOARCliGroup(click.Group):
+    """Custom Click group that surfaces plugin load failures when a command is not found.
+
+    Without this, a failed plugin silently disappears and the user gets a generic
+    "No such command" error with no indication that a plugin was involved.
+    """
+
     def resolve_command(self, ctx: click.Context, args: list) -> tuple:
         try:
             return super().resolve_command(ctx, args)
@@ -35,7 +49,10 @@ class XSOARCliGroup(click.Group):
 @click.option("--debug", is_flag=True, help="Enable debug logging")
 def cli(ctx: click.Context, debug: bool) -> None:
     """XSOAR CLI - Command line interface for XSOAR operations."""
-    if debug:
+    # _setup is None when cli() is invoked directly (e.g. from tests via
+    # CliRunner) rather than through main(). In that case logging is not
+    # configured and --debug is a no-op.
+    if debug and _setup is not None:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.DEBUG)
         stream_handler.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
@@ -83,13 +100,24 @@ def _configure_logging() -> LoggingSetup:
     return setup
 
 
+# Module-level initialization: register core commands and load plugins so the
+# CLI group is fully assembled before any invocation. Logging is NOT set up
+# here -- see main(). Deferring it prevents test imports from opening a file
+# handler against the real log file and writing unwanted "Executing:" /
+# "Exit:" entries for pytest invocations.
 _register_commands()
 CORE_COMMANDS, plugin_manager = _load_plugins()
-_setup = _configure_logging()
+
+# Initialized in main(). None when the module is imported without calling main(),
+# which is the case during test runs.
+_setup: LoggingSetup | None = None
 
 
 def main() -> None:
-    """Entry point that wraps cli() to capture and log the exit code."""
+    """Entry point (pyproject.toml console_scripts). Sets up logging, invokes
+    the CLI, and ensures the exit code is logged before the process exits."""
+    global _setup  # noqa: PLW0603
+    _setup = _configure_logging()
     try:
         cli()
     except SystemExit as e:
