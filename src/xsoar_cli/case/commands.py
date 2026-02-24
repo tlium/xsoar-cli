@@ -49,33 +49,45 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     xsoar_dest_client: Client = config.get_client(dest)
 
     results = xsoar_source_client.get_case(casenumber)
-    # Dbot mirror info is irrelevant. This will be added again if applicable by XSOAR after ticket creation in dev.
-    # Also remove id, created, modified as these values will be meaningless in the destination environment.
-    results.pop("dbotMirrorId")
-    results.pop("dbotMirrorInstance")
-    results.pop("dbotMirrorDirection")
-    results.pop("dbotDirtyFields")
-    results.pop("dbotCurrentDirtyFields")
-    results.pop("dbotMirrorTags")
-    results.pop("dbotMirrorLastSync")
-    results.pop("id")
-    results.pop("version")
-    results.pop("created")
-    results.pop("modified")
-    results.pop("cacheVersn")
-    results.pop("sizeInBytes")
-    # results.pop("CustomFields")
-    # results.pop("attachment")
-    # results.pop("labels")
+    # These keys can safely be removed from the results dict before creating a new case
+    remove_keys = [
+        "dbotMirrorId",
+        "dbotMirrorInstance",
+        "dbotMirrorDirection",
+        "dbotDirtyFields",
+        "dbotCurrentDirtyFields",
+        "dbotMirrorTags",
+        "dbotMirrorLastSync",
+        "id",
+        "version",
+        "created",
+        "modified",
+        "cacheVersn",
+        "sizeInBytes",
+        "attachment",
+    ]
+    for key in remove_keys:
+        results.pop(key)
+
+    # Pop the labels here because XSOAR chokes on to much data in the incident creation request. Create the
+    # new case clone without labels now and add labels in a later request.
+    labels = results.pop("labels")
     results.pop("owner")
-    data = json.loads(results["labels"])
-    print(json.dumps(data, indent=4))
-    ctx.exit(0)
 
     # Ensure that playbooks run immediately when the case is created
     results["createInvestigation"] = True
     case_data = xsoar_dest_client.create_case(data=results)
-    click.echo(json.dumps(case_data, indent=4))
+    case_id = case_data["id"]
+
+    # Fetch updated version etc for the newly created case. We need this to prevent errors stemming from optimistic locking
+    new_case_data = xsoar_dest_client.get_case(case_id)
+
+    new_labels = new_case_data["labels"] + labels
+    new_case_data["labels"] = new_labels
+    # Keep the source case status. If the case is closed in source environment, it should be closed in dest environment
+    # new_case_data["status"] = results["status"]
+    case_data = xsoar_dest_client.create_case(data=new_case_data)
+    click.echo(f"Case {casenumber} from {source} cloned into case {case_id} in {dest}")
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
