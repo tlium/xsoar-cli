@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -19,6 +20,8 @@ from xsoar_cli.utilities import (
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
+
+logger = logging.getLogger(__name__)
 
 
 def load_manifest(manifest: str):  # noqa: ANN201
@@ -63,7 +66,9 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
+    logger.info("Generating manifest from installed packs (environment: '%s')", environment or config.default_environment)
     installed_packs = xsoar_client.get_installed_packs()
+    logger.debug("Fetched %d installed pack(s) from server", len(installed_packs))
     manifest_data = {
         "marketplace_packs": [],
     }
@@ -74,6 +79,7 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
         }
         manifest_data["marketplace_packs"].append(tmpobj)
     write_manifest(manifest_path, manifest_data)
+    logger.info("Generated manifest with %d pack(s) at '%s'", len(manifest_data["marketplace_packs"]), manifest_path)
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
@@ -87,9 +93,11 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     """Update manifest on disk with latest available content pack versions."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
+    logger.info("Updating manifest '%s' (environment: '%s')", manifest, environment or config.default_environment)
     manifest_data = load_manifest(manifest)
     click.echo("Fetching outdated packs from XSOAR server. This may take a minute...")
     outdated_installed_packs = xsoar_client.get_outdated_packs()
+    logger.debug("Found %d outdated pack(s) on server", len(outdated_installed_packs))
 
     changes_made = False
     for key in ["custom_packs", "marketplace_packs"]:
@@ -97,15 +105,18 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
         for index, manifest_pack in enumerate(manifest_data[key]):
             if custom:
                 latest = xsoar_client.artifact_provider.get_latest_version(manifest_pack["id"])  # ty: ignore[unresolved-attribute]
+                logger.debug("Custom pack '%s': latest artifact version is %s", manifest_pack["id"], latest)
             else:
                 pack = next((item for item in outdated_installed_packs if item["id"] == manifest_pack["id"]), None)
                 if not pack:
                     # We have a content pack defined in the manifest which isn't installed on the XSOAR server. Ignore
                     # this pack and continue evaluation
+                    logger.debug("Pack '%s' not found in outdated list, skipping", manifest_pack["id"])
                     continue
                 latest = pack["latest"]
             if Version(latest) == Version(manifest_pack["version"]):
                 # No updates for pack if latest matches manifest definition
+                logger.debug("Pack '%s' already at latest version %s", manifest_pack["id"], latest)
                 continue
 
             # Check if there is a _comment key for the pack and print comment
@@ -122,9 +133,11 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
                 changes_made = True
 
     if not changes_made:
+        logger.info("No manifest changes made during update")
         click.echo("No changes made to manifest or no content packs applicable for update.")
     else:
         write_manifest(manifest, manifest_data)
+        logger.info("Manifest '%s' updated with new pack versions", manifest)
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
@@ -145,6 +158,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
     Custom pack availability is implementation dependant."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
+    logger.info("Validating manifest '%s' in '%s' mode (environment: '%s')", manifest, mode, environment or config.default_environment)
 
     manifest_data = load_manifest(manifest)
     click.echo("Manifest is valid JSON")
@@ -178,11 +192,14 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
                 # This should cause any significantly negative performance penalties.
                 if not available:
                     if custom and found_in_local_filesystem():
+                        logger.debug("Pack '%s' %s not in artifacts but found locally, skipping", pack["id"], pack["version"])
                         continue
+                    logger.info("Validation failed: pack '%s' version %s not reachable", pack["id"], pack["version"])
                     click.echo(f"\nFailed to reach find {pack['id']} version {pack['version']}")
                     sys.exit(1)
                 click.echo(".", nl=False)
             print()
+        logger.info("Full validation passed for manifest '%s'", manifest)
         click.echo("Manifest is valid JSON and all packs are reachable")
         return
     elif mode == "diff":
@@ -199,7 +216,9 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
                     # This should cause any significantly negative performance penalties.
                     if not available:
                         if custom and found_in_local_filesystem():
+                            logger.debug("Pack '%s' %s not in artifacts but found locally, skipping", pack["id"], pack["version"])
                             continue
+                        logger.info("Validation failed: pack '%s' version %s not reachable", pack["id"], pack["version"])
                         click.echo(f"\nFailed to find pack {pack['id']} version {pack['version']}")
                         sys.exit(1)
                     click.echo(".", nl=False)
@@ -209,6 +228,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
             else:
                 print()
 
+        logger.info("Diff validation passed for manifest '%s'", manifest)
         click.echo("Manifest is valid JSON and all packs are reachable.")
         return
     else:
@@ -227,8 +247,10 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     installed on the XSOAR server."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
+    logger.info("Computing manifest diff for '%s' (environment: '%s')", manifest, environment or config.default_environment)
     manifest_data = load_manifest(manifest)
     installed_packs = xsoar_client.get_installed_packs()
+    logger.debug("Fetched %d installed pack(s) from server", len(installed_packs))
     # Detect install content packs not defined in manifest
     # Find content packs defined in manifest but that are not defined
     # Find installed content packs that are outdated
@@ -239,12 +261,19 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     # print(f'{results["not_installed"]=}')
     results["mismatch"] = find_version_mismatch(installed_packs, manifest_data)
     # print(f'{results["mismatch"]=}')
+    logger.debug(
+        "Diff results: %d undefined in manifest, %d not installed, %d version mismatch",
+        len(results["undefined_in_manifest"]),
+        len(results["not_installed"]),
+        len(results["mismatch"]),
+    )
     found_diff = False
     for key in results:
         if results[key]:
             found_diff = True
 
     if not found_diff:
+        logger.info("No differences found between manifest and server")
         click.echo("All packs up to date.")
         ctx.exit(0)
 
@@ -301,6 +330,7 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     active_env = environment or config.default_environment
+    logger.info("Deploying manifest '%s' to environment '%s'", manifest, active_env)
 
     # Prompt for confirmation unless --yes flag is provided
     should_continue = True
@@ -321,14 +351,17 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
     installed_any = False
     for key in ["custom_packs", "marketplace_packs"]:
         custom = key == "custom_packs"
+        logger.debug("Processing %s from manifest", key)
         for pack in manifest_data[key]:
             # Check if pack needs installation (missing or version mismatch)
             installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
             if not installed or installed["currentVersion"] != pack["version"]:
+                logger.debug("Deploying pack '%s' version %s (custom=%s)", pack["id"], pack["version"], custom)
                 click.echo(f"Installing {pack['id']} version {pack['version']}...", nl=False)
                 try:
                     xsoar_client.deploy_pack(pack_id=pack["id"], pack_version=pack["version"], custom=custom)
                 except RuntimeError as ex:
+                    logger.info("Failed to deploy pack '%s' version %s: %s", pack["id"], pack["version"], ex)
                     click.echo("FAILED")
                     # Extract and format the original API exception
                     original_exception = ex.__cause__
@@ -346,13 +379,18 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
                         click.echo(str(original_exception))
                     ctx.exit(1)
                 else:
+                    logger.debug("Successfully deployed pack '%s' version %s", pack["id"], pack["version"])
                     click.echo("OK.")
                     installed_any = True
             elif verbose:
+                logger.debug("Pack '%s' version %s already installed, skipping", pack["id"], pack["version"])
                 click.echo(f"Not installing {pack['id']} version {pack['version']}. Already installed.")
 
     if not installed_any:
+        logger.info("Deploy complete: no packs required installation")
         click.echo("No packs to install. All packs and versions in manifest is already installed on XSOAR server.")
+    else:
+        logger.info("Deploy complete for manifest '%s' to environment '%s'", manifest, active_env)
 
 
 manifest.add_command(deploy)

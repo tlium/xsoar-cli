@@ -45,7 +45,7 @@ class PluginManager:
         plugin_names = []
 
         if not self.plugins_dir.exists():
-            logger.info(f"Plugins directory does not exist: {self.plugins_dir}")
+            logger.info("Plugins directory does not exist: %s", self.plugins_dir)
             return plugin_names
 
         for file_path in self.plugins_dir.glob("*.py"):
@@ -55,7 +55,7 @@ class PluginManager:
             module_name = file_path.stem
             plugin_names.append(module_name)
 
-        logger.info(f"Discovered {len(plugin_names)} plugin files: {plugin_names}")
+        logger.info("Discovered %d plugin file(s): %s", len(plugin_names), plugin_names)
         return plugin_names
 
     def _load_module_from_file(self, module_name: str, file_path: Path) -> types.ModuleType:
@@ -112,7 +112,8 @@ class PluginManager:
 
             if len(plugin_classes) > 1:
                 logger.warning(
-                    f"Multiple plugin classes found in {plugin_name}.py, using the first one",
+                    "Multiple plugin classes found in %s.py, using the first one",
+                    plugin_name,
                 )
 
             # Instantiate the first plugin class found
@@ -127,13 +128,13 @@ class PluginManager:
 
             # Store the loaded plugin
             self.loaded_plugins[plugin_name] = plugin_instance
-            logger.info(f"Successfully loaded plugin: {plugin_name}")
+            logger.info("Successfully loaded plugin: %s", plugin_name)
 
             return plugin_instance
 
         except Exception as e:
             self.failed_plugins[plugin_name] = e
-            logger.debug(f"Failed to load plugin '{plugin_name}': {e}")
+            logger.debug("Failed to load plugin '%s': %s", plugin_name, e)
             raise PluginLoadError(f"Failed to load plugin '{plugin_name}': {e}")
 
     def load_all_plugins(self, *, ignore_errors: bool = True) -> dict[str, XSOARPlugin]:
@@ -146,7 +147,7 @@ class PluginManager:
             except PluginLoadError as e:
                 if not ignore_errors:
                     raise
-                logger.debug(f"Skipping failed plugin: {e}")
+                logger.debug("Skipping failed plugin: %s", e)
 
         return self.loaded_plugins.copy()
 
@@ -171,16 +172,18 @@ class PluginManager:
                     }
                     conflicts.append(conflict_info)
                     logger.warning(
-                        f"Plugin '{plugin_name}' command '{command.name}' conflicts with existing command",
+                        "Plugin '%s' command '%s' conflicts with existing command",
+                        plugin_name,
+                        command.name,
                     )
                     continue
 
                 cli_group.add_command(command)
-                logger.info(f"Registered command '{command.name}' from plugin '{plugin_name}'")
+                logger.info("Registered command '%s' from plugin '%s'", command.name, plugin_name)
 
             except Exception as e:
                 error_msg = f"Failed to register plugin '{plugin_name}': {e}"
-                logger.debug(error_msg)
+                logger.debug("Failed to register plugin '%s': %s", plugin_name, e)
                 raise PluginRegistrationError(error_msg)
 
         # Store conflicts for later reporting
@@ -193,9 +196,9 @@ class PluginManager:
             try:
                 plugin.cleanup()
             except Exception as e:
-                logger.warning(f"Plugin '{plugin_name}' cleanup failed: {e}")
+                logger.warning("Plugin '%s' cleanup failed: %s", plugin_name, e)
             del self.loaded_plugins[plugin_name]
-            logger.info(f"Unloaded plugin: {plugin_name}")
+            logger.info("Unloaded plugin: %s", plugin_name)
 
     def unload_all_plugins(self) -> None:
         """Unloads all loaded plugins."""

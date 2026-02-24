@@ -1,11 +1,14 @@
 """Configuration management for XSOAR CLI."""
 
+import logging
 from typing import Optional
 
 from xsoar_client.artifact_providers.azure import AzureArtifactProvider
 from xsoar_client.artifact_providers.s3 import S3ArtifactProvider
 from xsoar_client.config import ClientConfig
 from xsoar_client.xsoar_client import Client
+
+logger = logging.getLogger(__name__)
 
 
 class EnvironmentConfig:
@@ -21,11 +24,19 @@ class EnvironmentConfig:
     def client(self) -> Client:
         """Lazy-load the XSOAR client."""
         if self._client is None:
+            logger.debug("Creating XSOAR client for environment '%s'", self.env_name)
             self._client = self._create_client()
         return self._client
 
     def _create_client(self) -> Client:
         """Create the XSOAR client with artifact provider."""
+        logger.debug(
+            "Client config for '%s': server_version=%s, base_url=%s, verify_ssl=%s",
+            self.env_name,
+            self._config["server_version"],
+            self._config["base_url"],
+            self._config["verify_ssl"],
+        )
         xsoar_client_config = ClientConfig(
             server_version=self._config["server_version"],
             custom_pack_authors=self.custom_pack_authors,
@@ -36,6 +47,7 @@ class EnvironmentConfig:
         )
 
         artifact_provider = self._create_artifact_provider()
+        logger.info("Initialized XSOAR client for environment '%s'", self.env_name)
         return Client(config=xsoar_client_config, artifact_provider=artifact_provider)
 
     def _create_artifact_provider(self) -> S3ArtifactProvider | AzureArtifactProvider | None:
@@ -44,13 +56,16 @@ class EnvironmentConfig:
 
         if artifacts_location == "S3":
             bucket_name = self._config.get("s3_bucket_name", "")
+            logger.debug("Creating S3 artifact provider for '%s' (bucket: %s)", self.env_name, bucket_name)
             return S3ArtifactProvider(bucket_name=bucket_name)
         elif artifacts_location == "Azure":
+            logger.debug("Creating Azure artifact provider for '%s'", self.env_name)
             return AzureArtifactProvider(
                 storage_account_url=self._config["azure_blobstore_url"],
                 container_name=self._config["azure_container_name"],
                 access_token=self._config.get("azure_storage_access_token", ""),
             )
+        logger.debug("No artifact provider configured for '%s'", self.env_name)
         return None
 
     @property
@@ -71,12 +86,19 @@ class XSOARConfig:
         self._environments: dict[str, EnvironmentConfig] = {}
         for env_name, env_config in config_dict["server_config"].items():
             self._environments[env_name] = EnvironmentConfig(env_name, env_config, self.custom_pack_authors)
+        logger.debug(
+            "XSOARConfig initialized: default_environment='%s', environments=%s",
+            self.default_environment,
+            list(self._environments.keys()),
+        )
 
     def get_client(self, environment: Optional[str] = None) -> Client:
         """Get the XSOAR client for the specified environment (or default)."""
         env = environment or self.default_environment
         if env not in self._environments:
+            logger.info("Requested unknown environment: '%s'", env)
             raise ValueError(f"Unknown environment: {env}")
+        logger.debug("Resolved client for environment '%s'", env)
         return self._environments[env].client
 
     def has_environment(self, environment: str) -> bool:
