@@ -4,7 +4,21 @@ Project reference for AI assistants working with the xsoar-cli codebase.
 
 ## Project Overview
 
-CLI tool for managing Palo Alto Networks XSOAR (Cortex XSOAR). Built with Python and Click. Supports XSOAR server versions 6 and 8.
+This is a CLI tool for managing Palo Alto Networks XSOAR (Cortex XSOAR). Built with Python and Click. Supports XSOAR server versions 6 and 8.
+The primary purpose for xsoar-cli is to be used both in CICD pipelines to deploy new content to XSOAR, as well as a tool for daily use by
+developers and power users who want to automate daily tasks.
+
+We aim to not break backwards compatibility, but the user base is small and actively communimcating, so breaking backwards compatibility may
+be acceptable if there are clear benefits in doing so.
+
+The xsoar-clil project is tightly integrated with two other Python modules:
+ - xsoar-client (hosted on https://github.com/tlium/xsoar-client)
+ - xsoar-dependency-graph (hosted on https://github.com/tlium/xsoar-dependency-graph)
+Development on xsoar-client, xsoar-dependency-graph and xsoar-cli is all done by the same developers. Suggesting modifications in the two
+aforementioned Python packages is acceptable if such modifications are required for new functionality or bugfixes in xsoar-cli.
+
+Properly debugging the various functionality in xsoar-cli depends on connectivity to XSOAR, AWS/Azure credentials and other things. Always ask a user
+for confirmation before executing any terminal commands as they may have consequences you may not be fully aware of.
 
 ## Tech Stack
 
