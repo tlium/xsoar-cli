@@ -8,12 +8,13 @@ from .__about__ import __version__
 from .case import commands as case_commands
 from .config import commands as config_commands
 from .graph import commands as graph_commands
-from .log import setup_logging
+from .log import LoggingSetup, setup_logging
 from .manifest import commands as manifest_commands
 from .pack import commands as pack_commands
 from .playbook import commands as playbook_commands
 from .plugins import commands as plugin_commands
 from .plugins.manager import PluginManager
+from .utilities import get_config_file_contents, get_config_file_path
 
 
 class XSOARCliGroup(click.Group):
@@ -42,30 +43,49 @@ def cli(ctx: click.Context, debug: bool) -> None:
         _setup.handler.setLevel(logging.DEBUG)
 
 
-cli.add_command(config_commands.config)
-cli.add_command(case_commands.case)
-cli.add_command(pack_commands.pack)
-cli.add_command(manifest_commands.manifest)
-cli.add_command(playbook_commands.playbook)
-cli.add_command(graph_commands.graph)
-cli.add_command(plugin_commands.plugins)
+def _register_commands() -> None:
+    cli.add_command(config_commands.config)
+    cli.add_command(case_commands.case)
+    cli.add_command(pack_commands.pack)
+    cli.add_command(manifest_commands.manifest)
+    cli.add_command(playbook_commands.playbook)
+    cli.add_command(graph_commands.graph)
+    cli.add_command(plugin_commands.plugins)
 
-# Capture core command names before any plugins are registered
-CORE_COMMANDS = list(cli.commands.keys())
 
-# Load and register plugins after all core commands are added
-plugin_manager = PluginManager()
-try:
-    plugin_manager.load_all_plugins(ignore_errors=True)
-    for plugin_name, error in plugin_manager.get_failed_plugins().items():
-        click.echo(f"Warning: plugin '{plugin_name}' failed to load: {error}", err=True)
-    plugin_manager.register_plugin_commands(cli)
-except Exception as e:
-    click.echo(f"Warning: failed to register plugin commands: {e}", err=True)
+def _load_plugins() -> tuple[list[str], PluginManager]:
+    """Captures core command names, then loads and registers plugins. Returns both."""
+    core_commands = list(cli.commands.keys())
+    manager = PluginManager()
+    try:
+        manager.load_all_plugins(ignore_errors=True)
+        for plugin_name, error in manager.get_failed_plugins().items():
+            click.echo(f"Warning: plugin '{plugin_name}' failed to load: {error}", err=True)
+        manager.register_plugin_commands(cli)
+    except Exception as e:
+        click.echo(f"Warning: failed to register plugin commands: {e}", err=True)
+    return core_commands, manager
 
-_setup = setup_logging()
-_log = _setup.logger
-_log.info("Executing: %s", " ".join(sys.argv[1:]))
+
+def _configure_logging() -> LoggingSetup:
+    """Sets up logging, applies log_level from config if present, and logs the invocation."""
+    setup = setup_logging()
+    config_file = get_config_file_path()
+    if config_file.is_file():
+        config_data = get_config_file_contents(config_file)
+        if "log_level" in config_data:
+            log_level_str = config_data["log_level"]
+            if log_level_str not in ("DEBUG", "INFO"):
+                click.echo(f"Error: invalid log_level '{log_level_str}' in config file. Valid values are: DEBUG, INFO", err=True)
+                sys.exit(1)
+            setup.handler.setLevel(getattr(logging, log_level_str))
+    setup.logger.info("Executing: %s", " ".join(sys.argv[1:]))
+    return setup
+
+
+_register_commands()
+CORE_COMMANDS, plugin_manager = _load_plugins()
+_setup = _configure_logging()
 
 
 def main() -> None:
@@ -80,5 +100,5 @@ def main() -> None:
         for h in list(_setup.logger.handlers):
             if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.handlers.RotatingFileHandler):
                 _setup.logger.removeHandler(h)
-        _log.info("Exit: %s", exit_code)
+        _setup.logger.info("Exit: %s", exit_code)
         raise

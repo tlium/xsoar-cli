@@ -24,7 +24,7 @@ def playbook(ctx: click.Context) -> None:
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity
+@validate_xsoar_connectivity()
 def download(ctx: click.Context, environment: str | None, name: str) -> None:
     """Download and reattach playbook.
 

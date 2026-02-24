@@ -101,28 +101,54 @@ def load_config(f: Callable) -> Callable:
     return update_wrapper(wrapper, f)
 
 
-def validate_xsoar_connectivity(f: Callable) -> Callable:
-    """Decorator that validates XSOAR server connectivity."""
+def validate_xsoar_connectivity(
+    environments: str | list[str] | Callable[[click.Context], str | list[str]] | None = None,
+) -> Callable:
+    """
+    Decorator that validates XSOAR server connectivity. Must be called with parentheses.
 
-    @click.pass_context
-    def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
-        config = get_xsoar_config(ctx)
-        environment = ctx.params.get("environment")
+    Args:
+        environments: Environments to validate connectivity for. Can be:
+            - None: Validate the environment from ctx.params["environment"] or default_environment
+            - str: Validate a single named environment
+            - list[str]: Validate multiple named environments
+            - Callable: A function taking ctx and returning str or list[str] of environments to validate
+    """
 
-        # Test artifact provider connectivity
-        env_name = environment or config.default_environment
-        env_config = config._environments[env_name]
+    def decorator(f: Callable) -> Callable:
+        @click.pass_context
+        def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
+            config = get_xsoar_config(ctx)
 
-        client = env_config.client
-        try:
-            client.test_connectivity()
-        except ConnectionError as ex:
-            handler = ConnectionErrorHandler()
-            click.echo(f"Connection failed: {handler.get_message(ex)}")
-            ctx.exit(1)
-        return ctx.invoke(f, *args, **kwargs)
+            # Resolve environment names to validate
+            if callable(environments):
+                env_resolver = cast(Callable[[click.Context], str | list[str]], environments)
+                result = env_resolver(ctx)
+                envs_to_validate = [result] if isinstance(result, str) else list(result)
+            elif environments is None:
+                env_name = ctx.params.get("environment") or config.default_environment
+                envs_to_validate = [env_name]
+            elif isinstance(environments, str):
+                envs_to_validate = [environments]
+            else:
+                envs_to_validate = list(environments)
 
-    return update_wrapper(wrapper, f)
+            # Validate connectivity for each environment
+            for env_name in envs_to_validate:
+                env_config = config._environments[env_name]
+                client = env_config.client
+                try:
+                    client.test_connectivity()
+                except ConnectionError as ex:
+                    handler = ConnectionErrorHandler()
+                    click.echo(f"Connection failed for '{env_name}': {handler.get_message(ex)}")
+                    ctx.exit(1)
+
+            return ctx.invoke(f, *args, **kwargs)
+
+        return update_wrapper(wrapper, f)
+
+    return decorator
 
 
 def validate_artifacts_provider(f: Callable) -> Callable:
