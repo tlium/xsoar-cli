@@ -1,9 +1,12 @@
 import json
+import logging
 from typing import TYPE_CHECKING
 
 import click
 
 from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments, validate_xsoar_connectivity
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
@@ -38,6 +41,8 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
 def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     """Clones a case from source to destination environment."""
+    logger.info("Cloning case %d from '%s' to '%s'", casenumber, source, dest)
+
     valid_envs = validate_environments(source, dest, ctx=ctx)
     if not valid_envs:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
@@ -66,27 +71,33 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
         "sizeInBytes",
         "attachment",
     ]
+    logger.debug("Removing keys from case %d before cloning: %s", casenumber, remove_keys)
     for key in remove_keys:
         results.pop(key)
 
     # Pop the labels here because XSOAR chokes on to much data in the incident creation request. Create the
     # new case clone without labels now and add labels in a later request.
     labels = results.pop("labels")
+    logger.debug("Popped %d label(s) from case %d for deferred merge", len(labels), casenumber)
     results.pop("owner")
 
     # Ensure that playbooks run immediately when the case is created
     results["createInvestigation"] = True
     case_data = xsoar_dest_client.create_case(data=results)
     case_id = case_data["id"]
+    logger.info("Created destination case %s in '%s'", case_id, dest)
 
     # Fetch updated version etc for the newly created case. We need this to prevent errors stemming from optimistic locking
     new_case_data = xsoar_dest_client.get_case(case_id)
+    logger.debug("Re-fetched destination case %s to obtain current version for label merge", case_id)
 
-    new_labels = new_case_data["labels"] + labels
-    new_case_data["labels"] = new_labels
+    existing_labels = new_case_data["labels"]
+    logger.debug("Merging %d existing label(s) with %d source label(s)", len(existing_labels), len(labels))
+    new_case_data["labels"] = existing_labels + labels
     # Keep the source case status. If the case is closed in source environment, it should be closed in dest environment
     # new_case_data["status"] = results["status"]
     case_data = xsoar_dest_client.create_case(data=new_case_data)
+    logger.info("Clone complete: case %d ('%s') -> case %s ('%s')", casenumber, source, case_id, dest)
     click.echo(f"Case {casenumber} from {source} cloned into case {case_id} in {dest}")
 
 
