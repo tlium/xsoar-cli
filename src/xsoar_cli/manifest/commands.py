@@ -197,7 +197,6 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
         # The relevant Pack locally does not have the requested version.
         return False
 
-    # TODO: check keys in json. Keys in entries manifest["custom_packs"] should only be "id", "version" or "_comment"
     # Validate json keys. The manifest entries should only contain "id", "version" or "_comment"
     found_invalid_entry = False
     for key in keys:
