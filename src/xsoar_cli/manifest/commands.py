@@ -197,6 +197,22 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
         # The relevant Pack locally does not have the requested version.
         return False
 
+    # TODO: check keys in json. Keys in entries manifest["custom_packs"] should only be "id", "version" or "_comment"
+    # Validate json keys. The manifest entries should only contain "id", "version" or "_comment"
+    found_invalid_entry = False
+    for key in keys:
+        for index, pack in enumerate(manifest_data[key]):
+            for k, v in pack.items():
+                if k not in ["id", "version", "_comment"]:
+                    logger.error("Manifest data contains invalid key. %s should only contain keys %s", pack, ["id", "version", "_comment"])
+                    errmsg = f"The following manifest entry contains an invalid key:\n{json.dumps(pack, indent=4)}\n"
+                    click.echo(f"ERROR: {errmsg}")
+                    found_invalid_entry = True
+
+    if found_invalid_entry:
+        click.echo('Valid keys are "id", "version", "_comment"')
+        ctx.exit(1)
+    sys.exit(0)
     if mode == "full":
         for key in keys:
             custom = key == "custom_packs"
