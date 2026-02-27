@@ -211,7 +211,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
     if found_invalid_entry:
         click.echo('Valid keys are "id", "version", "_comment"')
         ctx.exit(1)
-    sys.exit(0)
+
     if mode == "full":
         for key in keys:
             custom = key == "custom_packs"
