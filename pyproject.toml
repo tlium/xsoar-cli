@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -35,7 +35,10 @@ Issues = "https://github.com/tlium/xsoar-cli/issues"
 Source = "https://github.com/tlium/xsoar-cli"
 
 [tool.hatch.version]
-path = "src/xsoar_cli/__about__.py"
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "_version.py"
 
 [tool.hatch.envs.types]
 extra-dependencies = ["mypy>=1.0.0"]

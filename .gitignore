@@ -8,3 +8,4 @@ scratch
 .venv
 .coverage
 .pytest_cache
+_version.py
