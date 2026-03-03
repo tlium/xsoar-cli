@@ -19,10 +19,18 @@ def case() -> None:
 
 @click.argument("casenumber", type=int)
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.command(help="Get basic information about a single case in XSOAR")
+@click.command()
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
+    """Retrieves and displays a single case from XSOAR.
+
+    CASENUMBER is the numeric case ID to look up. Output is formatted as JSON.
+
+    Usage examples:
+
+    xsoar-cli case get 12345
+    """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     response = xsoar_client.get_case(casenumber)
@@ -40,7 +48,18 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @load_config
 @validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
 def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
-    """Clones a case from source to destination environment."""
+    """Clones a case from source to destination environment.
+
+    CASENUMBER is the numeric case ID to clone. Both --source and --dest must refer to
+    environments defined in the config file.
+
+    The cloned case preserves labels and triggers playbook execution on creation.
+    Attachments are not included in the clone.
+
+    Usage examples:
+
+    xsoar-cli case clone --source prod --dest staging 12345
+    """
     logger.info("Cloning case %d from '%s' to '%s'", casenumber, source, dest)
 
     valid_envs = validate_environments(source, dest, ctx=ctx)
@@ -123,7 +142,22 @@ def create(  # noqa: PLR0913
     custom_fields_delimiter: str,
     details: str,
 ) -> None:
-    """Creates a new case in XSOAR. If invalid case type is specified as a command option, XSOAR will default to using Unclassified."""
+    """Creates a new case in XSOAR.
+
+    NAME is the title of the created case. DETAILS is the case description body.
+
+    Custom fields must use the machine name (e.g. mycustomfieldname) and be specified as
+    key=value pairs separated by the configured delimiter.
+
+    If --casetype is omitted, the default case type from the config file is used.
+    If an invalid case type is specified, XSOAR will default to Unclassified.
+
+    Usage examples:
+
+    xsoar-cli case create "My case title" "Case description"
+
+    xsoar-cli case create --casetype Malware --custom-fields "severity=high,owner=analyst1" "My case" "Details here"
+    """
     if custom_fields and "=" not in custom_fields:
         click.echo('Malformed custom fields. Must be on the form "myfield=myvalue"')
         ctx.exit(1)
