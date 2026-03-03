@@ -114,8 +114,9 @@ def export(
 
     xsoar-cli graph export -rp . -o /tmp -of GraphML"""
     cg = _build_content_graph(ctx, packs, repo_path, upstream_repo_path, environment)
-    cg.export(output_path=output_path, output_format=output_format)
-    logger.info("Dependency graph export complete")
+    output = cg.export(output_path=output_path, output_format=output_format)
+    logger.debug(f"Done exporting: {output}")
+    click.echo(f"Done exporting: {output}")
 
 
 graph.add_command(generate)
