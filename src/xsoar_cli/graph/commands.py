@@ -74,4 +74,62 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
     logger.info("Dependency graph generation complete")
 
 
+@click.option("-of", "--output-format", type=click.Choice(["GML", "GraphML"]), default="GML", help="File format for the exported graph")
+@click.option("-o", "--output-path", required=True, type=click.Path(exists=True), help="Path to output directory.")
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "-urp", "--upstream-repo-path", required=False, type=click.Path(exists=True), help="Path to local clone of Palo Alto content repository"
+)
+@click.option("-rp", "--repo-path", required=True, type=click.Path(exists=True), help="Path to content repository")
+@click.argument("packs", nargs=-1, required=False, type=click.Path(exists=True))
+@click.command()
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity()
+def export(
+    ctx: click.Context,
+    packs: tuple[Path],
+    repo_path: str,
+    upstream_repo_path: str,
+    environment: str | None,
+    output_path: Path,
+    output_format: str,
+) -> None:
+    """BETA
+
+    Generates a XSOAR dependency graph for one or more content packs. If no packs are defined in the [PACKS] argument,
+    a dependency graph is created for all content packs in the content repository.
+
+    Usage examples:
+
+    xsoar-cli graph generate -rp . Packs/Pack_one Packs/Pack_two
+
+    xsoar-cli graph generate -rp ."""
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    logger.info("Generating dependency graph (environment: '%s', repo: '%s')", environment or config.default_environment, repo_path)
+    installed_content = xsoar_client.get_installed_expired_packs()
+    logger.debug("Fetched %d installed/expired pack(s) from server", len(installed_content))
+    if upstream_repo_path:
+        urp = Path(upstream_repo_path)
+        logger.debug("Using upstream repo path: %s", urp)
+    else:
+        urp = None
+    rp = Path(repo_path)
+    if upstream_repo_path:
+        cg: ContentGraph = ContentGraph(repo_path=rp, upstream_repo_path=urp, installed_content=installed_content)  # ty: ignore[invalid-argument-type]
+    else:
+        cg: ContentGraph = ContentGraph(repo_path=Path(repo_path), installed_content=installed_content)  # ty: ignore[invalid-argument-type]
+
+    packs_list = [Path(item) for item in packs]
+    if packs_list:
+        logger.debug("Generating graph for %d specified pack(s): %s", len(packs_list), [str(p) for p in packs_list])
+    else:
+        logger.debug("No packs specified, generating graph for all packs in repo")
+    cg.create_content_graph(pack_paths=packs_list)
+    cg.export(output_path=output_path, output_format=output_format)
+    logger.info("Dependency graph export complete")
+
+
 graph.add_command(generate)
+graph.add_command(export)
