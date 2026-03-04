@@ -32,29 +32,52 @@ We welcome contributions of all kinds! Whether you're fixing bugs, adding featur
    cd xsoar-cli
    ```
 
-### 2. Set Up Development Environment
+### 2. Install uv
+
+[uv](https://docs.astral.sh/uv/) is the recommended package manager for this project.
+
 ```bash
-# Create virtual environment
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+For other platforms and installation options, see the [uv installation docs](https://docs.astral.sh/uv/getting-started/installation/).
+
+### 3. Set Up Development Environment
+
+**Recommended: uv**
+
+```bash
+# Install dependencies and xsoar-cli in editable mode
+uv sync
+uv pip install -e .
+```
+
+If you need to work on `xsoar-client` or `xsoar-dependency-graph`, install them in editable mode from your local clones:
+
+```bash
+uv pip install -e /path/to/your/xsoar-client
+uv pip install -e /path/to/your/xsoar-dependency-graph
+```
+
+**Alternative: pip/venv**
+
+```bash
+# Create and activate a virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
 # Install development dependencies
 pip install -r requirements_dev.txt
 
-# Install the package in development mode
+# Install xsoar-cli in editable mode
 pip install -e .
 ```
 
-### 3. Verify Setup
+If you need to work on the supporting libraries, install them in editable mode as well:
+
 ```bash
-# Run tests to ensure everything works
-pytest
-
-# Check code style
-black --check src/ tests/
-
-# Run the CLI to verify installation
-xsoar-cli --help
+pip install -e /path/to/your/xsoar-client
+pip install -e /path/to/your/xsoar-dependency-graph
 ```
 
 ## Development Workflow

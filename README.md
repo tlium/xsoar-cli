@@ -101,6 +101,7 @@ After creating the config file, edit it with your XSOAR server details:
 {
     "default_environment": "xsoar6",
     "default_new_case_type": "My case type",
+    "log_level": "INFO",
     "custom_pack_authors": ["My_Org"],
     "server_config": {
         "xsoar6": {
@@ -144,6 +145,7 @@ After creating the config file, edit it with your XSOAR server details:
     "default_environment": "dev",
     "default_new_case_type": "My case type",
     "custom_pack_authors": ["My_Org"],
+    "log_level": "DEBUG"
     "server_config": {
         "dev": {
             "base_url": "https://your.dev.domain",
