@@ -34,7 +34,7 @@ We welcome contributions of all kinds! Whether you're fixing bugs, adding featur
 
 ### 2. Install uv
 
-[uv](https://docs.astral.sh/uv/) is the recommended package manager for this project.
+[uv](https://docs.astral.sh/uv/) is the recommended package manager for this project. Using legacy venv/pip workflows should also work, but uv is a great tool.
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -46,19 +46,19 @@ For other platforms and installation options, see the [uv installation docs](htt
 
 **Recommended: uv**
 
-```bash
-# Install dependencies and xsoar-cli in editable mode
-uv sync
-uv pip install -e .
-```
-
-If you need to work on `xsoar-client` or `xsoar-dependency-graph`, install them in editable mode from your local clones:
+You may find that you will need to make modifications in [xsoar-client](https://github.com/tlium/xsoar-client) and/or [xsoar-dependency-graph](https://github.com/tlium/xsoar-dependency-graph) in order
+to fix bugs or add new features to `xsoar-cli`. If you need to work on `xsoar-client` or `xsoar-dependency-graph`, install them in editable mode from your local clones:
 
 ```bash
 uv pip install -e /path/to/your/xsoar-client
 uv pip install -e /path/to/your/xsoar-dependency-graph
 ```
 
+```bash
+# Install dependencies and xsoar-cli in editable mode
+uv sync
+uv pip install -e .
+```
 **Alternative: pip/venv**
 
 ```bash
@@ -94,12 +94,6 @@ pip install -e /path/to/your/xsoar-dependency-graph
    ```bash
    # Run tests
    pytest
-   
-   # Format code
-   black src/ tests/
-   
-   # Check for any issues
-   python -m pytest --cov=src/xsoar_cli
    ```
 
 4. **Commit with clear messages**:
@@ -114,8 +108,7 @@ pip install -e /path/to/your/xsoar-dependency-graph
    ```
 
 ### Code Style
-- We use [Black](https://github.com/psf/black) for code formatting
-- Run `black src/ tests/` before committing
+- We use [Ruff](https://docs.astral.sh/ruff/) for code formatting
 - Follow existing code patterns and conventions
 - Add type hints where appropriate
 - Write docstrings for new functions and classes
@@ -149,12 +142,6 @@ Documentation improvements are especially welcome! You can contribute to documen
 - **Tutorials**: Step-by-step guides for specific workflows
 
 ## Submitting Pull Requests
-
-### Before Submitting
-- [ ] Tests pass (`pytest`)
-- [ ] Code is formatted (`black src/ tests/`)
-- [ ] Documentation is updated if needed
-- [ ] Commit messages are clear and descriptive
 
 ### Pull Request Guidelines
 - **Describe your changes** clearly in the PR description
