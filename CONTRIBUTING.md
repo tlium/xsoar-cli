@@ -47,7 +47,7 @@ For other platforms and installation options, see the [uv installation docs](htt
 **Recommended: uv**
 
 You may find that you will need to make modifications in [xsoar-client](https://github.com/tlium/xsoar-client) and/or [xsoar-dependency-graph](https://github.com/tlium/xsoar-dependency-graph) in order
-to fix bugs or add new features to `xsoar-cli`. If you need to work on `xsoar-client` or `xsoar-dependency-graph`, install them in editable mode from your local clones:
+to fix bugs or add new features to `xsoar-cli`. If you need to work on `xsoar-client` or `xsoar-dependency-graph`, install them in editable mode from your local Git clones:
 
 ```bash
 uv pip install -e /path/to/your/xsoar-client
