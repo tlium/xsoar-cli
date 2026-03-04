@@ -1,6 +1,6 @@
 # xsoar-cli
 
-![PyPI - Version](https://img.shields.io/pypi/v/xsoar-cli) [![Python](https://img.shields.io/pypi/pyversions/xsoar-cli.svg)](https://pypi.org/project/xsoar-cli/) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![codecov](https://codecov.io/gh/tlium/xsoar-cli/graph/badge.svg?token=CODECOV_TOKEN)](https://codecov.io/gh/tlium/xsoar-cli)
+![PyPI - Version](https://img.shields.io/pypi/v/xsoar-cli) [![Python](https://img.shields.io/pypi/pyversions/xsoar-cli.svg)](https://pypi.org/project/xsoar-cli/) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A command-line interface for managing Palo Alto Networks XSOAR (Cortex XSOAR) that streamlines content development and deployment workflows.
 
