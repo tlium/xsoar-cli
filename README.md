@@ -19,7 +19,7 @@ Pull Requests are very welcome and appreciated! See [CONTRIBUTING.md](CONTRIBUTI
 
 ```bash
 # Install
-pip install xsoar-cli
+uv tool install xsoar-cli
 
 # Create configuration file
 xsoar-cli config create
@@ -40,14 +40,22 @@ This CLI tool is made to be run from the root of a content repository. Some comm
 
 ### Core Requirements
 - XSOAR servers version 6 or 8
-- Python 3.9+ (only tested with Python 3.12, earlier versions may work but are not guaranteed)
+- Python 3.10+ (tested with Python 3.10-3.14, earlier versions may work but are untested)
+- [uv](https://docs.astral.sh/uv/) for installation
 
-### Additional Requirements 
-- **AWS SDK for Python (Boto3)** - Only required when working with custom content packs stored in S3.
-- **Azure SDK for Python**
+### Additional Requirements
+- **demisto-sdk** - Required by several commands, most notably `xsoar-cli playbook download`. Should be installed separately.
 
 
 ## Installation
+
+Installing xsoar-cli as a uv tool is recommended. This gives it an isolated environment with its own dependencies, avoiding version conflicts with other Python tools such as demisto-sdk.
+
+```bash
+uv tool install xsoar-cli
+```
+
+Alternatively, using pip:
 
 ```bash
 pip install xsoar-cli
@@ -56,10 +64,22 @@ pip install xsoar-cli
 ## Upgrading
 
 ```bash
+uv tool upgrade xsoar-cli
+```
+
+Or with pip:
+
+```bash
 pip install --upgrade xsoar-cli
 ```
 
 ## Uninstalling
+
+```bash
+uv tool uninstall xsoar-cli
+```
+
+Or with pip:
 
 ```bash
 pip uninstall xsoar-cli
@@ -81,6 +101,7 @@ After creating the config file, edit it with your XSOAR server details:
 {
     "default_environment": "xsoar6",
     "default_new_case_type": "My case type",
+    "log_level": "INFO",
     "custom_pack_authors": ["My_Org"],
     "server_config": {
         "xsoar6": {
@@ -124,6 +145,7 @@ After creating the config file, edit it with your XSOAR server details:
     "default_environment": "dev",
     "default_new_case_type": "My case type",
     "custom_pack_authors": ["My_Org"],
+    "log_level": "DEBUG"
     "server_config": {
         "dev": {
             "base_url": "https://your.dev.domain",
@@ -216,8 +238,7 @@ xsoar-cli supports a plugin system that allows you to extend the CLI with custom
 - Use `xsoar-cli config validate` to verify your configuration
 
 **Python compatibility issues**
-- Ensure you're using Python 3.9 or later
-- Consider using Python 3.12 for best compatibility
+- Ensure you're using Python 3.10 or later
 
 ## Contributing
 
