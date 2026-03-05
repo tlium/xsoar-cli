@@ -76,7 +76,7 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
             "--no-validate",
             "--no-graph",
             "--from-version",
-            "6.1.2",
+            "6.10.0",
             str(filepath),
         ],
         check=False,
