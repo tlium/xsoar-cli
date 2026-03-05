@@ -23,7 +23,7 @@ def rbac(ctx: click.Context) -> None:
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def getroles(ctx: click.Context, environment: str | None, name: str) -> None:
+def getroles(ctx: click.Context, environment: str | None) -> None:
     """Dump all roles in your environment."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
@@ -37,7 +37,7 @@ def getroles(ctx: click.Context, environment: str | None, name: str) -> None:
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def getusers(ctx: click.Context, environment: str | None, name: str) -> None:
+def getusers(ctx: click.Context, environment: str | None) -> None:
     """Dump all users in your environment."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
@@ -54,7 +54,7 @@ def getusers(ctx: click.Context, environment: str | None, name: str) -> None:
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def getusergroups(ctx: click.Context, environment: str | None, name: str) -> None:
+def getusergroups(ctx: click.Context, environment: str | None) -> None:
     """Dump all roles in your environment."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
