@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.pass_context
 def integration(ctx: click.Context) -> None:
-    """Save/load integration configuration for an integration instance."""
+    """(BETA) Save/load integration configuration for an integration instance."""
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
@@ -47,8 +47,6 @@ def dumpconfig(ctx: click.Context, environment: str | None, name: str | None) ->
 @validate_xsoar_connectivity()
 def loadconfig(ctx: click.Context, environment: str | None, name: str, instance_name: str) -> None:
     """Loads integration config from JSON file."""
-    config = get_xsoar_config(ctx)
-    xsoar_client: Client = config.get_client(environment)
     logger.debug("integration loadconfig command not implemented")
     click.echo("Command not implemented")
 
