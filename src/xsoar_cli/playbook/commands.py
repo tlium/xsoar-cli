@@ -72,9 +72,11 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
         [
             "demisto-sdk",
             "format",
-            "--assume-yes",
+            "--assume-no",
             "--no-validate",
             "--no-graph",
+            "--from-version",
+            "6.1.2",
             str(filepath),
         ],
         check=False,
