@@ -49,7 +49,6 @@ check = "mypy --install-types --non-interactive {args:src/xsoar_cli tests}"
 source_pkgs = ["xsoar_cli", "tests"]
 branch = true
 parallel = true
-omit = ["src/xsoar_cli/__about__.py"]
 
 [project.scripts]
 xsoar-cli = "xsoar_cli.cli:main"
