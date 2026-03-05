@@ -61,3 +61,8 @@ def getusergroups(ctx: click.Context, environment: str | None, name: str) -> Non
     results = xsoar_client.get_user_groups()
     user_groups = json.loads(results)
     click.echo(json.dumps(user_groups, sort_keys=True, indent=4) + "\n")
+
+
+rbac.add_command(getroles)
+rbac.add_command(getusers)
+rbac.add_command(getusergroups)
