@@ -16,6 +16,7 @@ from .__about__ import __version__
 from .case import commands as case_commands
 from .config import commands as config_commands
 from .graph import commands as graph_commands
+from .integration import commands as integration_commands
 from .log import LoggingSetup, setup_logging
 from .manifest import commands as manifest_commands
 from .pack import commands as pack_commands
@@ -64,6 +65,7 @@ def _register_commands() -> None:
     cli.add_command(config_commands.config)
     cli.add_command(case_commands.case)
     cli.add_command(pack_commands.pack)
+    cli.add_command(integration_commands.integration)
     cli.add_command(manifest_commands.manifest)
     cli.add_command(playbook_commands.playbook)
     cli.add_command(graph_commands.graph)
