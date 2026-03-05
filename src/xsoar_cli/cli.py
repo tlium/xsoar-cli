@@ -23,6 +23,7 @@ from .pack import commands as pack_commands
 from .playbook import commands as playbook_commands
 from .plugins import commands as plugin_commands
 from .plugins.manager import PluginManager
+from .rbac import commands as rbac_commands
 from .utilities import get_config_file_contents, get_config_file_path
 
 
@@ -70,6 +71,7 @@ def _register_commands() -> None:
     cli.add_command(playbook_commands.playbook)
     cli.add_command(graph_commands.graph)
     cli.add_command(plugin_commands.plugins)
+    cli.add_command(rbac_commands.rbac)
 
 
 def _load_plugins() -> tuple[list[str], PluginManager]:
