@@ -35,7 +35,6 @@ for confirmation before executing any terminal commands as they may have consequ
 
 ```
 src/xsoar_cli/           # Main package (src layout)
-  __about__.py            # Version (dynamic, read by hatch)
   cli.py                  # Entry point, Click group, plugin loading
   configuration.py        # XSOARConfig class
   connection_errors.py    # Error handling

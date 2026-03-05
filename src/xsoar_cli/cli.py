@@ -12,7 +12,6 @@ import sys
 
 import click
 
-from .__about__ import __version__
 from .case import commands as case_commands
 from .config import commands as config_commands
 from .graph import commands as graph_commands
@@ -47,7 +46,7 @@ class XSOARCliGroup(click.Group):
 
 @click.group(cls=XSOARCliGroup)
 @click.pass_context
-@click.version_option(__version__)
+@click.version_option(package_name="xsoar-cli")
 @click.option("--debug", is_flag=True, help="Enable debug logging")
 def cli(ctx: click.Context, debug: bool) -> None:
     """XSOAR CLI - Command line interface for XSOAR operations."""
