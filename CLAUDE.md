@@ -37,7 +37,7 @@ for confirmation before executing any terminal commands as they may have consequ
 src/xsoar_cli/           # Main package (src layout)
   cli.py                  # Entry point, Click group, plugin loading
   configuration.py        # XSOARConfig class
-  connection_errors.py    # Error handling
+  error_handling.py       # Error handling
   log.py                  # Logging setup
   utilities.py            # Shared helpers, decorators
   case/                   # Case operations command group

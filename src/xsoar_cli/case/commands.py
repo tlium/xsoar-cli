@@ -3,7 +3,9 @@ import logging
 from typing import TYPE_CHECKING
 
 import click
+from requests.exceptions import HTTPError
 
+from xsoar_cli.error_handling import HTTPErrorHandler
 from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments, validate_xsoar_connectivity
 
 logger = logging.getLogger(__name__)
@@ -33,9 +35,11 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    response = xsoar_client.get_case(casenumber)
-    if response["total"] == 0 and not response["data"]:
-        click.echo(f"Cannot find case ID {casenumber}")
+    try:
+        response = xsoar_client.get_case(casenumber)
+    except HTTPError as ex:
+        handler = HTTPErrorHandler()
+        click.echo(f"Error: {handler.get_message(ex, context='case')}")
         ctx.exit(1)
     click.echo(json.dumps(response, indent=4))
 
