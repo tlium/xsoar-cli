@@ -1,6 +1,7 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from requests.exceptions import HTTPError
 
 from xsoar_cli.utilities import get_config_file_template_contents
 
@@ -32,13 +33,14 @@ def mock_xsoar_client_create_case():  # noqa: ANN201
 
 
 @pytest.fixture
-def mock_xsoar_client_get_case_zero():  # noqa: ANN201
-    with patch("xsoar_client.xsoar_client.Client.get_case") as mock_get_zero:
-        mock_get_zero.return_value = {
-            "total": 0,
-            "data": [],
-        }
-        yield mock_get_zero
+def mock_xsoar_client_get_case_http_error():  # noqa: ANN201
+    mock_response = MagicMock()
+    mock_response.status_code = 400
+    mock_response.text = "Bad Request"
+    mock_response.url = "https://xsoar.example.com/incident/load/99999"
+    with patch("xsoar_client.xsoar_client.Client.get_case") as mock_get_error:
+        mock_get_error.side_effect = HTTPError(response=mock_response)
+        yield mock_get_error
 
 
 @pytest.fixture
