@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
-from xsoar_client.xsoar_client import Client
-from xsoar_dependency_graph.xsoar_dependency_graph import ContentGraph
 
 from xsoar_cli.utilities import (
     get_xsoar_config,
     load_config,
     validate_xsoar_connectivity,
 )
+
+if TYPE_CHECKING:
+    from xsoar_client.xsoar_client import Client
+    from xsoar_dependency_graph.xsoar_dependency_graph import ContentGraph
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +42,9 @@ def _build_content_graph(
     environment: str | None,
 ) -> ContentGraph:
     """Shared setup: load config, connect to XSOAR, build and return a ContentGraph."""
+    # Lazy import for performance reasons
+    from xsoar_dependency_graph.xsoar_dependency_graph import ContentGraph
+
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.info("Generating dependency graph (environment: '%s', repo: '%s')", environment or config.default_environment, repo_path)

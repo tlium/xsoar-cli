@@ -89,9 +89,10 @@ uv run xsoar-cli --help
 - The `@load_config` decorator (in `utilities.py`) handles config loading and injects `XSOARConfig` into `ctx.obj`
 - Use `click.echo()` for user-facing output, `logging` for debug/file logs
 - Commands that iterate over both `custom_packs` and `marketplace_packs` must use a `pack_type` variable (`"Custom"` / `"Marketplace"`) and include it in all log messages so the pack origin is always explicit in debug output
-- Logging setup in `cli.py` is intentionally deferred to `main()`. Command and plugin registration happen at module level, but `_configure_logging()` must not be moved there -- see inline comments in `cli.py` for details
+- Logging setup in `cli.py` is intentionally deferred to `main()`. Command and plugin registration happen at module level, but `_configure_logging()` must not be moved there. See inline comments in `cli.py` for details
 - Ruff noqa comments are used where rules are intentionally suppressed (e.g., `# noqa: PLR0913` for many parameters, `# noqa: ANN201` for fixture return types)
 - Type hints are used throughout; `str | None` union syntax (Python 3.10+)
+- Heavy third-party imports (`xsoar_client`, `xsoar_dependency_graph`, `demisto_client`, etc.) must be deferred into the function or method bodies that use them, not imported at module level. This avoids loading slow transitive dependencies (boto3, azure-storage-blob, matplotlib, networkx, etc.) at CLI startup, keeping `--help` and `--version` fast. Use `from __future__ import annotations` together with a `TYPE_CHECKING` block so type hints remain clean and unquoted. Mark each deferred import with the comment `# Lazy import for performance reasons`. When patching deferred imports in tests, patch at the source (`xsoar_client.xsoar_client.Client`) rather than the importing module (`xsoar_cli.configuration.Client`)
 - Tests must not produce side effects on the real filesystem, such as writing to the log file. Tests invoke `cli()` directly via Click's `CliRunner`, bypassing `main()` and its logging setup
 - Tests use `unittest.mock.patch` to mock external dependencies (`xsoar_client`, config file I/O)
 - Test classes follow `class TestX` naming; test methods use `test_` prefix
@@ -107,11 +108,11 @@ uv run xsoar-cli --help
 
 ## Workflow
 
-- Prefer plain, natural language in comments and documentation. Avoid formal or academic wording where a simpler alternative exists
+- Write comments and documentation in plain, natural language. Avoid formal or academic wording where a simpler alternative exists. Do not use em dashes ("--" or "—") as parenthetical separators; use periods, commas, or parentheses instead. Avoid filler phrases like "It is worth noting that" or "It should be noted that". Keep sentences short and direct.
 - Never start with code. Always plan changes properly before implementation. Ask for clarification in case of inconsistencies or missing information. Do not make assumptions. Confirm with user before generating code.
 - In case of larger modifications, do implementation in logically grouped steps. Complex modifications may be broken down further.
 - After completing each step, stop and wait for the user to review and confirm before proceeding to the next step.
-- Each step should be small enough to be comfortably reviewed -- as a rule of thumb, no more than one or two files modified per step.
+- Each step should be small enough to be comfortably reviewed. As a rule of thumb, no more than one or two files modified per step.
 
 ## Plugin System
 

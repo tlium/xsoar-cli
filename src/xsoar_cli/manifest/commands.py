@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import sys
@@ -5,8 +7,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import click
-from demisto_client.demisto_api.rest import ApiException
-from packaging.version import Version
 
 from xsoar_cli.utilities import (
     find_installed_packs_not_in_manifest,
@@ -91,6 +91,9 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
 @validate_xsoar_connectivity()
 def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     """Update manifest on disk with latest available content pack versions."""
+    # Lazy import for performance reasons
+    from packaging.version import Version
+
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.info("Updating manifest '%s' (environment: '%s')", manifest, environment or config.default_environment)
@@ -362,6 +365,9 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
     \b
     Prompts for confirmation prior to pack installation.
     """
+    # Lazy import for performance reasons
+    from demisto_client.demisto_api.rest import ApiException
+
     # Initialize client and determine target environment
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)

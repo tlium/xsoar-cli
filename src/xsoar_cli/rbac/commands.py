@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import click
 
-import xsoar_cli
 from xsoar_cli.utilities import get_xsoar_config, load_config, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
@@ -46,9 +45,6 @@ def getusers(ctx: click.Context, environment: str | None) -> None:
     users = json.loads(results)
     click.echo(json.dumps(users, sort_keys=True, indent=4) + "\n")
 
-    config = get_xsoar_config(ctx)
-    xsoar_client: Client = config.get_client(environment)
-
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
@@ -56,11 +52,11 @@ def getusers(ctx: click.Context, environment: str | None) -> None:
 @load_config
 @validate_xsoar_connectivity()
 def getusergroups(ctx: click.Context, environment: str | None) -> None:
-    """Dump all roles in your environment."""
+    """Dump all user groups in your environment. XSOAR 8+ only."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     if xsoar_client.config.server_version < 8:
-        click.echo("Errot: Command not supported for XSOAR server versions less than 8")
+        click.echo("Error: Command not supported for XSOAR server versions less than 8")
         ctx.exit(1)
     results = xsoar_client.get_user_groups()
     user_groups = json.loads(results)
