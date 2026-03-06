@@ -23,7 +23,7 @@ from .commands.plugins import commands as plugin_commands
 from .commands.rbac import commands as rbac_commands
 from .log import LoggingSetup, setup_logging
 from .plugins.manager import PluginManager
-from .utilities import get_config_file_contents, get_config_file_path
+from .utilities.config_file import get_config_file_contents, get_config_file_path
 
 
 class XSOARCliGroup(click.Group):

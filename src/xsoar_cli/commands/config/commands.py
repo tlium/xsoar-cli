@@ -8,7 +8,7 @@ import click
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
 
-from xsoar_cli.utilities import (
+from xsoar_cli.utilities.config_file import (
     get_config_file_contents,
     get_config_file_path,
     get_config_file_template_contents,

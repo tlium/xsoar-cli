@@ -3,12 +3,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from requests.exceptions import HTTPError
 
-from xsoar_cli.utilities import get_config_file_template_contents
+from xsoar_cli.utilities.config_file import get_config_file_template_contents
 
 
 @pytest.fixture
 def mock_config_file():  # noqa: ANN201
-    with patch("xsoar_cli.utilities.get_config_file_contents") as mock_get_config:
+    with patch("xsoar_cli.utilities.config_file.get_config_file_contents") as mock_get_config:
         mock_get_config.return_value = get_config_file_template_contents()
         yield mock_get_config
 
