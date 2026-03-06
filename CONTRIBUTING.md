@@ -152,7 +152,7 @@ Documentation improvements are especially welcome! You can contribute to documen
 
 ### Types of Documentation Contributions
 - **README improvements**: Better explanations, more examples
-- **Command documentation**: Individual command READMEs in `src/xsoar_cli/*/README.md`
+- **Command documentation**: Individual command READMEs in `src/xsoar_cli/commands/*/README.md`
 - **Plugin documentation**: Examples and guides for plugin development
 - **Troubleshooting**: Common issues and solutions
 - **Tutorials**: Step-by-step guides for specific workflows

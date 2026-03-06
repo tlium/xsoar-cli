@@ -36,21 +36,30 @@ for confirmation before executing any terminal commands as they may have consequ
 ## Project Layout
 
 ```
-src/xsoar_cli/           # Main package (src layout)
+src/xsoar_cli/            # Main package (src layout)
   cli.py                  # Entry point, Click group, plugin loading
   configuration.py        # XSOARConfig class
-  error_handling.py       # Error handling
   log.py                  # Logging setup
-  utilities.py            # Shared helpers, decorators
-  case/                   # Case operations command group
-  config/                 # Config management command group
-  graph/                  # Dependency graph command group
-  integration/            # Integration instance config command group
-  manifest/               # Manifest validate/deploy command group
-  pack/                   # Pack operations command group
-  playbook/               # Playbook download command group
-  plugins/                # Plugin system and manager
-  rbac/                   # RBAC dump command group
+  error_handling/         # Error handling
+    connection.py         # ConnectionErrorHandler
+    http.py               # HTTPErrorHandler
+  utilities/              # Shared helpers and validators
+    config_file.py        # Config file I/O, get_xsoar_config, load_config
+    validators.py         # Connectivity and artifact provider validators
+    manifest.py           # Manifest comparison helpers
+    generic.py            # General-purpose helpers
+  commands/               # CLI command groups
+    case/                 # Case operations command group
+    config/               # Config management command group
+    graph/                # Dependency graph command group
+    integration/          # Integration instance config command group
+    manifest/             # Manifest validate/deploy command group
+    pack/                 # Pack operations command group
+    playbook/             # Playbook download command group
+    plugins/              # Plugin CLI commands
+    rbac/                 # RBAC dump command group
+  plugins/                # Plugin system infrastructure
+    manager.py            # PluginManager
 tests/                    # Test suite
   conftest.py             # Shared fixtures
   test_*.py               # Test modules per command group
@@ -87,10 +96,10 @@ uv run xsoar-cli --help
 ## Code Conventions
 
 - Entry point: `xsoar_cli.cli:main` (defined in `pyproject.toml` under `[project.scripts]`)
-- Each command group lives in its own subpackage under `src/xsoar_cli/` with a `commands.py` module
+- Each command group lives in its own subpackage under `src/xsoar_cli/commands/` with a `commands.py` module
 - Each command group has its own `README.md` documenting usage
 - Commands are registered on the root Click group in `cli.py` via `cli.add_command()`
-- The `@load_config` decorator (in `utilities.py`) handles config loading and injects `XSOARConfig` into `ctx.obj`
+- The `@load_config` decorator (in `utilities/config_file.py`) handles config loading and injects `XSOARConfig` into `ctx.obj`
 - Use `click.echo()` for user-facing output, `logging` for debug/file logs
 - Commands that iterate over both `custom_packs` and `marketplace_packs` must use a `pack_type` variable (`"Custom"` / `"Marketplace"`) and include it in all log messages so the pack origin is always explicit in debug output
 - Logging setup in `cli.py` is intentionally deferred to `main()`. Command and plugin registration happen at module level, but `_configure_logging()` must not be moved there. See inline comments in `cli.py` for details
