@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
 
 
-@click.group(help="Add new or modify existing XSOAR case")
+@click.group(help="Create, retrieve, and clone cases")
 def case() -> None:
     pass
 

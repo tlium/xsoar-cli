@@ -19,7 +19,7 @@ from xsoar_cli.utilities import (
 logger = logging.getLogger(__name__)
 
 
-@click.group(help="Create/validate etc")
+@click.group(help="Create, validate, and manage CLI configuration")
 def config() -> None:
     pass
 

@@ -1,10 +1,10 @@
 # Pack
 
-Content pack management commands for XSOAR.
+Content pack management commands.
 
 ## Delete
 
-Delete a content pack from the XSOAR server. Verifies the pack is installed before attempting deletion.
+Delete a content pack from the server. Verifies the pack is installed before attempting deletion.
 
 **Syntax:** `xsoar-cli pack delete [OPTIONS] PACK_ID`
 

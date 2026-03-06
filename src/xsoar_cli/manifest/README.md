@@ -28,6 +28,7 @@ Validate manifest JSON syntax and verify all specified content packs are availab
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
+- `--mode [full|diff]` - Validate the full manifest, or only the definitions that diff with installed versions (default: diff)
 
 **Arguments:**
 - `MANIFEST_PATH` - Path to the manifest file to validate
