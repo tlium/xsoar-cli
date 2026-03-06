@@ -167,7 +167,7 @@ class ValidPlugin(XSOARPlugin):
 
 class TestPluginCommands:
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    @patch("xsoar_cli.plugins.commands.PluginManager")
+    @patch("xsoar_cli.commands.plugins.commands.PluginManager")
     def test_plugins_list_command(self, mock_manager_class):
         """Test the plugins list command."""
         runner = CliRunner()
@@ -191,7 +191,7 @@ class TestPluginCommands:
         assert "test_plugin" in result.output
 
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    @patch("xsoar_cli.plugins.commands.PluginManager")
+    @patch("xsoar_cli.commands.plugins.commands.PluginManager")
     def test_plugins_info_command(self, mock_manager_class):
         """Test the plugins info command."""
         runner = CliRunner()

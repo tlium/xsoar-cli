@@ -12,17 +12,17 @@ import sys
 
 import click
 
-from .case import commands as case_commands
-from .config import commands as config_commands
-from .graph import commands as graph_commands
-from .integration import commands as integration_commands
+from .commands.case import commands as case_commands
+from .commands.config import commands as config_commands
+from .commands.graph import commands as graph_commands
+from .commands.integration import commands as integration_commands
+from .commands.manifest import commands as manifest_commands
+from .commands.pack import commands as pack_commands
+from .commands.playbook import commands as playbook_commands
+from .commands.plugins import commands as plugin_commands
+from .commands.rbac import commands as rbac_commands
 from .log import LoggingSetup, setup_logging
-from .manifest import commands as manifest_commands
-from .pack import commands as pack_commands
-from .playbook import commands as playbook_commands
-from .plugins import commands as plugin_commands
 from .plugins.manager import PluginManager
-from .rbac import commands as rbac_commands
 from .utilities import get_config_file_contents, get_config_file_path
 
 

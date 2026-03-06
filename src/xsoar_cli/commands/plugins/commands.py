@@ -9,7 +9,7 @@ import logging
 
 import click
 
-from .manager import PluginManager
+from xsoar_cli.plugins.manager import PluginManager
 
 logger = logging.getLogger(__name__)
 
