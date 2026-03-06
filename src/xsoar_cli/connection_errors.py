@@ -1,4 +1,9 @@
-from urllib3.exceptions import NameResolutionError
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from urllib3.exceptions import NameResolutionError
 
 
 class ConnectionErrorHandler:
@@ -8,6 +13,9 @@ class ConnectionErrorHandler:
         """Return a user-friendly error message from an exception chain."""
         if exception is None:
             return "Unknown error"
+
+        # Lazy import for performance reasons
+        from urllib3.exceptions import NameResolutionError
 
         # Walk through the exception chain to find known error types and the root cause
         current = exception

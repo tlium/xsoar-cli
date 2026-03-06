@@ -113,6 +113,22 @@ pip install -e /path/to/your/xsoar-dependency-graph
 - Add type hints where appropriate
 - Write docstrings for new functions and classes
 
+#### Lazy imports
+
+Heavy third-party packages like `xsoar_client`, `xsoar_dependency_graph` and `demisto_client` pull in large dependency trees (boto3, azure-storage-blob, matplotlib, networkx, etc.) that are expensive to load. To keep everyday invocations like `--help` and `--version` fast, these imports are placed inside the functions that need them rather than at the top of the file. Each lazy import is marked with the comment `# Lazy import for performance reasons`.
+
+Type hints for the deferred types still appear in function signatures. To avoid quoting them as strings, modules that use this pattern include `from __future__ import annotations` and a `TYPE_CHECKING` block at the top:
+
+```python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from xsoar_client.xsoar_client import Client
+```
+
+See `configuration.py` for a complete example.
+
 ### Testing
 - Add tests for new features
 - Ensure existing tests still pass

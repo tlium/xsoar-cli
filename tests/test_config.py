@@ -7,7 +7,7 @@ from xsoar_cli import cli
 
 
 class TestConfig:
-    @patch("xsoar_cli.configuration.Client")
+    @patch("xsoar_client.xsoar_client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     @pytest.mark.parametrize(
         ("cli_args", "use_fixtures", "expected_return_value"),
