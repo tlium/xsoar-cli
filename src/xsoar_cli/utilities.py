@@ -8,7 +8,7 @@ from typing import cast
 import click
 
 from xsoar_cli.configuration import XSOARConfig
-from xsoar_cli.error_handling import ConnectionErrorHandler
+from xsoar_cli.error_handling.connection import ConnectionErrorHandler
 
 logger = logging.getLogger(__name__)
 

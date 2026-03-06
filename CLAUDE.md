@@ -8,8 +8,10 @@ This is a CLI tool for managing Palo Alto Networks XSOAR (Cortex XSOAR). Built w
 The primary purpose for xsoar-cli is to be used both in CICD pipelines to deploy new content to XSOAR, as well as a tool for daily use by
 developers and power users who want to automate daily tasks.
 
-We aim to not break backwards compatibility, but the user base is small and actively communicating, so breaking backwards compatibility may
-be acceptable if there are clear benefits in doing so.
+Backwards compatibility matters for the CLI surface: commands, arguments, and options should remain stable. Internal APIs (module layout,
+class imports, helper functions) can change freely, but changes with a wide blast radius should be made carefully to avoid introducing
+bugs silently. The user base is small and actively communicating, so even CLI-level breaking changes may be acceptable if there are clear
+benefits in doing so.
 
 The xsoar-cli project is tightly integrated with two other Python modules:
  - xsoar-client (hosted on https://github.com/tlium/xsoar-client)
