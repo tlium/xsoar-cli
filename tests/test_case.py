@@ -23,7 +23,7 @@ class TestCase:
     def test_case(self, cli_args: list[str], use_fixtures: bool, expected_return_value: int, request: pytest.FixtureRequest) -> None:  # noqa: FBT001
         if "get" in cli_args and not use_fixtures:
             mock_config_file = request.getfixturevalue("mock_config_file")
-            mock_xsoar_client_get_case = request.getfixturevalue("mock_xsoar_client_get_case_zero")
+            mock_xsoar_client_get_case = request.getfixturevalue("mock_xsoar_client_get_case_http_error")
             mock_xsoar_client_create_case = request.getfixturevalue("mock_xsoar_client_create_case")
 
         else:

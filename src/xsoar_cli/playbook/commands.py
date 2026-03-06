@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.pass_context
 def playbook(ctx: click.Context) -> None:
-    """Download/attach/detach playbooks"""
+    """Download and manage playbooks"""
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
@@ -33,8 +33,8 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
 
     We try to detect output path to $(cwd)/Packs/<Pack ID>/Playbooks/<name>.yml
     Whitespace in Pack ID and playbook filename will be replaced with underscores. After the playbook is downloaded,
-    then demisto-sdk format --assume-yes --no-validate --no-graph is done on the downloaded playbook before the item
-    is re-attached in XSOAR.
+    then demisto-sdk format --assume-no --no-validate --no-graph is done on the downloaded playbook before the item
+    is re-attached.
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)

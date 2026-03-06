@@ -172,8 +172,9 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
 @validate_artifacts_provider
 @validate_xsoar_connectivity()
 def validate(ctx: click.Context, environment: str | None, mode: str, manifest: str) -> None:
-    """Validate manifest JSON and content pack availability by doing HTTP CONNECT to the appropriate artifacts repository.
-    Custom pack availability is implementation dependant."""
+    """Validate manifest JSON and content pack availability.
+
+    Custom pack availability is implementation dependent."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.info("Validating manifest '%s' in '%s' mode (environment: '%s')", manifest, mode, environment or config.default_environment)
@@ -358,9 +359,9 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
 @validate_artifacts_provider
 @validate_xsoar_connectivity()
 def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: bool, yes: bool) -> None:  # noqa: FBT001
-    """
-    Deploys content packs to the XSOAR server as defined in the xsoar_config.json manifest.
-    The PATH argument expects the full or relative path to xsoar_config.json
+    """Deploy content packs to the server as defined in the xsoar_config.json manifest.
+
+    The MANIFEST argument expects the full or relative path to xsoar_config.json.
 
     \b
     Prompts for confirmation prior to pack installation.

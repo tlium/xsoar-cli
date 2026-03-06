@@ -25,7 +25,7 @@ def integration(ctx: click.Context) -> None:
 @load_config
 @validate_xsoar_connectivity()
 def dumpconfig(ctx: click.Context, environment: str | None, name: str | None) -> None:
-    """Dumps integration config to JSON file."""
+    """Dump integration instance configuration to stdout as JSON."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.debug("Dumping integration config (environment: '%s')", environment or config.default_environment)
@@ -46,7 +46,7 @@ def dumpconfig(ctx: click.Context, environment: str | None, name: str | None) ->
 @load_config
 @validate_xsoar_connectivity()
 def loadconfig(ctx: click.Context, environment: str | None, name: str, instance_name: str) -> None:
-    """Loads integration config from JSON file."""
+    """Load integration instance configuration from a JSON file. Not yet implemented."""
     logger.debug("integration loadconfig command not implemented")
     click.echo("Command not implemented")
 

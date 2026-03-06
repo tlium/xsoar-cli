@@ -37,16 +37,18 @@ for confirmation before executing any terminal commands as they may have consequ
 src/xsoar_cli/           # Main package (src layout)
   cli.py                  # Entry point, Click group, plugin loading
   configuration.py        # XSOARConfig class
-  connection_errors.py    # Error handling
+  error_handling.py       # Error handling
   log.py                  # Logging setup
   utilities.py            # Shared helpers, decorators
   case/                   # Case operations command group
   config/                 # Config management command group
   graph/                  # Dependency graph command group
+  integration/            # Integration instance config command group
   manifest/               # Manifest validate/deploy command group
   pack/                   # Pack operations command group
   playbook/               # Playbook download command group
   plugins/                # Plugin system and manager
+  rbac/                   # RBAC dump command group
 tests/                    # Test suite
   conftest.py             # Shared fixtures
   test_*.py               # Test modules per command group

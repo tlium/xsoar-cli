@@ -1,10 +1,10 @@
 # Case
 
-Various case/incident related commands for XSOAR.
+Create, retrieve, and clone cases between environments.
 
 ## Get
 
-Retrieve basic information about a single case. Returns raw JSON formatted with 4-space indentation.
+Retrieve basic information about a single case. Output is JSON formatted with 4-space indentation.
 
 **Syntax:** `xsoar-cli case get [OPTIONS] CASENUMBER`
 
@@ -24,13 +24,13 @@ Clone a case from one environment to another. Useful for copying production case
 **Syntax:** `xsoar-cli case clone [OPTIONS] CASENUMBER`
 
 **Options:**
-- `--source TEXT` - Source environment (default: prod)
-- `--dest TEXT` - Destination environment (default: dev)
+- `--source TEXT` - Source environment (required)
+- `--dest TEXT` - Destination environment (required)
 
 **Examples:**
 ```
-xsoar-cli case clone 312412                           # Clone from prod to dev (defaults)
-xsoar-cli case clone --source dev --dest prod 312412  # Clone from dev to prod
+xsoar-cli case clone --source prod --dest dev 312412
+xsoar-cli case clone --source dev --dest prod 312412
 ```
 
 ## Create

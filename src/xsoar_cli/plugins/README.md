@@ -1,15 +1,75 @@
-# XSOAR CLI Plugin System
+# Plugins
 
-The XSOAR CLI plugin system allows you to extend the CLI with custom commands. Plugins are Python files placed in `~/.local/xsoar-cli/plugins/` that are automatically discovered and loaded.
+Manage and extend the CLI with custom commands.
 
-## Quick Start
+## List
 
-1. **Create the plugins directory**:
-   ```bash
+List all available and loaded plugins.
+
+**Syntax:** `xsoar-cli plugins list [OPTIONS]`
+
+**Options:**
+- `-v, --verbose` - Show detailed information (name, version, description)
+
+**Examples:**
+```
+xsoar-cli plugins list
+xsoar-cli plugins list --verbose
+```
+
+## Info
+
+Show detailed information about a specific plugin.
+
+**Syntax:** `xsoar-cli plugins info PLUGIN_NAME`
+
+**Arguments:**
+- `PLUGIN_NAME` - The name of the plugin file (without `.py` extension)
+
+**Examples:**
+```
+xsoar-cli plugins info hello
+```
+
+## Validate
+
+Validate all plugins in the plugins directory. Checks that each plugin can load and provide a valid Click command, and reports any command name conflicts with core commands.
+
+**Syntax:** `xsoar-cli plugins validate`
+
+**Examples:**
+```
+xsoar-cli plugins validate
+```
+
+## Reload
+
+Reload a specific plugin after making changes to its source file.
+
+**Syntax:** `xsoar-cli plugins reload PLUGIN_NAME`
+
+**Arguments:**
+- `PLUGIN_NAME` - The name of the plugin to reload
+
+**Examples:**
+```
+xsoar-cli plugins reload hello
+```
+
+---
+
+## Writing Plugins
+
+Plugins are Python files placed in `~/.local/xsoar-cli/plugins/` that are automatically discovered and loaded at CLI startup.
+
+### Quick Start
+
+1. Create the plugins directory:
+   ```
    mkdir -p ~/.local/xsoar-cli/plugins
    ```
 
-2. **Create a plugin file** (`~/.local/xsoar-cli/plugins/hello_plugin.py`):
+2. Create a plugin file (`~/.local/xsoar-cli/plugins/hello_plugin.py`):
    ```python
    import click
 
@@ -30,56 +90,25 @@ The XSOAR CLI plugin system allows you to extend the CLI with custom commands. P
            return hello
    ```
 
-3. **Use your plugin**:
-   ```bash
+3. Use your plugin:
+   ```
    xsoar-cli hello --name "Alice"
    ```
 
-## Plugin Structure
+### Plugin Structure
 
-A plugin must:
-- Be a Python class that inherits from `XSOARPlugin`
-- Implement the `name`, `version`, and `get_command()` methods
-- The `get_command()` method must return a Click command
+A plugin must be a Python class that inherits from `XSOARPlugin`. The `XSOARPlugin` base class is automatically available in plugin files without any imports.
 
-### Required Methods
-
+**Required methods:**
 - `name` - Unique identifier for your plugin
 - `version` - Version string
-- `get_command()` - Returns the Click command to register
+- `get_command()` - Returns a Click command or group to register
 
-### Optional Methods
-
+**Optional methods:**
 - `description` - Plugin description
 - `initialize()` - Called when plugin loads
 - `cleanup()` - Called when plugin unloads
 
-## Plugin Management
+### Command Conflicts
 
-```bash
-# List all plugins
-xsoar-cli plugins list
-
-# Show plugin details
-xsoar-cli plugins info hello
-
-# Validate plugins
-xsoar-cli plugins validate
-
-# Reload a plugin after changes
-xsoar-cli plugins reload hello
-```
-
-## Command Conflicts
-
-Plugin commands cannot use the same names as core CLI commands:
-- `case`, `config`, `graph`, `manifest`, `pack`, `playbook`, `plugins`
-
-If conflicts occur, use a different command name or create a command group.
-
-## Notes
-
-- The `XSOARPlugin` class is automatically available in plugin files
-- Plugin files are discovered automatically from `~/.local/xsoar-cli/plugins/`
-- Plugins are loaded when the CLI starts
-- No special imports are needed for `XSOARPlugin`
+Plugin commands cannot use the same names as core CLI commands (`case`, `config`, `graph`, `integration`, `manifest`, `pack`, `playbook`, `plugins`, `rbac`). If a conflict is detected, the plugin command is skipped. Use a different command name or wrap your commands in a Click group.

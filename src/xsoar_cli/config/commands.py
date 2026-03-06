@@ -19,7 +19,7 @@ from xsoar_cli.utilities import (
 logger = logging.getLogger(__name__)
 
 
-@click.group(help="Create/validate etc")
+@click.group(help="Create, validate, and manage CLI configuration")
 def config() -> None:
     pass
 
@@ -29,7 +29,7 @@ def config() -> None:
 @click.pass_context
 @load_config
 def show(ctx: click.Context, masked: bool) -> None:
-    """Prints out current config. API keys are masked."""
+    """Print current config. API keys are masked by default."""
     config_file = get_config_file_path()
     logger.info("Showing config (masked=%s)", not masked)
     config = get_config_file_contents(config_file)
@@ -49,7 +49,7 @@ def show(ctx: click.Context, masked: bool) -> None:
 @click.pass_context
 @load_config
 def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -> None:
-    """Validates that the configuration file is JSON and tests connectivity for each XSOAR Client environment defined."""
+    """Validate the configuration file and test connectivity for each environment."""
     return_code = 0
     config = get_xsoar_config(ctx)
     logger.info("Validating config (environments: %s)", config.environment_names)
@@ -127,7 +127,7 @@ def create() -> None:
 @click.pass_context
 @load_config
 def set_credentials(ctx: click.Context, environment: str, apitoken: str, key_id: int) -> None:  # noqa: ARG001
-    """Set XSOAR API credentials for an environment in the config file."""
+    """Set API credentials for an environment in the config file."""
     config_file = get_config_file_path()
     logger.info("Setting credentials for environment '%s' (server_version=%s)", environment, 8 if key_id else 6)
     config_data = json.loads(config_file.read_text())

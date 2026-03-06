@@ -3,7 +3,9 @@ import logging
 from typing import TYPE_CHECKING
 
 import click
+from requests.exceptions import HTTPError
 
+from xsoar_cli.error_handling import HTTPErrorHandler
 from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments, validate_xsoar_connectivity
 
 logger = logging.getLogger(__name__)
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
 
 
-@click.group(help="Add new or modify existing XSOAR case")
+@click.group(help="Create, retrieve, and clone cases")
 def case() -> None:
     pass
 
@@ -23,7 +25,7 @@ def case() -> None:
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
-    """Retrieves and displays a single case from XSOAR.
+    """Retrieve and display a single case.
 
     CASENUMBER is the numeric case ID to look up. Output is formatted as JSON.
 
@@ -33,9 +35,11 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    response = xsoar_client.get_case(casenumber)
-    if response["total"] == 0 and not response["data"]:
-        click.echo(f"Cannot find case ID {casenumber}")
+    try:
+        response = xsoar_client.get_case(casenumber)
+    except HTTPError as ex:
+        handler = HTTPErrorHandler()
+        click.echo(f"Error: {handler.get_message(ex, context='case')}")
         ctx.exit(1)
     click.echo(json.dumps(response, indent=4))
 
@@ -48,7 +52,7 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @load_config
 @validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
 def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
-    """Clones a case from source to destination environment.
+    """Clone a case from source to destination environment.
 
     CASENUMBER is the numeric case ID to clone. Both --source and --dest must refer to
     environments defined in the config file.
@@ -142,7 +146,7 @@ def create(  # noqa: PLR0913
     custom_fields_delimiter: str,
     details: str,
 ) -> None:
-    """Creates a new case in XSOAR.
+    """Create a new case.
 
     NAME is the title of the created case. DETAILS is the case description body.
 
