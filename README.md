@@ -208,15 +208,15 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 
 ### Commands
 
-- **[case](src/xsoar_cli/case/README.md)** - Retrieve case details and clone cases between environments
-- **[config](src/xsoar_cli/config/README.md)** - Create, validate, and manage CLI configuration files
-- **[graph](src/xsoar_cli/graph/README.md)** - Generate visual dependency graphs for content packs
-- **[integration](src/xsoar_cli/integration/README.md)** - Save and load integration instance configuration
-- **[manifest](src/xsoar_cli/manifest/README.md)** - Validate and deploy content using declarative manifests
-- **[pack](src/xsoar_cli/pack/README.md)** - Manage content pack operations and information
-- **[playbook](src/xsoar_cli/playbook/README.md)** - Download playbooks for local editing and development
+- **[case](src/xsoar_cli/commands/case/README.md)** - Retrieve case details and clone cases between environments
+- **[config](src/xsoar_cli/commands/config/README.md)** - Create, validate, and manage CLI configuration files
+- **[graph](src/xsoar_cli/commands/graph/README.md)** - Generate visual dependency graphs for content packs
+- **[integration](src/xsoar_cli/commands/integration/README.md)** - Save and load integration instance configuration
+- **[manifest](src/xsoar_cli/commands/manifest/README.md)** - Validate and deploy content using declarative manifests
+- **[pack](src/xsoar_cli/commands/pack/README.md)** - Manage content pack operations and information
+- **[playbook](src/xsoar_cli/commands/playbook/README.md)** - Download playbooks for local editing and development
 - **[plugins](src/xsoar_cli/plugins/README.md)** - Extend CLI functionality with custom commands
-- **[rbac](src/xsoar_cli/rbac/README.md)** - Dump roles, users and user groups from XSOAR
+- **[rbac](src/xsoar_cli/commands/rbac/README.md)** - Dump roles, users and user groups from XSOAR
 
 ## Plugin System
 
