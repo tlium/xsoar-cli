@@ -219,7 +219,6 @@ def find_packs_in_manifest_not_installed(installed_packs, manifest_data):
             installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
             if not installed:
                 not_installed.append(pack)
-                break
     return not_installed
 
 
@@ -236,5 +235,4 @@ def find_version_mismatch(installed_packs, manifest_data):
             if installed["currentVersion"] != pack["version"]:
                 tmpobj = {"id": pack["id"], "manifest_version": pack["version"], "installed_version": installed["currentVersion"]}
                 outdated.append(tmpobj)
-                break
     return outdated
