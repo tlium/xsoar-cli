@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 import click
 
-from xsoar_cli.utilities import get_xsoar_config, load_config, validate_artifacts_provider, validate_xsoar_connectivity
+from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
+from xsoar_cli.utilities.validators import validate_artifacts_provider, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client

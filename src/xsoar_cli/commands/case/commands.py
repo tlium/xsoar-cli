@@ -6,7 +6,9 @@ import click
 from requests.exceptions import HTTPError
 
 from xsoar_cli.error_handling.http import HTTPErrorHandler
-from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments, validate_xsoar_connectivity
+from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
+from xsoar_cli.utilities.generic import parse_string_to_dict
+from xsoar_cli.utilities.validators import validate_environments, validate_xsoar_connectivity
 
 logger = logging.getLogger(__name__)
 

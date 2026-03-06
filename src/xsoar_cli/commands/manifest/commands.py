@@ -8,15 +8,13 @@ from typing import TYPE_CHECKING, Any
 
 import click
 
-from xsoar_cli.utilities import (
+from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
+from xsoar_cli.utilities.manifest import (
     find_installed_packs_not_in_manifest,
     find_packs_in_manifest_not_installed,
     find_version_mismatch,
-    get_xsoar_config,
-    load_config,
-    validate_artifacts_provider,
-    validate_xsoar_connectivity,
 )
+from xsoar_cli.utilities.validators import validate_artifacts_provider, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
     from xsoar_client.xsoar_client import Client
