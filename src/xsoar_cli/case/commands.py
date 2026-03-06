@@ -23,7 +23,7 @@ def case() -> None:
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
-    """Retrieves and displays a single case from XSOAR.
+    """Retrieve and display a single case.
 
     CASENUMBER is the numeric case ID to look up. Output is formatted as JSON.
 
@@ -48,7 +48,7 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @load_config
 @validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
 def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
-    """Clones a case from source to destination environment.
+    """Clone a case from source to destination environment.
 
     CASENUMBER is the numeric case ID to clone. Both --source and --dest must refer to
     environments defined in the config file.
@@ -142,7 +142,7 @@ def create(  # noqa: PLR0913
     custom_fields_delimiter: str,
     details: str,
 ) -> None:
-    """Creates a new case in XSOAR.
+    """Create a new case.
 
     NAME is the title of the created case. DETAILS is the case description body.
 
