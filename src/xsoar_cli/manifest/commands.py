@@ -291,16 +291,10 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     manifest_data = load_manifest(manifest)
     installed_packs = xsoar_client.get_installed_packs()
     logger.debug("Fetched %d installed pack(s) from server", len(installed_packs))
-    # Detect install content packs not defined in manifest
-    # Find content packs defined in manifest but that are not defined
-    # Find installed content packs that are outdated
     results = {}
     results["undefined_in_manifest"] = find_installed_packs_not_in_manifest(installed_packs, manifest_data)
-    # print(f'{results["undefined_in_manifest"]=}')
     results["not_installed"] = find_packs_in_manifest_not_installed(installed_packs, manifest_data)
-    # print(f'{results["not_installed"]=}')
     results["mismatch"] = find_version_mismatch(installed_packs, manifest_data)
-    # print(f'{results["mismatch"]=}')
     logger.debug(
         "Diff results: %d undefined in manifest, %d not installed, %d version mismatch",
         len(results["undefined_in_manifest"]),
@@ -316,16 +310,6 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
         logger.info("No differences found between manifest and server")
         click.echo("All packs up to date.")
         ctx.exit(0)
-
-    # Example output string:
-    #
-    # Installed packs missing manifest definition:
-    #  - AnsibleTower version 1.1.6
-    #  - CDC_Databricks version 2.0.0
-    #  - CDC_Testing version 1.0.15
-    #
-    #  Packs where install version does not match manifest definition:
-    #    - Base version 1.41.60 installed when version 1.41.58 defined in manifest
 
     msg = ""
     if results["undefined_in_manifest"]:
@@ -343,7 +327,6 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     if results["mismatch"]:
         msg += "Packs where install version does not match manifest definition:\n"
         for item in results["mismatch"]:
-            # mpobj = {pack["id"]: {"manifest version": pack["version"], "installed version": installed["currentVersion"]}}
             msg += f"  - {item['id']} version {item['installed_version']} installed when version {item['manifest_version']} defined in manifest\n"
 
     click.echo(msg)
