@@ -43,10 +43,12 @@ src/xsoar_cli/           # Main package (src layout)
   case/                   # Case operations command group
   config/                 # Config management command group
   graph/                  # Dependency graph command group
+  integration/            # Integration instance config command group
   manifest/               # Manifest validate/deploy command group
   pack/                   # Pack operations command group
   playbook/               # Playbook download command group
   plugins/                # Plugin system and manager
+  rbac/                   # RBAC dump command group
 tests/                    # Test suite
   conftest.py             # Shared fixtures
   test_*.py               # Test modules per command group

@@ -34,7 +34,7 @@ xsoar-cli --help
 
 ## Important Notes
 
-This CLI tool is made to be run from the root of a content repository. Some commands depend on files located in your content repository or expects a certain directory structure to be available from your currently working directory.
+This CLI tool is made to be run from the root of a content repository. Some commands depend on files located in your content repository or expect a certain directory structure to be available from your current working directory.
 
 ## Requirements
 
@@ -44,7 +44,7 @@ This CLI tool is made to be run from the root of a content repository. Some comm
 - [uv](https://docs.astral.sh/uv/) for installation
 
 ### Additional Requirements
-- **demisto-sdk** - Required by several commands, most notably `xsoar-cli playbook download`. Should be installed separately.
+- **demisto-sdk** - Required by `xsoar-cli playbook download`. Should be installed separately.
 
 
 ## Installation
@@ -93,7 +93,7 @@ The xsoar-cli config file is located in `~/.config/xsoar-cli/config.json`. To cr
 xsoar-cli config create
 ```
 
-### Sample configuration file using AWS S3 as artifacs repository for custom content packs
+### Sample configuration file using AWS S3 as artifacts repository for custom content packs
 
 After creating the config file, edit it with your XSOAR server details:
 
@@ -116,7 +116,7 @@ After creating the config file, edit it with your XSOAR server details:
 }
 ```
 
-### Sample configuration file using Azure BlobStorage as artifacs repository for custom content packs
+### Sample configuration file using Azure BlobStorage as artifacts repository for custom content packs
 ```json
 {
     "default_environment": "xsoar8",
@@ -145,7 +145,7 @@ After creating the config file, edit it with your XSOAR server details:
     "default_environment": "dev",
     "default_new_case_type": "My case type",
     "custom_pack_authors": ["My_Org"],
-    "log_level": "DEBUG"
+    "log_level": "DEBUG",
     "server_config": {
         "dev": {
             "base_url": "https://your.dev.domain",
@@ -180,8 +180,8 @@ After creating the config file, edit it with your XSOAR server details:
   - **api_token**: API token for authentication (see XSOAR documentation for creating API keys)
   - **artifacts_location**: Where artifacts are stored ("Azure" and "S3" is currently supported). Set this to an empty string to use `xsoar-cli` without an artifacts repository.
   - **s3_bucket_name**: S3 bucket where your custom content packs are stored (only applicable if using "S3" artifacts location)
-  - **azure_blobstore_url** URL to your Azure BlobStore location (only applicable if using "Azure" artifats location)
-  - **azure_container_name** Name of the container where blobs should be stored (only applicable if using "Azure" artifats location)
+  - **azure_blobstore_url** URL to your Azure BlobStore location (only applicable if using "Azure" artifacts location)
+  - **azure_container_name** Name of the container where blobs should be stored (only applicable if using "Azure" artifacts location)
   - **verify_ssl**: SSL certificate verification - use `false` for self-signed certificates, or path to CA bundle
   - **server_version**: XSOAR server version (6 or 8)
   - **xsiam_auth_id**: Required for XSOAR 8 (XSIAM) - the authentication ID for API access
@@ -211,10 +211,12 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 - **[case](src/xsoar_cli/case/README.md)** - Retrieve case details and clone cases between environments
 - **[config](src/xsoar_cli/config/README.md)** - Create, validate, and manage CLI configuration files
 - **[graph](src/xsoar_cli/graph/README.md)** - Generate visual dependency graphs for content packs
+- **[integration](src/xsoar_cli/integration/README.md)** - Save and load integration instance configuration
 - **[manifest](src/xsoar_cli/manifest/README.md)** - Validate and deploy content using declarative manifests
 - **[pack](src/xsoar_cli/pack/README.md)** - Manage content pack operations and information
 - **[playbook](src/xsoar_cli/playbook/README.md)** - Download playbooks for local editing and development
 - **[plugins](src/xsoar_cli/plugins/README.md)** - Extend CLI functionality with custom commands
+- **[rbac](src/xsoar_cli/rbac/README.md)** - Dump roles, users and user groups from XSOAR
 
 ## Plugin System
 

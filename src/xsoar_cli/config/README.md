@@ -1,6 +1,6 @@
 # Config
 
-Configuration management commands for XSOAR CLI.
+Create, validate, and manage CLI configuration.
 
 ## Create
 
@@ -36,11 +36,13 @@ Validate that the configuration file is properly formatted JSON and test connect
 
 **Options:**
 - `--only-test-environment TEXT` - Test connectivity for only the specified environment
+- `--stacktrace` - Print full stack trace on connectivity failure
 
 **Examples:**
 ```
 xsoar-cli config validate
 xsoar-cli config validate --only-test-environment prod
+xsoar-cli config validate --stacktrace
 ```
 
 ## Set Credentials
@@ -61,4 +63,22 @@ Update API credentials for a specific environment in the configuration file. Aut
 xsoar-cli config set-credentials your-api-token-here
 xsoar-cli config set-credentials --environment prod your-api-token-here
 xsoar-cli config set-credentials --environment prod --key_id 123 your-api-token-here
+```
+
+## Set Azure Token
+
+Set the Azure Blob Storage SAS token for an environment in the configuration file.
+
+**Syntax:** `xsoar-cli config set-azure-token [OPTIONS] SASTOKEN`
+
+**Options:**
+- `--environment TEXT` - Target environment (default: dev)
+
+**Arguments:**
+- `SASTOKEN` - The SAS token to set for the environment
+
+**Examples:**
+```
+xsoar-cli config set-azure-token my-sas-token
+xsoar-cli config set-azure-token --environment prod my-sas-token
 ```
