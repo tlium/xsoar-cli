@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import click
 from requests.exceptions import HTTPError
 
-from xsoar_cli.error_handling import HTTPErrorHandler
+from xsoar_cli.error_handling.http import HTTPErrorHandler
 from xsoar_cli.utilities import get_xsoar_config, load_config, parse_string_to_dict, validate_environments, validate_xsoar_connectivity
 
 logger = logging.getLogger(__name__)

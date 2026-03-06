@@ -14,7 +14,8 @@ import pytest
 from requests.exceptions import HTTPError
 from urllib3.exceptions import NameResolutionError
 
-from xsoar_cli.error_handling import ConnectionErrorHandler, HTTPErrorHandler
+from xsoar_cli.error_handling.connection import ConnectionErrorHandler
+from xsoar_cli.error_handling.http import HTTPErrorHandler
 
 
 def _make_name_resolution_error(hostname: str, reason: str) -> NameResolutionError:
