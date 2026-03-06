@@ -25,7 +25,7 @@ def pack(ctx: click.Context) -> None:
 @load_config
 @validate_xsoar_connectivity()
 def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
-    """Deletes a content pack from the XSOAR server."""
+    """Delete a content pack from the server."""
     config = get_xsoar_config(ctx)
     active_env = environment or config.default_environment
     logger.info("Deleting pack '%s' from environment '%s'", pack_id, active_env)
@@ -47,7 +47,7 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
 @validate_artifacts_provider
 @validate_xsoar_connectivity()
 def get_outdated(ctx: click.Context, environment: str | None) -> None:
-    """Prints out a list of outdated content packs."""
+    """Print a list of outdated content packs."""
     config = get_xsoar_config(ctx)
     active_env = environment or config.default_environment
     logger.info("Fetching outdated packs (environment: '%s')", active_env)
