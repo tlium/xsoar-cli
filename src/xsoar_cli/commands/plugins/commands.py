@@ -82,27 +82,6 @@ def list_plugins(ctx: click.Context, verbose: bool):
             click.echo("    Solution: Rename the command in your plugin or use a command group")
 
 
-@click.command(help="Reload a specific plugin")
-@click.argument("plugin_name", type=str)
-def reload(plugin_name: str):
-    """Reload a specific plugin."""
-    plugin_manager = PluginManager()
-
-    try:
-        click.echo(f"Reloading plugin: {plugin_name}...")
-        plugin = plugin_manager.reload_plugin(plugin_name)
-
-        if plugin:
-            click.echo(f"Successfully reloaded plugin: {plugin_name}")
-            click.echo(f"   Name: {plugin.name}")
-            click.echo(f"   Version: {plugin.version}")
-        else:
-            click.echo(f"Failed to reload plugin: {plugin_name}")
-
-    except Exception as e:
-        click.echo(f"Error reloading plugin {plugin_name}: {e}")
-
-
 @click.command(help="Show information about a specific plugin")
 @click.argument("plugin_name", type=str)
 def info(plugin_name: str):
@@ -201,6 +180,5 @@ def validate():
 
 # Add all commands to the plugins group
 plugins.add_command(list_plugins, name="list")
-plugins.add_command(reload)
 plugins.add_command(info)
 plugins.add_command(validate)

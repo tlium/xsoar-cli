@@ -189,23 +189,6 @@ class PluginManager:
         # Store conflicts for later reporting
         self.command_conflicts = conflicts
 
-    def unload_plugin(self, plugin_name: str) -> None:
-        """Calls the plugin's cleanup method and removes it from the loaded plugins registry."""
-        if plugin_name in self.loaded_plugins:
-            plugin = self.loaded_plugins[plugin_name]
-            try:
-                plugin.cleanup()
-            except Exception as e:
-                logger.warning("Plugin '%s' cleanup failed: %s", plugin_name, e)
-            del self.loaded_plugins[plugin_name]
-            logger.info("Unloaded plugin: %s", plugin_name)
-
-    def unload_all_plugins(self) -> None:
-        """Unloads all loaded plugins."""
-        plugin_names = list(self.loaded_plugins.keys())
-        for plugin_name in plugin_names:
-            self.unload_plugin(plugin_name)
-
     def get_plugin_info(self) -> dict[str, dict[str, str]]:
         """Returns name, version, and description for each loaded plugin."""
         info = {}
@@ -224,20 +207,3 @@ class PluginManager:
     def get_command_conflicts(self) -> list[dict[str, str]]:
         """Returns any command conflicts detected during the last call to register_plugin_commands."""
         return self.command_conflicts.copy()
-
-    def reload_plugin(self, plugin_name: str) -> XSOARPlugin | None:
-        """Unloads and reloads a plugin, clearing any previous load failure. Useful for picking up changes to a plugin file without restarting."""
-        # Unload if already loaded
-        if plugin_name in self.loaded_plugins:
-            self.unload_plugin(plugin_name)
-
-        # Remove from failed plugins if it was there
-        if plugin_name in self.failed_plugins:
-            del self.failed_plugins[plugin_name]
-
-        # Remove from sys.modules to force reload
-        if plugin_name in sys.modules:
-            del sys.modules[plugin_name]
-
-        # Load again
-        return self.load_plugin(plugin_name)
