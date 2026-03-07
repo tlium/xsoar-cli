@@ -20,20 +20,25 @@ def integration(ctx: click.Context) -> None:
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option("--flag", is_flag=True, default=False)
 @click.command()
-@click.argument("name", type=str)
+@click.argument("name", type=str, required=False, default=None)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def dumpconfig(ctx: click.Context, environment: str | None, name: str | None) -> None:
+def dump(ctx: click.Context, environment: str | None, name: str | None, all: bool) -> None:
     """Dump integration instance configuration to stdout as JSON."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.debug("Dumping integration config (environment: '%s')", environment or config.default_environment)
     response = xsoar_client.get_integrations()
     integrations = json.loads(response)
-    integration_data = next((i for i in integrations if i["name"] == name), None)
-    logger.debug("Fetching config for integration name '%s'(environment: '%s')", name, environment or config.default_environment)
+    if all:
+        logger.debug("Fetching config for all integrations (environment: '%s')", environment or config.default_environment)
+        integration_data = integrations
+    else:
+        logger.debug("Fetching config for integration name '%s'(environment: '%s')", name, environment or config.default_environment)
+        integration_data = next((i for i in integrations if i["name"] == name), None)
     if not integration_data:
         click.echo(f"Cannot find integration instance '{name}'")
         ctx.exit(1)
@@ -46,11 +51,11 @@ def dumpconfig(ctx: click.Context, environment: str | None, name: str | None) ->
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def loadconfig(ctx: click.Context, environment: str | None, name: str, instance_name: str) -> None:
-    """Load integration instance configuration from a JSON file. Not yet implemented."""
+def load(ctx: click.Context, environment: str | None, name: str, instance_name: str) -> None:
+    """Load integration instance configuration into XSOAR from a JSON file. Not yet implemented."""
     logger.debug("integration loadconfig command not implemented")
     click.echo("Command not implemented")
 
 
-integration.add_command(dumpconfig)
-integration.add_command(loadconfig)
+integration.add_command(save)
+integration.add_command(load)
