@@ -20,7 +20,7 @@ def integration(ctx: click.Context) -> None:
 
 
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.option("--flag", is_flag=True, default=False)
+@click.option("--all", is_flag=True, default=False)
 @click.command()
 @click.argument("name", type=str, required=False, default=None)
 @click.pass_context
