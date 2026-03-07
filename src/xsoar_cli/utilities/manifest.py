@@ -1,38 +1,67 @@
-def find_installed_packs_not_in_manifest(installed_packs, manifest_data) -> list[dict[str, str]]:
+"""Manifest comparison helpers.
+
+Functions for comparing installed XSOAR packs against a manifest definition,
+used by the manifest CLI commands.
+"""
+
+from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+MANIFEST_KEYS = ["custom_packs", "marketplace_packs"]
+
+
+def _all_manifest_packs(manifest_data: dict) -> list[dict[str, str]]:
+    """Return a flat list of all pack entries across manifest sections."""
+    return [pack for key in MANIFEST_KEYS for pack in manifest_data.get(key, [])]
+
+
+def find_installed_packs_not_in_manifest(
+    installed_packs: list[dict[str, str]],
+    manifest_data: dict,
+) -> list[dict[str, str]]:
     """Find packs that are installed on the XSOAR server but missing manifest definitions."""
-    undefined_packs = []
+    manifest_ids = {pack["id"] for pack in _all_manifest_packs(manifest_data)}
+    undefined = []
     for pack in installed_packs:
-        for key in manifest_data:
-            installed = next((item for item in manifest_data[key] if item["id"] == pack["id"]), {})
-            if installed:
-                break
-        if not installed:
-            undefined_packs.append(pack)
-    return undefined_packs
+        if pack["id"] not in manifest_ids:
+            undefined.append(pack)
+    return undefined
 
 
-def find_packs_in_manifest_not_installed(installed_packs, manifest_data):
+def find_packs_in_manifest_not_installed(
+    installed_packs: list[dict[str, str]],
+    manifest_data: dict,
+) -> list[dict[str, str]]:
     """Find packs defined in the manifest that are not installed on the XSOAR server."""
+    installed_ids = {pack["id"] for pack in installed_packs}
     not_installed = []
-    for key in manifest_data:
-        for pack in manifest_data[key]:
-            installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
-            if not installed:
-                not_installed.append(pack)
+    for pack in _all_manifest_packs(manifest_data):
+        if pack["id"] not in installed_ids:
+            not_installed.append(pack)
     return not_installed
 
 
-def find_version_mismatch(installed_packs, manifest_data):
-    """Find packs where the version installed in XSOAR differs from the version defined in the manifest."""
-    outdated = []
-    for key in manifest_data:
-        for pack in manifest_data[key]:
-            installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
-            if not installed:
-                # We don't care about packs that are not installed here. That use case is handled
-                # in a separate function
-                continue
-            if installed["currentVersion"] != pack["version"]:
-                tmpobj = {"id": pack["id"], "manifest_version": pack["version"], "installed_version": installed["currentVersion"]}
-                outdated.append(tmpobj)
-    return outdated
+def find_version_mismatch(
+    installed_packs: list[dict[str, str]],
+    manifest_data: dict,
+) -> list[dict[str, str]]:
+    """Find packs where the installed version differs from the manifest version."""
+    installed_by_id = {pack["id"]: pack for pack in installed_packs}
+    mismatched = []
+    for manifest_pack in _all_manifest_packs(manifest_data):
+        installed = installed_by_id.get(manifest_pack["id"])
+        if not installed:
+            # Packs not installed are handled by find_packs_in_manifest_not_installed
+            continue
+        if installed["currentVersion"] != manifest_pack["version"]:
+            mismatched.append(
+                {
+                    "id": manifest_pack["id"],
+                    "manifest_version": manifest_pack["version"],
+                    "installed_version": installed["currentVersion"],
+                }
+            )
+    return mismatched
