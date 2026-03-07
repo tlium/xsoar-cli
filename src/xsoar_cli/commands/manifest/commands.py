@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -10,6 +9,7 @@ import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.manifest import (
+    MANIFEST_KEYS,
     find_installed_packs_not_in_manifest,
     find_packs_in_manifest_not_installed,
     find_version_mismatch,
@@ -22,18 +22,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def load_manifest(manifest: str):  # noqa: ANN201
-    """Calls json.load() on the manifest and returns a dict."""
+def load_manifest(manifest: str) -> dict:
+    """Load and parse a manifest JSON file. Raises click.ClickException on failure."""
     filepath = Path(manifest)
     try:
-        return json.load(filepath.open("r"))
+        with filepath.open() as f:
+            return json.load(f)
     except json.JSONDecodeError:
-        msg = f"Failed to decode JSON in {filepath}"
-        click.echo(msg)
-        sys.exit(1)
+        raise click.ClickException(f"Failed to decode JSON in {filepath}")
     except FileNotFoundError:
-        print(f"File not found: {filepath}")
-        sys.exit(1)
+        raise click.ClickException(f"File not found: {filepath}")
 
 
 def write_manifest(manifest: str, data: Any) -> None:  # noqa: ANN401
@@ -43,6 +41,76 @@ def write_manifest(manifest: str, data: Any) -> None:  # noqa: ANN401
         f.write(json.dumps(data, indent=4))
         f.write("\n")
     click.echo(f"Written updated manifest to '{manifest_path}'")
+
+
+def _pack_found_locally(pack_id: str, pack_version: str, manifest_path: str) -> bool:
+    """Check if a pack with the given version exists in the local filesystem.
+
+    During a merge request the manifest may reference a new pack that is not yet
+    available in the artifact repository. If the pack exists locally with the
+    correct version, validation can safely skip the remote availability check.
+    """
+    repo_path = Path(manifest_path).resolve().parent
+    metadata_path = repo_path / "Packs" / pack_id / "pack_metadata.json"
+    if not metadata_path.is_file():
+        return False
+    with metadata_path.open(encoding="utf-8") as f:
+        pack_metadata = json.load(f)
+    return pack_metadata["currentVersion"] == pack_version
+
+
+def _validate_manifest_keys(manifest_data: dict) -> list[dict]:
+    """Return manifest entries that contain invalid keys.
+
+    Valid keys are "id", "version", and "_comment".
+    """
+    valid_keys = {"id", "version", "_comment"}
+    invalid_entries = []
+    for key in MANIFEST_KEYS:
+        for pack in manifest_data[key]:
+            if not set(pack.keys()).issubset(valid_keys):
+                invalid_entries.append(pack)
+    return invalid_entries
+
+
+def _check_pack_availability(
+    xsoar_client: Client,
+    packs: list[dict[str, str]],
+    *,
+    custom: bool,
+    manifest_path: str,
+) -> None:
+    """Verify that each pack is reachable in the artifact repository.
+
+    Falls back to a local filesystem check for custom packs. Raises
+    click.ClickException if any pack is not available.
+    """
+    pack_type = "Custom" if custom else "Marketplace"
+    for pack in packs:
+        available = xsoar_client.is_pack_available(
+            pack_id=pack["id"],
+            version=pack["version"],
+            custom=custom,
+        )
+        if available:
+            click.echo(".", nl=False)
+            continue
+        if custom and _pack_found_locally(pack["id"], pack["version"], manifest_path):
+            logger.debug(
+                "%s pack '%s' %s not in artifacts but found locally, skipping",
+                pack_type,
+                pack["id"],
+                pack["version"],
+            )
+            continue
+        logger.info(
+            "Validation failed: %s pack '%s' version %s not reachable",
+            pack_type.lower(),
+            pack["id"],
+            pack["version"],
+        )
+        raise click.ClickException(f"Failed to find {pack['id']} version {pack['version']}")
+    click.echo()
 
 
 @click.group()
@@ -71,11 +139,12 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
         "marketplace_packs": [],
     }
     for item in installed_packs:
-        tmpobj = {
-            "id": item["id"],
-            "version": item["currentVersion"],
-        }
-        manifest_data["marketplace_packs"].append(tmpobj)
+        manifest_data["marketplace_packs"].append(
+            {
+                "id": item["id"],
+                "version": item["currentVersion"],
+            }
+        )
     write_manifest(manifest_path, manifest_data)
     logger.info("Generated manifest with %d pack(s) at '%s'", len(manifest_data["marketplace_packs"]), manifest_path)
 
@@ -101,7 +170,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     logger.debug("Found %d outdated pack(s) on server", len(outdated_installed_packs))
 
     changes_made = False
-    for key in ["custom_packs", "marketplace_packs"]:
+    for key in MANIFEST_KEYS:
         custom = key == "custom_packs"
         pack_type = "Custom" if custom else "Marketplace"
         for index, manifest_pack in enumerate(manifest_data[key]):
@@ -124,7 +193,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
             # as warning
             comment = manifest_data[key][index].get("_comment", None)
             if comment is not None:
-                print(f"WARNING: comment found in manifest for {manifest_pack['id']}: {comment}")
+                click.echo(f"WARNING: comment found in manifest for {manifest_pack['id']}: {comment}")
 
             # Prompt user if pack should be upgraded
             logger.debug("%s pack '%s': update available from %s to %s", pack_type, manifest_pack["id"], manifest_pack["version"], latest)
@@ -179,96 +248,49 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
 
     manifest_data = load_manifest(manifest)
     click.echo("Manifest is valid JSON")
-    keys = ["custom_packs", "marketplace_packs"]
 
-    def found_in_local_filesystem() -> bool:
-        # If we are in a merge request and the merge request contains a new pack as well
-        # as a updated xsoar_config.json manifest, then the pack is not available in S3
-        # before the MR is merged. Check if we can find the appropriate pack version locally
-        # If so, we can ignore this error because the pack will become available after merge.
-        manifest_arg = Path(manifest)
-        manifest_path = manifest_arg.resolve()
-        repo_path = manifest_path.parent
-        pack_metadata_path = Path(f"{repo_path}/Packs/{pack['id']}/pack_metadata.json")
-        if not pack_metadata_path.is_file():
-            return False
-        with Path.open(pack_metadata_path, encoding="utf-8") as f:
-            pack_metadata = json.load(f)
-        if pack_metadata["currentVersion"] == pack["version"]:
-            return True
-        # The relevant Pack locally does not have the requested version.
-        return False
-
-    # Validate json keys. The manifest entries should only contain "id", "version" or "_comment"
-    found_invalid_entry = False
-    for key in keys:
-        for index, pack in enumerate(manifest_data[key]):
-            for k, v in pack.items():
-                if k not in ["id", "version", "_comment"]:
-                    logger.error("Manifest data contains invalid key. %s should only contain keys %s", pack, ["id", "version", "_comment"])
-                    errmsg = f"The following manifest entry contains an invalid key:\n{json.dumps(pack, indent=4)}\n"
-                    click.echo(f"ERROR: {errmsg}")
-                    found_invalid_entry = True
-
-    if found_invalid_entry:
+    invalid_entries = _validate_manifest_keys(manifest_data)
+    if invalid_entries:
+        for entry in invalid_entries:
+            logger.error("Manifest entry contains invalid key: %s", entry)
+            click.echo(f"ERROR: The following manifest entry contains an invalid key:\n{json.dumps(entry, indent=4)}\n")
         click.echo('Valid keys are "id", "version", "_comment"')
         ctx.exit(1)
 
     if mode == "full":
-        for key in keys:
+        for key in MANIFEST_KEYS:
             custom = key == "custom_packs"
-            pack_type = "Custom" if custom else "Marketplace"
             click.echo(f"Checking {key} availability ", nl=False)
-            for pack in manifest_data[key]:
-                available = xsoar_client.is_pack_available(pack_id=pack["id"], version=pack["version"], custom=custom)
-                # We check if a pack is found in local filesystem regardless of whether it's an upstream pack or not.
-                # This should cause any significantly negative performance penalties.
-                if not available:
-                    if custom and found_in_local_filesystem():
-                        logger.debug("%s pack '%s' %s not in artifacts but found locally, skipping", pack_type, pack["id"], pack["version"])
-                        continue
-                    logger.info("Validation failed: %s pack '%s' version %s not reachable", pack_type.lower(), pack["id"], pack["version"])
-                    click.echo(f"\nFailed to reach find {pack['id']} version {pack['version']}")
-                    sys.exit(1)
-                click.echo(".", nl=False)
-            print()
+            _check_pack_availability(
+                xsoar_client,
+                manifest_data[key],
+                custom=custom,
+                manifest_path=manifest,
+            )
         logger.info("Full validation passed for manifest '%s'", manifest)
         click.echo("Manifest is valid JSON and all packs are reachable")
-        return
     elif mode == "diff":
         installed_packs = xsoar_client.get_installed_packs()
-        for key in keys:
-            found_diff = False
+        installed_by_id = {pack["id"]: pack for pack in installed_packs}
+        for key in MANIFEST_KEYS:
             custom = key == "custom_packs"
-            pack_type = "Custom" if custom else "Marketplace"
-            click.echo(f"Checking {key} availability ", nl=False)
+            packs_to_check = []
             for pack in manifest_data[key]:
-                installed = next((item for item in installed_packs if item["id"] == pack["id"]), {})
+                installed = installed_by_id.get(pack["id"])
                 if not installed or installed["currentVersion"] != pack["version"]:
-                    available = xsoar_client.is_pack_available(pack_id=pack["id"], version=pack["version"], custom=custom)
-                    # We check if a pack is found in local filesystem regardless of whether it's an upstream pack or not.
-                    # This should cause any significantly negative performance penalties.
-                    if not available:
-                        if custom and found_in_local_filesystem():
-                            logger.debug(
-                                "%s pack '%s' %s not in artifacts but found locally, skipping", pack_type, pack["id"], pack["version"]
-                            )
-                            continue
-                        logger.info(
-                            "Validation failed: %s pack '%s' version %s not reachable", pack_type.lower(), pack["id"], pack["version"]
-                        )
-                        click.echo(f"\nFailed to find pack {pack['id']} version {pack['version']}")
-                        sys.exit(1)
-                    click.echo(".", nl=False)
-                    found_diff = True
-            if not found_diff:
+                    packs_to_check.append(pack)
+            click.echo(f"Checking {key} availability ", nl=False)
+            if not packs_to_check:
                 click.echo("- no diff from installed versions found in manifest.")
             else:
-                print()
-
+                _check_pack_availability(
+                    xsoar_client,
+                    packs_to_check,
+                    custom=custom,
+                    manifest_path=manifest,
+                )
         logger.info("Diff validation passed for manifest '%s'", manifest)
         click.echo("Manifest is valid JSON and all packs are reachable.")
-        return
     else:
         msg = "Invalid value for --mode detected. This should never happen"
         raise RuntimeError(msg)
@@ -373,7 +395,7 @@ def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: 
 
     # Process both custom and marketplace packs
     installed_any = False
-    for key in ["custom_packs", "marketplace_packs"]:
+    for key in MANIFEST_KEYS:
         custom = key == "custom_packs"
         pack_type = "Custom" if custom else "Marketplace"
         logger.debug("Processing %s packs from manifest", pack_type.lower())
