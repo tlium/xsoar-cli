@@ -215,7 +215,7 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 - **[manifest](src/xsoar_cli/commands/manifest/README.md)** - Validate and deploy content using declarative manifests
 - **[pack](src/xsoar_cli/commands/pack/README.md)** - Manage content pack operations and information
 - **[playbook](src/xsoar_cli/commands/playbook/README.md)** - Download playbooks for local editing and development
-- **[plugins](src/xsoar_cli/plugins/README.md)** - Extend CLI functionality with custom commands
+- **[plugins](src/xsoar_cli/commands/plugins/README.md)** - Extend CLI functionality with custom commands
 - **[rbac](src/xsoar_cli/commands/rbac/README.md)** - Dump roles, users and user groups from XSOAR
 
 ## Plugin System
