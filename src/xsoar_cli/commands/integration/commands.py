@@ -57,5 +57,5 @@ def load(ctx: click.Context, environment: str | None, name: str, instance_name: 
     click.echo("Command not implemented")
 
 
-integration.add_command(save)
+integration.add_command(dump)
 integration.add_command(load)
