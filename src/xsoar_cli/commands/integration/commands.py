@@ -19,9 +19,9 @@ def integration(ctx: click.Context) -> None:
     """(BETA) Save/load integration configuration for an integration instance."""
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--all", is_flag=True, default=False)
-@click.command()
 @click.argument("name", type=str, required=False, default=None)
 @click.pass_context
 @load_config
@@ -45,8 +45,8 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
     click.echo(json.dumps(integration_data, sort_keys=True, indent=4) + "\n")
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
