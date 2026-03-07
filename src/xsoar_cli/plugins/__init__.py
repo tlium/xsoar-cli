@@ -49,12 +49,6 @@ class XSOARPlugin(ABC):
         Override this method if your plugin needs initialization.
         """
 
-    def cleanup(self) -> None:
-        """
-        Cleanup plugin resources. Called when the application shuts down.
-        Override this method if your plugin needs cleanup.
-        """
-
 
 class PluginError(Exception):
     """Exception raised when there's an error with plugin loading or execution."""
