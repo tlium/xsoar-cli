@@ -118,9 +118,9 @@ def manifest() -> None:
     """Various commands to interact/update/deploy content packs defined in the xsoar_config.json manifest."""
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.argument("manifest_path", type=str)
-@click.command()
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
@@ -149,9 +149,9 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
     logger.info("Generated manifest with %d pack(s) at '%s'", len(manifest_data["marketplace_packs"]), manifest_path)
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.argument("manifest", type=str)
-@click.command()
 @click.pass_context
 @load_config
 @validate_artifacts_provider
@@ -225,6 +225,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
         logger.info("Manifest '%s' updated with new pack versions", manifest)
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option(
     "--mode",
@@ -233,7 +234,6 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     help="Validate the full manifest, or only the definitions that diff with installed versions",
 )
 @click.argument("manifest", type=str)
-@click.command()
 @click.pass_context
 @load_config
 @validate_artifacts_provider
@@ -296,9 +296,9 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
         raise RuntimeError(msg)
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.argument("manifest", type=str)
-@click.command()
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
@@ -352,10 +352,10 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     click.echo(msg)
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--verbose", is_flag=True, default=False)
 @click.option("--yes", is_flag=True, default=False)
-@click.command()
 @click.argument("manifest", type=str)
 @click.pass_context
 @load_config

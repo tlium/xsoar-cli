@@ -1,7 +1,6 @@
 import logging
 import pathlib
 import subprocess
-import sys
 from io import StringIO
 from typing import TYPE_CHECKING
 
@@ -23,8 +22,8 @@ def playbook(ctx: click.Context) -> None:
     """Download and manage playbooks"""
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
@@ -49,7 +48,7 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
     except Exception as ex:  # noqa: BLE001
         logger.info("Failed to download playbook '%s': %s", name, ex)
         click.echo(f"FAILED: {ex!s}")
-        sys.exit(1)
+        ctx.exit(1)
     playbook_bytes_data = StringIO(playbook.decode("utf-8"))
     playbook_data = yaml.safe_load(playbook_bytes_data)
     pack_id = playbook_data["contentitemexportablefields"]["contentitemfields"]["packID"]
@@ -60,7 +59,7 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
         logger.info("Target directory not found: %s", target_dir)
         msg = f"Cannot find target directory: {target_dir}\nMaybe you're not running xsoar-cli from the root of a content repository?"
         click.echo(msg)
-        sys.exit(1)
+        ctx.exit(1)
     filepath = pathlib.Path(cwd / "Packs" / pack_id / "Playbooks" / f"{playbook_data['id']}.yml")
     filepath = pathlib.Path(str(filepath).replace(" ", "_"))
     with filepath.open("w") as f:

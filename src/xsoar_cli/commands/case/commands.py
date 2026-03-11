@@ -21,9 +21,9 @@ def case() -> None:
     pass
 
 
+@click.command()
 @click.argument("casenumber", type=int)
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.command()
 @click.pass_context
 @load_config
 def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
@@ -46,10 +46,10 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
     click.echo(json.dumps(response, indent=4))
 
 
+@click.command()
 @click.argument("casenumber", type=int)
 @click.option("--source", required=True, show_default=True, help="Source environment")
 @click.option("--dest", required=True, show_default=True, help="Destination environment")
-@click.command()
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
@@ -126,6 +126,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     click.echo(f"Case {casenumber} from {source} cloned into case {case_id} in {dest}")
 
 
+@click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--casetype", default="", show_default=True, help="Create case of specified type. Default type set in config file.")
 @click.option(
@@ -136,7 +137,6 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 @click.option("--custom-fields-delimiter", default=",", help='Delimiter when specifying additional fields. Default is ","')
 @click.argument("details", type=str, default="Placeholder case details")
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
-@click.command()
 @click.pass_context
 @load_config
 def create(  # noqa: PLR0913

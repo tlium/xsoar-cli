@@ -92,10 +92,10 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
     logger.info("Dependency graph generation complete")
 
 
+@click.command()
 @click.option("-of", "--output-format", type=click.Choice(["GML", "GraphML"]), default="GML", help="File format for the exported graph")
 @click.option("-o", "--output-path", required=True, type=click.Path(exists=True), help="Path to output directory.")
 @_common_graph_options
-@click.command()
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
@@ -120,7 +120,7 @@ def export(
     xsoar-cli graph export -rp . -o /tmp -of GraphML"""
     cg = _build_content_graph(ctx, packs, repo_path, upstream_repo_path, environment)
     output = cg.export(output_path=output_path, output_format=output_format)
-    logger.debug(f"Done exporting: {output}")
+    logger.debug("Done exporting: %s", output)
     click.echo(f"Done exporting: {output}")
 
 

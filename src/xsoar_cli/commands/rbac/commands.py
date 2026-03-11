@@ -19,8 +19,8 @@ def rbac(ctx: click.Context) -> None:
     """Dump roles, users and user groups"""
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
@@ -33,8 +33,8 @@ def getroles(ctx: click.Context, environment: str | None) -> None:
     click.echo(json.dumps(roles, sort_keys=True, indent=4) + "\n")
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
@@ -47,8 +47,8 @@ def getusers(ctx: click.Context, environment: str | None) -> None:
     click.echo(json.dumps(users, sort_keys=True, indent=4) + "\n")
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()

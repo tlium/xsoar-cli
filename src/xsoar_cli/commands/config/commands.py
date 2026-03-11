@@ -120,10 +120,10 @@ def create() -> None:
     click.echo(f"Wrote template configuration file {config_file}")
 
 
+@click.command()
 @click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
 @click.option("--key_id", type=int, help="If set then server config for server_version will be set to 8.")
 @click.argument("apitoken", type=str)
-@click.command()
 @click.pass_context
 @load_config
 def set_credentials(ctx: click.Context, environment: str, apitoken: str, key_id: int) -> None:  # noqa: ARG001
@@ -145,9 +145,9 @@ def set_credentials(ctx: click.Context, environment: str, apitoken: str, key_id:
     logger.info("Credentials updated for environment '%s'", environment)
 
 
+@click.command()
 @click.option("--environment", default="dev", show_default=True, help="Environment as defined in config file")
 @click.argument("sastoken", type=str)
-@click.command()
 @click.pass_context
 @load_config
 def set_azure_token(ctx: click.Context, environment: str, sastoken: str) -> None:  # noqa: ARG001

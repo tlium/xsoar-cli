@@ -1,5 +1,4 @@
 import logging
-import sys
 from typing import TYPE_CHECKING
 
 import click
@@ -19,8 +18,8 @@ def pack(ctx: click.Context) -> None:
     """Various content pack related commands."""
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.argument("pack_id", type=str)
 @click.pass_context
 @load_config
@@ -34,15 +33,15 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
     if not xsoar_client.is_installed(pack_id=pack_id):
         logger.info("Pack '%s' is not installed on '%s', aborting delete", pack_id, active_env)
         click.echo(f"Pack ID {pack_id} is not installed. Cannot delete.")
-        sys.exit(1)
+        ctx.exit(1)
     logger.debug("Pack '%s' confirmed installed, proceeding with deletion", pack_id)
     xsoar_client.delete(pack_id=pack_id)
     logger.info("Successfully deleted pack '%s' from environment '%s'", pack_id, active_env)
-    click.echo(f"Deleted pack {pack_id} from XSOAR {environment}")
+    click.echo(f"Deleted pack {pack_id} from XSOAR {active_env}")
 
 
-@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
 @validate_artifacts_provider
@@ -59,7 +58,7 @@ def get_outdated(ctx: click.Context, environment: str | None) -> None:
     if not outdated_packs:
         logger.info("No outdated packs found on '%s'", active_env)
         click.echo("No outdated packs found")
-        sys.exit(0)
+        return
     id_header = "Pack ID"
     installed_header = "Installed"
     latest_header = "Latest"
