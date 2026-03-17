@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import TYPE_CHECKING
 
@@ -34,7 +35,9 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     """List detached content items."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    click.echo(f"Getting detached content items (type={content_type})")
+    response = xsoar_client.content.get_detached(content_type)
+    click.echo(json.dumps(response.json(), indent=4))
+    click.echo(f"Getting detached content items ({content_type=})")
 
 
 content.add_command(get_detached)
