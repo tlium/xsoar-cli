@@ -1,0 +1,43 @@
+import json
+import logging
+from typing import TYPE_CHECKING
+
+import click
+
+from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
+from xsoar_cli.utilities.validators import validate_xsoar_connectivity
+
+if TYPE_CHECKING:
+    from xsoar_client.xsoar_client import Client
+
+logger = logging.getLogger(__name__)
+
+
+@click.group()
+def content() -> None:
+    """Inspect and manage content items."""
+
+
+@click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "--type",
+    "content_type",
+    type=click.Choice(["scripts", "playbooks", "all"], case_sensitive=False),
+    default="all",
+    show_default=True,
+    help="Type of content items to retrieve.",
+)
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity()
+def get_detached(ctx: click.Context, environment: str | None, content_type: str) -> None:
+    """List detached content items."""
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    response = xsoar_client.content.get_detached(content_type)
+    click.echo(json.dumps(response.json(), indent=4))
+    click.echo(f"Getting detached content items ({content_type=})")
+
+
+content.add_command(get_detached)
