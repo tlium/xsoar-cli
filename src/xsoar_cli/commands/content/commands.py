@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import click
 
+import xsoar_cli
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
@@ -40,4 +41,28 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     click.echo(f"Getting detached content items ({content_type=})")
 
 
+@click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "--type",
+    "content_type",
+    type=click.Choice(["scripts", "playbooks", "commands", "all"], case_sensitive=False),
+    default="all",
+    show_default=True,
+    help="Type of content items to list.",
+)
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity()
+def list(ctx: click.Context, environment: str | None, content_type: str) -> None:
+    """
+    List detached content items. The purpose of this function is to list out available commands,
+    playbooks and scripts, primarily to facilitate better AI generated playbooks"""
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    json_blob = xsoar_client.content.list(content_type)
+    click.echo(json.dumps(json_blob, indent=4))
+
+
 content.add_command(get_detached)
+content.add_command(list)
