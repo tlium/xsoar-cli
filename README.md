@@ -209,6 +209,7 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 ### Commands
 
 - **[case](src/xsoar_cli/commands/case/README.md)** - Retrieve case details and clone cases between environments
+- **[content](src/xsoar_cli/commands/content/README.md)** - Inspect and manage content items on your XSOAR server
 - **[config](src/xsoar_cli/commands/config/README.md)** - Create, validate, and manage CLI configuration files
 - **[graph](src/xsoar_cli/commands/graph/README.md)** - Generate visual dependency graphs for content packs
 - **[integration](src/xsoar_cli/commands/integration/README.md)** - Save and load integration instance configuration
