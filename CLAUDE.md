@@ -36,6 +36,7 @@ for confirmation before executing any terminal commands as they may have consequ
 ## Project Layout
 
 ```
+CHANGELOG.md              # Changelog (Keep a Changelog format)
 src/xsoar_cli/            # Main package (src layout)
   cli.py                  # Entry point, Click group, plugin loading
   configuration.py        # XSOARConfig class
@@ -126,6 +127,20 @@ uv run xsoar-cli --help
 - In case of larger modifications, do implementation in logically grouped steps. Complex modifications may be broken down further.
 - After completing each step, stop and wait for the user to review and confirm before proceeding to the next step.
 - Each step should be small enough to be comfortably reviewed. As a rule of thumb, no more than one or two files modified per step.
+
+## Changelog
+
+- The project maintains a `CHANGELOG.md` in the repository root.
+- The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+- All user-facing changes must be documented in `CHANGELOG.md`. This includes:
+  - Adding, removing, or renaming commands, options, or arguments (`Added` / `Removed`)
+  - Changes to default behavior or output format (`Changed`)
+  - Bug fixes (`Fixed`)
+  - Refactors or internal changes that alter observable behavior (`Changed`)
+- When an option or command is renamed, document both the addition of the new name (`Added` or `Changed`) and the removal of the old name (`Removed`).
+- Internal refactors that do not affect CLI behavior do not need a changelog entry.
+- New entries go under the `## [Unreleased]` section, grouped by type: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`.
+- When a release is cut, the `[Unreleased]` entries are moved under a new version heading with the release date.
 
 ## Plugin System
 
