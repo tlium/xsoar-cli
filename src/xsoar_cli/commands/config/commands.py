@@ -47,10 +47,10 @@ def show(ctx: click.Context, masked: bool) -> None:
 @click.option("--only-test-environment", default=None, show_default=True, help="Environment as defined in config file")
 @click.option("--connectivity-only", is_flag=True, default=False, help="Only test XSOAR server connectivity, skip artifacts check.")
 @click.option("--all", "all_environments", is_flag=True, default=False, help="Test all configured environments.")
-@click.option("--stacktrace", is_flag=True, default=False, help="Print full stack trace on config validation failure.")
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Show error details on validation failure.")
 @click.pass_context
 @load_config
-def validate(ctx: click.Context, only_test_environment: str, connectivity_only: bool, all_environments: bool, stacktrace: bool) -> None:
+def validate(ctx: click.Context, only_test_environment: str, connectivity_only: bool, all_environments: bool, verbose: bool) -> None:
     """Validate the configuration file and test connectivity.
 
     By default, tests only the default environment. Use --all to test all
@@ -88,7 +88,7 @@ def validate(ctx: click.Context, only_test_environment: str, connectivity_only: 
             click.echo("OK")
         except ConnectionError as ex:
             logger.info("XSOAR connectivity failed for '%s': %s", server_env, ex)
-            if stacktrace:
+            if verbose:
                 # Print the original cause if available, otherwise the main message
                 error_msg = str(ex.__cause__) if ex.__cause__ else str(ex)
                 click.echo(error_msg)
@@ -107,7 +107,7 @@ def validate(ctx: click.Context, only_test_environment: str, connectivity_only: 
                     click.echo("No artifact provider configured")
             except Exception as ex:
                 logger.info("Artifact provider failed for '%s': %s", server_env, ex)
-                if stacktrace:
+                if verbose:
                     # Print the original cause if available, otherwise the main message
                     error_msg = str(ex.__cause__) if ex.__cause__ else str(ex)
                     click.echo(error_msg)

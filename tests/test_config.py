@@ -248,29 +248,29 @@ class TestConfigValidateMutualExclusivity:
         assert "mutually exclusive" in result.output
 
 
-class TestConfigValidateStacktrace:
-    """Tests for config validate --stacktrace."""
+class TestConfigValidateVerbose:
+    """Tests for config validate --verbose."""
 
     @patch("xsoar_client.xsoar_client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    def test_stacktrace_shows_error_message_on_connectivity_failure(self, mock_client, mock_config_file) -> None:
+    def test_verbose_shows_error_message_on_connectivity_failure(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(connectivity_ok=False)
         mock_client.return_value = mock_instance
 
         runner = CliRunner()
-        result = runner.invoke(cli.cli, ["config", "validate", "--stacktrace"])
+        result = runner.invoke(cli.cli, ["config", "validate", "--verbose"])
 
         assert result.exit_code == 1
         assert "Connection refused" in result.output
 
     @patch("xsoar_client.xsoar_client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    def test_stacktrace_shows_error_message_on_artifacts_failure(self, mock_client, mock_config_file) -> None:
+    def test_verbose_shows_error_message_on_artifacts_failure(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(artifacts_ok=False)
         mock_client.return_value = mock_instance
 
         runner = CliRunner()
-        result = runner.invoke(cli.cli, ["config", "validate", "--stacktrace"])
+        result = runner.invoke(cli.cli, ["config", "validate", "--verbose"])
 
         assert result.exit_code == 1
         assert "Artifact connection failed" in result.output

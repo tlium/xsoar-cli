@@ -38,7 +38,7 @@ Validate the configuration file and test connectivity. By default, tests only th
 - `--connectivity-only` - Only test XSOAR server connectivity, skip artifacts repository check
 - `--all` - Test all configured environments (mutually exclusive with `--only-test-environment`)
 - `--only-test-environment TEXT` - Test connectivity for only the specified environment (mutually exclusive with `--all`)
-- `--stacktrace` - Print full stack trace on connectivity failure
+- `-v`, `--verbose` - Show error details on validation failure
 
 **Examples:**
 ```
@@ -60,8 +60,8 @@ xsoar-cli config validate --only-test-environment prod
 # Test a specific environment, XSOAR connectivity only
 xsoar-cli config validate --only-test-environment prod --connectivity-only
 
-# Show full error details on failure
-xsoar-cli config validate --stacktrace
+# Show error details on failure
+xsoar-cli config validate --verbose
 ```
 
 ## Set Credentials
