@@ -107,7 +107,8 @@ uv run xsoar-cli --help
 - Ruff noqa comments are used where rules are intentionally suppressed (e.g., `# noqa: PLR0913` for many parameters, `# noqa: ANN201` for fixture return types)
 - Type hints are used throughout; `str | None` union syntax (Python 3.10+)
 - Heavy third-party imports (`xsoar_client`, `xsoar_dependency_graph`, `demisto_client`, etc.) must be deferred into the function or method bodies that use them, not imported at module level. This avoids loading slow transitive dependencies (boto3, azure-storage-blob, matplotlib, networkx, etc.) at CLI startup, keeping `--help` and `--version` fast. Use `from __future__ import annotations` together with a `TYPE_CHECKING` block so type hints remain clean and unquoted. Mark each deferred import with the comment `# Lazy import for performance reasons`. When patching deferred imports in tests, patch at the source (`xsoar_client.xsoar_client.Client`) rather than the importing module (`xsoar_cli.configuration.Client`)
-- Tests must not produce side effects on the real filesystem, such as writing to the log file. Tests invoke `cli()` directly via Click's `CliRunner`, bypassing `main()` and its logging setup
+- Tests must not produce side effects on the real filesystem, such as writing to the log file or modifying the user's config file. Tests invoke `cli()` directly via Click's `CliRunner`, bypassing `main()` and its logging setup
+- Tests must mock all config file I/O. Any test that exercises code paths touching `get_config_file_contents`, `get_config_file_path`, or `Path.write_text` on the config file must patch these to prevent real filesystem access. The `mock_config_file` fixture in `conftest.py` is the standard way to do this
 - Tests use `unittest.mock.patch` to mock external dependencies (`xsoar_client`, config file I/O)
 - Test classes follow `class TestX` naming; test methods use `test_` prefix
 - Fixtures are defined in `tests/conftest.py` and requested via `request.getfixturevalue()` for conditional use
@@ -119,6 +120,14 @@ uv run xsoar-cli --help
 - Supports multiple named environments under `server_config`
 - `default_environment` selects the active environment
 - `custom_pack_authors` distinguishes custom packs from marketplace packs
+
+## Sensitive Files
+
+The user's live configuration at `~/.config/xsoar-cli/config.json` contains API tokens and other credentials. Corrupting or overwriting this file breaks the user's ability to interact with XSOAR.
+
+- Never under any circumstance read, write, or execute commands that touch `~/.config/xsoar-cli/config.json` without explicit user permission. This includes running `xsoar-cli config create`, `xsoar-cli config set-credentials`, `xsoar-cli config set-azure-token`, or `xsoar-cli config show --unmask`
+- Never run `xsoar-cli` subcommands via terminal that could modify the user's live configuration. When testing CLI changes, rely on the test suite (`uv run pytest`), not direct CLI invocations
+- When editing config-related code (`config_file.py`, `commands/config/commands.py`, `configuration.py`), never propose changes that remove or weaken the existing mocking of `get_config_file_contents` or `get_config_file_path` in tests
 
 ## Workflow
 
