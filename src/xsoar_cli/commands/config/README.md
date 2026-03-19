@@ -30,18 +30,37 @@ xsoar-cli config show --unmask
 
 ## Validate
 
-Validate that the configuration file is properly formatted JSON and test connectivity to each XSOAR environment defined in the configuration.
+Validate the configuration file and test connectivity. By default, tests only the default environment (both XSOAR server connectivity and artifacts repository if configured).
 
 **Syntax:** `xsoar-cli config validate [OPTIONS]`
 
 **Options:**
-- `--only-test-environment TEXT` - Test connectivity for only the specified environment
+- `--connectivity-only` - Only test XSOAR server connectivity, skip artifacts repository check
+- `--all` - Test all configured environments (mutually exclusive with `--only-test-environment`)
+- `--only-test-environment TEXT` - Test connectivity for only the specified environment (mutually exclusive with `--all`)
 - `--stacktrace` - Print full stack trace on connectivity failure
 
 **Examples:**
 ```
+# Test default environment (XSOAR connectivity and artifacts)
 xsoar-cli config validate
+
+# Test default environment, XSOAR connectivity only
+xsoar-cli config validate --connectivity-only
+
+# Test all configured environments
+xsoar-cli config validate --all
+
+# Test all configured environments, XSOAR connectivity only
+xsoar-cli config validate --all --connectivity-only
+
+# Test a specific environment
 xsoar-cli config validate --only-test-environment prod
+
+# Test a specific environment, XSOAR connectivity only
+xsoar-cli config validate --only-test-environment prod --connectivity-only
+
+# Show full error details on failure
 xsoar-cli config validate --stacktrace
 ```
 
