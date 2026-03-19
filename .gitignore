@@ -6,6 +6,7 @@ venv
 xsoar_config.json
 scratch
 .venv
+.envrc
 .coverage
 .pytest_cache
 _version.py
