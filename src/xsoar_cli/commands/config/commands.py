@@ -45,19 +45,38 @@ def show(ctx: click.Context, masked: bool) -> None:
 
 @click.command()
 @click.option("--only-test-environment", default=None, show_default=True, help="Environment as defined in config file")
+@click.option("--connectivity-only", is_flag=True, default=False, help="Only test XSOAR server connectivity, skip artifacts check.")
+@click.option("--all", "all_environments", is_flag=True, default=False, help="Test all configured environments.")
 @click.option("--stacktrace", is_flag=True, default=False, help="Print full stack trace on config validation failure.")
 @click.pass_context
 @load_config
-def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -> None:
-    """Validate the configuration file and test connectivity for each environment."""
+def validate(ctx: click.Context, only_test_environment: str, connectivity_only: bool, all_environments: bool, stacktrace: bool) -> None:
+    """Validate the configuration file and test connectivity.
+
+    By default, tests only the default environment. Use --all to test all
+    configured environments, or --only-test-environment to test a specific one.
+    """
+    if all_environments and only_test_environment:
+        raise click.UsageError("--all and --only-test-environment are mutually exclusive.")
+
     return_code = 0
     config = get_xsoar_config(ctx)
-    logger.info("Validating config (environments: %s)", config.environment_names)
-    for server_env in config.environment_names:
-        if only_test_environment and server_env != only_test_environment:
-            # Ignore environment if --only-test-environment option is given and environment does not match
-            # what the user specified in option
-            logger.debug("Skipping environment '%s' (not selected)", server_env)
+
+    # Determine which environments to test
+    if only_test_environment:
+        environments_to_test = [only_test_environment]
+    elif all_environments:
+        environments_to_test = config.environment_names
+    else:
+        environments_to_test = [config.default_environment]
+
+    logger.info("Validating config (environments: %s)", environments_to_test)
+
+    for server_env in environments_to_test:
+        if not config.has_environment(server_env):
+            logger.info("Environment '%s' not found in server config", server_env)
+            click.echo(f'Error: environment "{server_env}" not found in server config.')
+            return_code = 1
             continue
         logger.debug("Testing environment '%s'", server_env)
         click.echo(f'Testing "{server_env}" environment')
@@ -76,7 +95,7 @@ def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -
             else:
                 click.echo("FAILED")
             return_code = 1
-        if config.environment_has_artifacts(server_env):
+        if not connectivity_only and config.environment_has_artifacts(server_env):
             click.echo("  - Artifacts repository: ", nl=False)
             try:
                 if xsoar_client.artifact_provider:
@@ -95,10 +114,6 @@ def validate(ctx: click.Context, only_test_environment: str, stacktrace: bool) -
                 else:
                     click.echo("FAILED")
                 return_code = 1
-    if not config.has_environment(config.default_environment):
-        logger.info("Default environment '%s' not found in server config", config.default_environment)
-        click.echo(f'Error: default environment "{config.default_environment}" not found in server config.')
-        return_code = 1
     logger.info("Config validation finished with return code %d", return_code)
     ctx.exit(return_code)
 
