@@ -1,22 +1,22 @@
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+      - main
 
 jobs:
-    coverage:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Install uv and set the Python version
-              uses: astral-sh/setup-uv@v7
-              with:
-                  python-version: "3.14"
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
 
-            - name: Sync uv
-              run: uv sync --all-groups
+      - name: Sync uv
+        run: uv sync --all-groups
 
-            - name: Run unit tests with coverage
-              run: uv run pytest --cov=src/xsoar_cli --cov-report=term-missing
+      - name: Run unit tests with coverage
+        run: uv run pytest --cov=src/xsoar_cli --cov-report=term-missing
