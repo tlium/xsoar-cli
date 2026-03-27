@@ -61,6 +61,8 @@ def check_for_update() -> str | None:
     skip_version_check = True
     if config_file.is_file():
         config_data = get_config_file_contents(config_file)
+        # Default to skipping version check if skip_version_check does not
+        # exist in config file.
         skip_version_check = config_data.get("skip_version_check", True)
 
     if skip_version_check:
