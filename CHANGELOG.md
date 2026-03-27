@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-03-27
+
 ### Added
 
 - `config validate --connectivity-only` flag to test only XSOAR server connectivity, skipping artifacts repository checks.
