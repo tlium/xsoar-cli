@@ -127,12 +127,7 @@ def main() -> None:
     _setup = _configure_logging()
     # Check for updates to xsoar-cli
     try:
-        config_file = get_config_file_path()
-        skip_version_check = True
-        if config_file.is_file():
-            config_data = get_config_file_contents(config_file)
-            skip_version_check = config_data.get("skip_version_check", True)
-        update_message = check_for_update(skip_version_check=skip_version_check)
+        update_message = check_for_update()
         if update_message:
             click.echo(update_message, err=True)
     except Exception:

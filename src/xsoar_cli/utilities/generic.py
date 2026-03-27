@@ -4,6 +4,8 @@ import logging
 import requests
 from packaging.version import Version
 
+from xsoar_cli.utilities.config_file import get_config_file_contents, get_config_file_path
+
 logger = logging.getLogger(__name__)
 
 PACKAGE_NAME = "xsoar-cli"
@@ -48,13 +50,19 @@ def get_latest_version(package_name: str) -> Version:
     return stable[-1] if stable else versions[-1]
 
 
-def check_for_update(skip_version_check: bool = True) -> str | None:
+def check_for_update() -> str | None:
     """Check if a newer version of xsoar-cli is available on PyPI.
 
     Returns a message string if an update is available, None otherwise.
-    Skips the check when skip_version_check is True (the default), or when
-    the package was not installed from an index.
+    Skips the check when skip_version_check is absent or True in the config,
+    or when the package was not installed from an index.
     """
+    config_file = get_config_file_path()
+    skip_version_check = True
+    if config_file.is_file():
+        config_data = get_config_file_contents(config_file)
+        skip_version_check = config_data.get("skip_version_check", True)
+
     if skip_version_check:
         logger.debug("Skipping version check (disabled in configuration)")
         return None
