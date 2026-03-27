@@ -36,6 +36,14 @@ jobs:
             exit 1
           fi
 
+  update_changelog:
+    needs: details
+    uses: ./.github/workflows/update-changelog.yml
+    with:
+      version: ${{ needs.details.outputs.new_version }}
+    permissions:
+      contents: write
+
   check_pypi:
     needs: details
     runs-on: ubuntu-latest
@@ -63,7 +71,7 @@ jobs:
           fi
 
   setup_and_build:
-    needs: [details, check_pypi]
+    needs: [details, check_pypi, update_changelog]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
