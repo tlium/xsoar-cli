@@ -174,6 +174,7 @@ After creating the config file, edit it with your XSOAR server details:
 - **default_environment**: Which environment to use by default (e.g., "xsoar6")
 - **default_new_case_type**: Default case type when creating new cases
 - **custom_pack_authors**: List of author names used in your custom content packs. This helps xsoar-cli distinguish between your custom packs and marketplace packs. Use the same values you have in `pack_metadata.json` files.
+- **skip_version_check**: Set to `false` to check PyPI for newer versions of xsoar-cli on each invocation. Defaults to `true` (no check). The check is also skipped for editable and non-index installs.
 
 - **server_config**: Define multiple XSOAR environments (xsoar6, xsoar8, etc.)
   - **base_url**: Your XSOAR server URL
