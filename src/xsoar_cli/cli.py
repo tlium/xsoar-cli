@@ -25,6 +25,7 @@ from .commands.rbac import commands as rbac_commands
 from .log import LoggingSetup, setup_logging
 from .plugins.manager import PluginManager
 from .utilities.config_file import get_config_file_contents, get_config_file_path
+from .utilities.generic import check_for_update
 
 
 class XSOARCliGroup(click.Group):
@@ -121,8 +122,22 @@ _setup: LoggingSetup | None = None
 def main() -> None:
     """Entry point (pyproject.toml console_scripts). Sets up logging, invokes
     the CLI, and ensures the exit code is logged before the process exits."""
+    # Start by setting up logging facilitites
     global _setup  # noqa: PLW0603
     _setup = _configure_logging()
+    # Check for updates to xsoar-cli
+    try:
+        config_file = get_config_file_path()
+        skip_version_check = True
+        if config_file.is_file():
+            config_data = get_config_file_contents(config_file)
+            skip_version_check = config_data.get("skip_version_check", True)
+        update_message = check_for_update(skip_version_check=skip_version_check)
+        if update_message:
+            click.echo(update_message, err=True)
+    except Exception:
+        # Ignore errors during update check (network issues, missing metadata, etc.)
+        pass
     try:
         cli()
     except SystemExit as e:
