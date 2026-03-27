@@ -33,6 +33,7 @@ def get_config_file_template_contents() -> dict:
         "default_environment": "dev",
         "default_new_case_type": "",
         "custom_pack_authors": ["SOMEONE"],
+        "skip_version_check": True,
         "server_config": {
             "dev": {
                 "base_url": "https://xsoar.example.com",

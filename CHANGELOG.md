@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `config validate --connectivity-only` flag to test only XSOAR server connectivity, skipping artifacts repository checks.
 - `config validate --all` flag to test all configured environments.
+- Version update check on CLI startup. When `skip_version_check` is set to `false` in the config file and the package is installed from PyPI, the CLI checks for newer versions and prints a notice to stderr. Disabled by default.
+- `skip_version_check` key in the config file template.
 
 ### Changed
 
