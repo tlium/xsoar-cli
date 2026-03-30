@@ -36,9 +36,9 @@ class Content:
         Where content_type must be either "playbooks" or "scripts".
         """
         payload = {"query": "system:T"}
-        if content_type == "playbooks":
+        if content_type == "scripts":
             endpoint = "/automation/search"
-        elif content_type == "scripts":
+        elif content_type == "playbooks":
             endpoint = "/playbook/search"
         else:
             raise ValueError(f"Invalid value {content_type=}")
