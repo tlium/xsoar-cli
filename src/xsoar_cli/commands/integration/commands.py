@@ -31,8 +31,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.debug("Dumping integration config (environment: '%s')", environment or config.default_environment)
-    response = xsoar_client.integrations.get_instances()
-    integrations = json.loads(response)
+    integrations = xsoar_client.integrations.get_instances()
     if all:
         logger.debug("Fetching config for all integrations (environment: '%s')", environment or config.default_environment)
         integration_data = integrations
@@ -46,12 +45,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
 
 
 @click.command()
-@click.option("--environment", default=None, help="Default environment set in config file.")
-@click.argument("name", type=str)
-@click.pass_context
-@load_config
-@validate_xsoar_connectivity()
-def load(ctx: click.Context, environment: str | None, name: str, instance_name: str) -> None:
+def load(ctx: click.Context) -> None:
     """Load integration instance configuration into XSOAR from a JSON file. Not yet implemented."""
     logger.debug("integration loadconfig command not implemented")
     click.echo("Command not implemented")
