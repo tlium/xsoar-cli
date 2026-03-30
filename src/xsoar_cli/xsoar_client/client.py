@@ -8,7 +8,6 @@ import requests
 
 from .artifact_providers.base import BaseArtifactProvider
 from .cases import Cases
-from .config import ClientConfig
 from .constants import HTTP_CALL_TIMEOUT, XSOAR_OLD_VERSION
 from .content import Content
 from .integrations import Integrations
@@ -28,17 +27,25 @@ class Client:
     def __init__(
         self,
         *,
-        config: ClientConfig,
+        server_url: str,
+        api_token: str,
+        server_version: int,
+        xsiam_auth_id: str = "",
+        verify_ssl: bool | str = False,
         artifact_provider: BaseArtifactProvider | None = None,
     ) -> None:
-        self.config = config
+        self.server_url = server_url
+        self.api_token = api_token
+        self.server_version = server_version
+        self.xsiam_auth_id = xsiam_auth_id
+        self.verify_ssl = verify_ssl
         self.artifact_provider = artifact_provider
         self.http_timeout = HTTP_CALL_TIMEOUT
         self.demisto_py_instance = demisto_client.configure(
-            base_url=self.config.server_url,
-            api_key=self.config.api_token,
-            auth_id=self.config.xsiam_auth_id,
-            verify_ssl=self.config.verify_ssl,
+            base_url=self.server_url,
+            api_key=self.api_token,
+            auth_id=self.xsiam_auth_id,
+            verify_ssl=self.verify_ssl,
         )
 
         self.packs = Packs(self)
@@ -57,14 +64,14 @@ class Client:
         data: dict | None = None,
     ) -> Response:
         """Wrapper for Requests. Sets the appropriate headers and authentication token."""
-        url = f"{self.config.server_url}{endpoint}"
+        url = f"{self.server_url}{endpoint}"
         headers = {
             "Accept": "application/json",
-            "Authorization": self.config.api_token,
+            "Authorization": self.api_token,
             "Content-Type": "application/json",
         }
-        if self.config.xsiam_auth_id:
-            headers["x-xdr-auth-id"] = self.config.xsiam_auth_id
+        if self.xsiam_auth_id:
+            headers["x-xdr-auth-id"] = self.xsiam_auth_id
         return requests.request(
             method=method,
             url=url,
@@ -72,13 +79,13 @@ class Client:
             json=json,
             files=files,
             data=data,
-            verify=self.config.verify_ssl,
+            verify=self.verify_ssl,
             timeout=self.http_timeout,
         )
 
     def test_connectivity(self) -> bool:
         """Tests connectivity to the XSOAR server."""
-        if self.config.server_version > XSOAR_OLD_VERSION:
+        if self.server_version > XSOAR_OLD_VERSION:
             endpoint = "/xsoar/workers/status"
         else:
             endpoint = "/workers/status"
