@@ -65,6 +65,9 @@ tests = ["tests", "*/xsoar-cli/tests"]
 [tool.coverage.report]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
