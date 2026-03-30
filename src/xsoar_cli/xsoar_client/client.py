@@ -32,6 +32,7 @@ class Client:
         server_version: int,
         xsiam_auth_id: str = "",
         verify_ssl: bool | str = False,
+        custom_pack_authors: list[str] | None = None,
         artifact_provider: BaseArtifactProvider | None = None,
     ) -> None:
         self.server_url = server_url
@@ -48,7 +49,7 @@ class Client:
             verify_ssl=self.verify_ssl,
         )
 
-        self.packs = Packs(self)
+        self.packs = Packs(self, custom_pack_authors=custom_pack_authors)
         self.cases = Cases(self)
         self.content = Content(self)
         self.integrations = Integrations(self)

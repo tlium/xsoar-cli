@@ -21,7 +21,7 @@ class Cases:
 
     def create(self, data: dict) -> dict:
         """Creates a new case."""
-        if self.client.config.server_version > XSOAR_OLD_VERSION:
+        if self.client.server_version > XSOAR_OLD_VERSION:
             endpoint = "/xsoar/public/v1/incident"
         else:
             endpoint = "/incident"
