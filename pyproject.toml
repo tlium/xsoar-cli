@@ -25,8 +25,13 @@ classifiers = [
 dependencies = [
     "click==8.1.8",
     "PyYaml>=6.0.2",
-    "xsoar-client>=2.0.5",
     "xsoar-dependency-graph>=0.2.1",
+    "requests>=2.8.0",
+    "boto3>=1.36.17",
+    "demisto-py>=3.2.22",
+    "azure-storage-blob>=12.28.0",
+    "azure-identity>=1.25.1",
+    "packaging",
 ]
 
 [project.urls]
