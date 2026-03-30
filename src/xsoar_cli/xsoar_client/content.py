@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from requests.models import Response
 
 if TYPE_CHECKING:
-    from .xsoar_client import Client
+    from .client import Client
 
 
 class Content:

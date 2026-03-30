@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from .constants import XSOAR_OLD_VERSION
 
 if TYPE_CHECKING:
-    from .xsoar_client import Client
+    from .client import Client
 
 
 class Cases:

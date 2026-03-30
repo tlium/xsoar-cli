@@ -11,7 +11,7 @@ from packaging import version
 from .constants import HTTP_CALL_TIMEOUT, XSOAR_OLD_VERSION
 
 if TYPE_CHECKING:
-    from .xsoar_client import Client
+    from .client import Client
 
 
 class Packs:
