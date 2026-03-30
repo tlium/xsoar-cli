@@ -12,7 +12,7 @@ class Rbac:
 
     def get_users(self) -> str:
         """Returns information on all XSOAR users."""
-        if self.client.config.server_version < 8:
+        if self.client.server_version < 8:
             endpoint = "/users"
         else:
             endpoint = "/rbac/get_users"
@@ -22,7 +22,7 @@ class Rbac:
 
     def get_roles(self) -> str:
         """Returns information on all XSOAR roles."""
-        if self.client.config.server_version < 8:
+        if self.client.server_version < 8:
             endpoint = "/roles"
         else:
             endpoint = "/rbac/get_roles"
@@ -32,7 +32,7 @@ class Rbac:
 
     def get_user_groups(self) -> str:
         """Returns information on all XSOAR user groups."""
-        if self.client.config.server_version < 8:
+        if self.client.server_version < 8:
             endpoint = "/user_groups"
         else:
             endpoint = "/rbac/get_user_groups"

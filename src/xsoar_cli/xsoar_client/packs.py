@@ -15,14 +15,15 @@ if TYPE_CHECKING:
 
 
 class Packs:
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, custom_pack_authors: list[str] | None = None) -> None:
         self.client = client
+        self.custom_pack_authors = custom_pack_authors or []
         self.installed_packs: list[dict] | None = None
         self.installed_expired: list[dict] | None = None
 
     def get_installed(self) -> list[dict]:
         """Fetches a complete list of installed packs."""
-        if self.client.config.server_version > XSOAR_OLD_VERSION:
+        if self.client.server_version > XSOAR_OLD_VERSION:
             endpoint = "/xsoar/public/v1/contentpacks/metadata/installed"
         else:
             endpoint = "/contentpacks/metadata/installed"
@@ -35,7 +36,7 @@ class Packs:
 
     def get_installed_expired(self) -> list[dict]:
         """Fetches a complete list of installed expired packs."""
-        if self.client.config.server_version > XSOAR_OLD_VERSION:
+        if self.client.server_version > XSOAR_OLD_VERSION:
             endpoint = "/xsoar/contentpacks/installed-expired"
         else:
             endpoint = "/contentpacks/installed-expired"
@@ -119,7 +120,7 @@ class Packs:
         expired_packs = self.get_installed_expired()
         update_available = []
         for pack in expired_packs:
-            if pack["author"] in self.client.config.custom_pack_authors:
+            if pack["author"] in self.custom_pack_authors:
                 if not self.client.artifact_provider:
                     raise RuntimeError("No artifact provider configured")
                 try:
