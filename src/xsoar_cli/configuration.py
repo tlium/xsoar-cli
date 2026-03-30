@@ -6,9 +6,9 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from xsoar_client.artifact_providers.azure import AzureArtifactProvider
-    from xsoar_client.artifact_providers.s3 import S3ArtifactProvider
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.artifact_providers.azure import AzureArtifactProvider
+    from xsoar_cli.xsoar_client.artifact_providers.s3 import S3ArtifactProvider
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +33,8 @@ class EnvironmentConfig:
     def _create_client(self) -> Client:
         """Create the XSOAR client with artifact provider."""
         # Lazy import for performance reasons
-        from xsoar_client.config import ClientConfig
-        from xsoar_client.xsoar_client import Client
+        from xsoar_cli.xsoar_client.client import Client
+        from xsoar_cli.xsoar_client.config import ClientConfig
 
         logger.debug(
             "Client config for '%s': server_version=%s, base_url=%s, verify_ssl=%s",
@@ -62,14 +62,14 @@ class EnvironmentConfig:
 
         if artifacts_location == "S3":
             # Lazy import for performance reasons
-            from xsoar_client.artifact_providers.s3 import S3ArtifactProvider
+            from xsoar_cli.xsoar_client.artifact_providers.s3 import S3ArtifactProvider
 
             bucket_name = self._config.get("s3_bucket_name", "")
             logger.debug("Creating S3 artifact provider for '%s' (bucket: %s)", self.env_name, bucket_name)
             return S3ArtifactProvider(bucket_name=bucket_name)
         elif artifacts_location == "Azure":
             # Lazy import for performance reasons
-            from xsoar_client.artifact_providers.azure import AzureArtifactProvider
+            from xsoar_cli.xsoar_client.artifact_providers.azure import AzureArtifactProvider
 
             logger.debug("Creating Azure artifact provider for '%s'", self.env_name)
             return AzureArtifactProvider(

@@ -17,7 +17,7 @@ from xsoar_cli.utilities.manifest import (
 from xsoar_cli.utilities.validators import validate_artifacts_provider, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ from xsoar_cli.utilities.validators import validate_environments, validate_xsoar
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 
 
 @click.group(help="Create, retrieve, and clone cases")
