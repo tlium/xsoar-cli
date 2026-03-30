@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
-
 from xsoar_cli import cli
 
 
@@ -27,7 +26,7 @@ def _make_mock_client(connectivity_ok: bool = True, artifacts_ok: bool = True) -
 class TestConfigGroup:
     """Tests for the config command group itself."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_config_group_shows_help(self, mock_client, mock_config_file) -> None:
         runner = CliRunner()
@@ -38,7 +37,7 @@ class TestConfigGroup:
 class TestConfigValidateDefault:
     """Tests for config validate with no flags (default behavior: test default environment only)."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_default_tests_only_default_environment(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -51,7 +50,7 @@ class TestConfigValidateDefault:
         assert 'Testing "dev" environment' in result.output
         assert 'Testing "prod" environment' not in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_default_tests_xsoar_connectivity_and_artifacts(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -64,7 +63,7 @@ class TestConfigValidateDefault:
         assert "XSOAR connectivity: OK" in result.output
         assert "Artifacts repository: OK" in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_default_connectivity_failure(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(connectivity_ok=False)
@@ -76,7 +75,7 @@ class TestConfigValidateDefault:
         assert result.exit_code == 1
         assert "XSOAR connectivity: FAILED" in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_default_artifacts_failure(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(artifacts_ok=False)
@@ -93,7 +92,7 @@ class TestConfigValidateDefault:
 class TestConfigValidateConnectivityOnly:
     """Tests for config validate --connectivity-only."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_connectivity_only_skips_artifacts(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -106,7 +105,7 @@ class TestConfigValidateConnectivityOnly:
         assert "XSOAR connectivity: OK" in result.output
         assert "Artifacts repository" not in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_connectivity_only_does_not_fail_on_broken_artifacts(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(artifacts_ok=False)
@@ -118,7 +117,7 @@ class TestConfigValidateConnectivityOnly:
         assert result.exit_code == 0
         assert "Artifacts repository" not in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_connectivity_only_fails_on_connection_error(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(connectivity_ok=False)
@@ -130,7 +129,7 @@ class TestConfigValidateConnectivityOnly:
         assert result.exit_code == 1
         assert "XSOAR connectivity: FAILED" in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_connectivity_only_tests_only_default_environment(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -147,7 +146,7 @@ class TestConfigValidateConnectivityOnly:
 class TestConfigValidateAll:
     """Tests for config validate --all."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_all_tests_every_environment(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -160,7 +159,7 @@ class TestConfigValidateAll:
         assert 'Testing "dev" environment' in result.output
         assert 'Testing "prod" environment' in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_all_tests_connectivity_and_artifacts(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -173,7 +172,7 @@ class TestConfigValidateAll:
         assert result.output.count("XSOAR connectivity: OK") == 2
         assert result.output.count("Artifacts repository: OK") == 2
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_all_connectivity_only_skips_artifacts(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -192,7 +191,7 @@ class TestConfigValidateAll:
 class TestConfigValidateOnlyTestEnvironment:
     """Tests for config validate --only-test-environment."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_only_test_environment_tests_specified_env(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -205,7 +204,7 @@ class TestConfigValidateOnlyTestEnvironment:
         assert 'Testing "prod" environment' in result.output
         assert 'Testing "dev" environment' not in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_only_test_environment_with_connectivity_only(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -219,7 +218,7 @@ class TestConfigValidateOnlyTestEnvironment:
         assert "XSOAR connectivity: OK" in result.output
         assert "Artifacts repository" not in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_only_test_environment_nonexistent(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -235,7 +234,7 @@ class TestConfigValidateOnlyTestEnvironment:
 class TestConfigValidateMutualExclusivity:
     """Tests for mutual exclusivity between --all and --only-test-environment."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_all_and_only_test_environment_are_mutually_exclusive(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client()
@@ -251,7 +250,7 @@ class TestConfigValidateMutualExclusivity:
 class TestConfigValidateVerbose:
     """Tests for config validate --verbose."""
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_verbose_shows_error_message_on_connectivity_failure(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(connectivity_ok=False)
@@ -263,7 +262,7 @@ class TestConfigValidateVerbose:
         assert result.exit_code == 1
         assert "Connection refused" in result.output
 
-    @patch("xsoar_client.xsoar_client.Client")
+    @patch("xsoar_cli.xsoar_client.client.Client")
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
     def test_verbose_shows_error_message_on_artifacts_failure(self, mock_client, mock_config_file) -> None:
         mock_instance = _make_mock_client(artifacts_ok=False)
