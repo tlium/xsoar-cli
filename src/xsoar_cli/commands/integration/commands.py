@@ -46,12 +46,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
 
 
 @click.command()
-@click.option("--environment", default=None, help="Default environment set in config file.")
-@click.argument("name", type=str)
-@click.pass_context
-@load_config
-@validate_xsoar_connectivity()
-def load(ctx: click.Context, environment: str | None, name: str, instance_name: str) -> None:
+def load(ctx: click.Context) -> None:
     """Load integration instance configuration into XSOAR from a JSON file. Not yet implemented."""
     logger.debug("integration loadconfig command not implemented")
     click.echo("Command not implemented")
