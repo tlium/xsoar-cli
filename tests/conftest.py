@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from requests.exceptions import HTTPError
-
 from xsoar_cli.utilities.config_file import get_config_file_template_contents
 
 
@@ -15,7 +14,7 @@ def mock_config_file():  # noqa: ANN201
 
 @pytest.fixture
 def mock_xsoar_client_create_case():  # noqa: ANN201
-    with patch("xsoar_client.xsoar_client.Client.create_case") as mock_create:
+    with patch("xsoar_cli.xsoar_client.cases.Cases.create") as mock_create:
         mock_create.return_value = {
             "name": "This is a test",
             "id": "66666666",
@@ -38,14 +37,14 @@ def mock_xsoar_client_get_case_http_error():  # noqa: ANN201
     mock_response.status_code = 400
     mock_response.text = "Bad Request"
     mock_response.url = "https://xsoar.example.com/incident/load/99999"
-    with patch("xsoar_client.xsoar_client.Client.get_case") as mock_get_error:
+    with patch("xsoar_cli.xsoar_client.cases.Cases.get") as mock_get_error:
         mock_get_error.side_effect = HTTPError(response=mock_response)
         yield mock_get_error
 
 
 @pytest.fixture
 def mock_xsoar_client_get_case():  # noqa: ANN201
-    with patch("xsoar_client.xsoar_client.Client.get_case") as mock_get:
+    with patch("xsoar_cli.xsoar_client.cases.Cases.get") as mock_get:
         mock_get.return_value = {
             "total": 1,
             "data": [

@@ -11,7 +11,7 @@ from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
     # case user specifies a cutsom playbook and not a system playbook
     try:
         click.echo("Downloading playbook...", nl=False)
-        playbook = xsoar_client.download_item(item_type="playbook", item_id=name)
+        playbook = xsoar_client.content.download_item(item_type="playbook", item_id=name)
         click.echo("ok.")
     except Exception as ex:  # noqa: BLE001
         logger.info("Failed to download playbook '%s': %s", name, ex)
@@ -82,7 +82,7 @@ def download(ctx: click.Context, environment: str | None, name: str) -> None:
         check=False,
     )  # noqa: S603, S607
     click.echo("Re-attaching playbook in XSOAR...", nl=False)
-    xsoar_client.attach_item(item_type="playbook", item_id=name)
+    xsoar_client.content.attach_item(item_type="playbook", item_id=name)
     click.echo("done.")
     logger.info("Playbook '%s' downloaded and re-attached", name)
 

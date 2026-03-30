@@ -13,7 +13,7 @@ from xsoar_cli.utilities.validators import validate_environments, validate_xsoar
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 
 
 @click.group(help="Create, retrieve, and clone cases")
@@ -38,7 +38,7 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     try:
-        response = xsoar_client.get_case(casenumber)
+        response = xsoar_client.cases.get(casenumber)
     except HTTPError as ex:
         handler = HTTPErrorHandler()
         click.echo(f"Error: {handler.get_message(ex, context='case')}")
@@ -78,7 +78,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     xsoar_source_client: Client = config.get_client(source)
     xsoar_dest_client: Client = config.get_client(dest)
 
-    results = xsoar_source_client.get_case(casenumber)
+    results = xsoar_source_client.cases.get(casenumber)
     # These keys can safely be removed from the results dict before creating a new case
     remove_keys = [
         "dbotMirrorId",
@@ -108,12 +108,12 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 
     # Ensure that playbooks run immediately when the case is created
     results["createInvestigation"] = True
-    case_data = xsoar_dest_client.create_case(data=results)
+    case_data = xsoar_dest_client.cases.create(data=results)
     case_id = case_data["id"]
     logger.info("Created destination case %s in '%s'", case_id, dest)
 
     # Fetch updated version etc for the newly created case. We need this to prevent errors stemming from optimistic locking
-    new_case_data = xsoar_dest_client.get_case(case_id)
+    new_case_data = xsoar_dest_client.cases.get(case_id)
     logger.debug("Re-fetched destination case %s to obtain current version for label merge", case_id)
 
     existing_labels = new_case_data["labels"]
@@ -121,7 +121,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     new_case_data["labels"] = existing_labels + labels
     # Keep the source case status. If the case is closed in source environment, it should be closed in dest environment
     # new_case_data["status"] = results["status"]
-    case_data = xsoar_dest_client.create_case(data=new_case_data)
+    case_data = xsoar_dest_client.cases.create(data=new_case_data)
     logger.info("Clone complete: case %d ('%s') -> case %s ('%s')", casenumber, source, case_id, dest)
     click.echo(f"Case {casenumber} from {source} cloned into case {case_id} in {dest}")
 
@@ -178,7 +178,7 @@ def create(  # noqa: PLR0913
         "details": details,
         "CustomFields": parse_string_to_dict(custom_fields, custom_fields_delimiter),
     }
-    case_data = xsoar_client.create_case(data=data)
+    case_data = xsoar_client.cases.create(data=data)
     case_id = case_data["id"]
     click.echo(f"Created XSOAR case {case_id}")
 

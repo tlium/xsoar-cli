@@ -7,7 +7,7 @@ from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_artifacts_provider, validate_xsoar_connectivity
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +30,12 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
     active_env = environment or config.default_environment
     logger.info("Deleting pack '%s' from environment '%s'", pack_id, active_env)
     xsoar_client: Client = config.get_client(environment)
-    if not xsoar_client.is_installed(pack_id=pack_id):
+    if not xsoar_client.packs.is_installed(pack_id=pack_id):
         logger.info("Pack '%s' is not installed on '%s', aborting delete", pack_id, active_env)
         click.echo(f"Pack ID {pack_id} is not installed. Cannot delete.")
         ctx.exit(1)
     logger.debug("Pack '%s' confirmed installed, proceeding with deletion", pack_id)
-    xsoar_client.delete(pack_id=pack_id)
+    xsoar_client.packs.delete(pack_id=pack_id)
     logger.info("Successfully deleted pack '%s' from environment '%s'", pack_id, active_env)
     click.echo(f"Deleted pack {pack_id} from XSOAR {active_env}")
 
@@ -53,7 +53,7 @@ def get_outdated(ctx: click.Context, environment: str | None) -> None:
     logger.info("Fetching outdated packs (environment: '%s')", active_env)
     xsoar_client: Client = config.get_client(environment)
     click.echo("Fetching outdated packs. This may take a little while...", err=True)
-    outdated_packs = xsoar_client.get_outdated_packs()
+    outdated_packs = xsoar_client.packs.get_outdated()
     logger.debug("Found %d outdated pack(s)", len(outdated_packs))
     if not outdated_packs:
         logger.info("No outdated packs found on '%s'", active_env)

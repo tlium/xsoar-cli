@@ -10,8 +10,9 @@ from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
     from xsoar_dependency_graph.xsoar_dependency_graph import ContentGraph
+
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def _build_content_graph(
     xsoar_client: Client = config.get_client(environment)
     logger.info("Generating dependency graph (environment: '%s', repo: '%s')", environment or config.default_environment, repo_path)
 
-    installed_content = xsoar_client.get_installed_expired_packs()
+    installed_content = xsoar_client.packs.get_installed_expired()
     logger.debug("Fetched %d installed/expired pack(s) from server", len(installed_content))
 
     rp = Path(repo_path)

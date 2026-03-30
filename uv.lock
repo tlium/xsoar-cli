@@ -643,7 +643,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -1675,9 +1675,14 @@ wheels = [
 name = "xsoar-cli"
 source = { editable = "." }
 dependencies = [
+    { name = "azure-identity" },
+    { name = "azure-storage-blob" },
+    { name = "boto3" },
     { name = "click" },
+    { name = "demisto-py" },
+    { name = "packaging" },
     { name = "pyyaml" },
-    { name = "xsoar-client" },
+    { name = "requests" },
     { name = "xsoar-dependency-graph" },
 ]
 
@@ -1689,9 +1694,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "azure-identity", specifier = ">=1.25.1" },
+    { name = "azure-storage-blob", specifier = ">=12.28.0" },
+    { name = "boto3", specifier = ">=1.36.17" },
     { name = "click", specifier = "==8.1.8" },
+    { name = "demisto-py", specifier = ">=3.2.22" },
+    { name = "packaging" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "xsoar-client", specifier = ">=2.0.5" },
+    { name = "requests", specifier = ">=2.8.0" },
     { name = "xsoar-dependency-graph", specifier = ">=0.2.1" },
 ]
 
@@ -1699,22 +1709,6 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
-]
-
-[[package]]
-name = "xsoar-client"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "azure-identity" },
-    { name = "azure-storage-blob" },
-    { name = "boto3" },
-    { name = "demisto-py" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f6/fe/6147b4fc9e51644e8c9f0acf784089dd51d48843489262cddc2dea26a945/xsoar_client-2.1.0.tar.gz", hash = "sha256:fb1e4cbd29884bb5619ad1d637374dfe74eab90e092ce5b882df0dc9a13ae54d", size = 36804, upload-time = "2026-03-05T20:27:08.465Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/2a/1fc65ef8bea3b56406ee470f9f19d04438e27effb4540dad63b42a3b1798/xsoar_client-2.1.0-py3-none-any.whl", hash = "sha256:1c9e3e613b8895f5563137d84e17cc7f1a703fd3fd87f400ee3ae5f225bfe3bd", size = 10277, upload-time = "2026-03-05T20:27:06.815Z" },
 ]
 
 [[package]]

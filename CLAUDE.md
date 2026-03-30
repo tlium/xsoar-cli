@@ -13,11 +13,10 @@ class imports, helper functions) can change freely, but changes with a wide blas
 bugs silently. The user base is small and actively communicating, so even CLI-level breaking changes may be acceptable if there are clear
 benefits in doing so.
 
-The xsoar-cli project is tightly integrated with two other Python modules:
- - xsoar-client (hosted on https://github.com/tlium/xsoar-client)
- - xsoar-dependency-graph (hosted on https://github.com/tlium/xsoar-dependency-graph)
-Development on xsoar-client, xsoar-dependency-graph and xsoar-cli is all done by the same developers. Suggesting modifications in the two
-aforementioned Python packages is acceptable if such modifications are required for new functionality or bugfixes in xsoar-cli.
+The xsoar-cli project includes an integrated XSOAR API client (`xsoar_cli.xsoar_client`), which was previously a standalone package
+(xsoar-client). It is also tightly integrated with xsoar-dependency-graph (hosted on https://github.com/tlium/xsoar-dependency-graph).
+Development on xsoar-dependency-graph and xsoar-cli is all done by the same developers. Suggesting modifications in
+xsoar-dependency-graph is acceptable if such modifications are required for new functionality or bugfixes in xsoar-cli.
 
 Properly debugging the various functionality in xsoar-cli depends on connectivity to XSOAR, AWS/Azure credentials and other things. Always ask a user
 for confirmation before executing any terminal commands as they may have consequences you may not be fully aware of.
@@ -39,7 +38,7 @@ for confirmation before executing any terminal commands as they may have consequ
 CHANGELOG.md              # Changelog (Keep a Changelog format)
 src/xsoar_cli/            # Main package (src layout)
   cli.py                  # Entry point, Click group, plugin loading
-  configuration.py        # XSOARConfig class
+  configuration.py        # XSOARConfig class, EnvironmentConfig
   log.py                  # Logging setup
   error_handling/         # Error handling
     connection.py         # ConnectionErrorHandler
@@ -49,6 +48,19 @@ src/xsoar_cli/            # Main package (src layout)
     validators.py         # Connectivity and artifact provider validators
     manifest.py           # Manifest comparison helpers
     generic.py            # General-purpose helpers
+  xsoar_client/           # XSOAR API client (merged from xsoar-client)
+    client.py             # Client class, HTTP request handling
+    config.py             # ClientConfig dataclass
+    constants.py          # Shared constants (XSOAR_OLD_VERSION, HTTP_CALL_TIMEOUT)
+    cases.py              # Cases domain class
+    content.py            # Content domain class
+    integrations.py       # Integrations domain class
+    packs.py              # Packs domain class
+    rbac.py               # Rbac domain class
+    artifact_providers/   # Artifact storage providers
+      base.py             # BaseArtifactProvider ABC
+      s3.py               # S3ArtifactProvider (AWS)
+      azure.py            # AzureArtifactProvider (Azure Blob Storage)
   commands/               # CLI command groups
     case/                 # Case operations command group
     config/               # Config management command group
@@ -106,10 +118,11 @@ uv run xsoar-cli --help
 - Logging setup in `cli.py` is intentionally deferred to `main()`. Command and plugin registration happen at module level, but `_configure_logging()` must not be moved there. See inline comments in `cli.py` for details
 - Ruff noqa comments are used where rules are intentionally suppressed (e.g., `# noqa: PLR0913` for many parameters, `# noqa: ANN201` for fixture return types)
 - Type hints are used throughout; `str | None` union syntax (Python 3.10+)
-- Heavy third-party imports (`xsoar_client`, `xsoar_dependency_graph`, `demisto_client`, etc.) must be deferred into the function or method bodies that use them, not imported at module level. This avoids loading slow transitive dependencies (boto3, azure-storage-blob, matplotlib, networkx, etc.) at CLI startup, keeping `--help` and `--version` fast. Use `from __future__ import annotations` together with a `TYPE_CHECKING` block so type hints remain clean and unquoted. Mark each deferred import with the comment `# Lazy import for performance reasons`. When patching deferred imports in tests, patch at the source (`xsoar_client.xsoar_client.Client`) rather than the importing module (`xsoar_cli.configuration.Client`)
+- Heavy third-party imports (`xsoar_cli.xsoar_client`, `xsoar_dependency_graph`, `demisto_client`, etc.) must be deferred into the function or method bodies that use them, not imported at module level. This avoids loading slow transitive dependencies (boto3, azure-storage-blob, matplotlib, networkx, etc.) at CLI startup, keeping `--help` and `--version` fast. Use `from __future__ import annotations` together with a `TYPE_CHECKING` block so type hints remain clean and unquoted. Mark each deferred import with the comment `# Lazy import for performance reasons`. When patching deferred imports in tests, patch at the source (e.g., `xsoar_cli.xsoar_client.client.Client`) rather than the importing module (`xsoar_cli.configuration.Client`)
+- The XSOAR client uses domain classes (`client.cases`, `client.packs`, `client.rbac`, etc.) for API operations. Command modules should call the domain class methods directly (e.g., `xsoar_client.cases.get()`) rather than methods on the Client class itself
 - Tests must not produce side effects on the real filesystem, such as writing to the log file or modifying the user's config file. Tests invoke `cli()` directly via Click's `CliRunner`, bypassing `main()` and its logging setup
 - Tests must mock all config file I/O. Any test that exercises code paths touching `get_config_file_contents`, `get_config_file_path`, or `Path.write_text` on the config file must patch these to prevent real filesystem access. The `mock_config_file` fixture in `conftest.py` is the standard way to do this
-- Tests use `unittest.mock.patch` to mock external dependencies (`xsoar_client`, config file I/O)
+- Tests use `unittest.mock.patch` to mock external dependencies (`xsoar_cli.xsoar_client`, config file I/O)
 - Test classes follow `class TestX` naming; test methods use `test_` prefix
 - Fixtures are defined in `tests/conftest.py` and requested via `request.getfixturevalue()` for conditional use
 

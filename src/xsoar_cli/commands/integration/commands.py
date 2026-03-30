@@ -8,7 +8,7 @@ from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.debug("Dumping integration config (environment: '%s')", environment or config.default_environment)
-    response = xsoar_client.get_integrations()
+    response = xsoar_client.integrations.get_instances()
     integrations = json.loads(response)
     if all:
         logger.debug("Fetching config for all integrations (environment: '%s')", environment or config.default_environment)
