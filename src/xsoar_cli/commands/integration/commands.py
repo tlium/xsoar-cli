@@ -31,7 +31,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.debug("Dumping integration config (environment: '%s')", environment or config.default_environment)
-    response = xsoar_client.get_integrations()
+    response = xsoar_client.integrations.get_instances()
     integrations = json.loads(response)
     if all:
         logger.debug("Fetching config for all integrations (environment: '%s')", environment or config.default_environment)
