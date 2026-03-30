@@ -28,8 +28,7 @@ def getroles(ctx: click.Context, environment: str | None) -> None:
     """Dump all roles in your environment."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    results = xsoar_client.rbac.get_roles()
-    roles = json.loads(results)
+    roles = xsoar_client.rbac.get_roles()
     click.echo(json.dumps(roles, sort_keys=True, indent=4) + "\n")
 
 
@@ -42,8 +41,7 @@ def getusers(ctx: click.Context, environment: str | None) -> None:
     """Dump all users in your environment."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    results = xsoar_client.rbac.get_users()
-    users = json.loads(results)
+    users = xsoar_client.rbac.get_users()
     click.echo(json.dumps(users, sort_keys=True, indent=4) + "\n")
 
 
@@ -59,8 +57,7 @@ def getusergroups(ctx: click.Context, environment: str | None) -> None:
     if xsoar_client.server_version < 8:
         click.echo("Error: Command not supported for XSOAR server versions less than 8")
         ctx.exit(1)
-    results = xsoar_client.rbac.get_user_groups()
-    user_groups = json.loads(results)
+    user_groups = xsoar_client.rbac.get_user_groups()
     click.echo(json.dumps(user_groups, sort_keys=True, indent=4) + "\n")
 
 

@@ -10,7 +10,7 @@ class Rbac:
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    def get_users(self) -> str:
+    def get_users(self) -> list:
         """Returns information on all XSOAR users."""
         if self.client.server_version < 8:
             endpoint = "/users"
@@ -18,9 +18,9 @@ class Rbac:
             endpoint = "/rbac/get_users"
         response = self.client._make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
-        return response.content
+        return response.json()
 
-    def get_roles(self) -> str:
+    def get_roles(self) -> list:
         """Returns information on all XSOAR roles."""
         if self.client.server_version < 8:
             endpoint = "/roles"
@@ -28,9 +28,9 @@ class Rbac:
             endpoint = "/rbac/get_roles"
         response = self.client._make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
-        return response.content
+        return response.json()
 
-    def get_user_groups(self) -> str:
+    def get_user_groups(self) -> list:
         """Returns information on all XSOAR user groups."""
         if self.client.server_version < 8:
             endpoint = "/user_groups"
@@ -38,4 +38,4 @@ class Rbac:
             endpoint = "/rbac/get_user_groups"
         response = self.client._make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
-        return response.content
+        return response.json()
