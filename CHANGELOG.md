@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 
 - Deprecated proxy methods on the `Client` class (`get_case`, `create_case`, `get_roles`, `get_users`, `get_user_groups`, `get_integrations`, `download_item`, `attach_item`, `detach_item`, `get_installed_packs`, `get_installed_expired_packs`, `is_installed`, `is_pack_available`, `download_pack`, `deploy_pack`, `deploy_zip`, `delete`, `get_outdated_packs`, `get_latest_custom_pack_version`). Use the corresponding domain class methods instead.
+- `ClientConfig` dataclass (`xsoar_client/config.py`). The `Client` constructor now accepts connection parameters directly.
+- Environment variable fallback for client credentials (`DEMISTO_API_KEY`, `DEMISTO_BASE_URL`, `XSIAM_AUTH_ID`). All configuration is managed through the config file.
 
 ## [1.5.1] - 2026-03-27
 
