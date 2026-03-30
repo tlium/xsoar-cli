@@ -34,7 +34,6 @@ class EnvironmentConfig:
         """Create the XSOAR client with artifact provider."""
         # Lazy import for performance reasons
         from xsoar_cli.xsoar_client.client import Client
-        from xsoar_cli.xsoar_client.config import ClientConfig
 
         logger.debug(
             "Client config for '%s': server_version=%s, base_url=%s, verify_ssl=%s",
@@ -43,18 +42,18 @@ class EnvironmentConfig:
             self._config["base_url"],
             self._config["verify_ssl"],
         )
-        xsoar_client_config = ClientConfig(
-            server_version=self._config["server_version"],
-            custom_pack_authors=self.custom_pack_authors,
-            api_token=self._config["api_token"],
-            server_url=self._config["base_url"],
-            xsiam_auth_id=self._config.get("xsiam_auth_id", ""),
-            verify_ssl=self._config["verify_ssl"],
-        )
 
         artifact_provider = self._create_artifact_provider()
         logger.info("Initialized XSOAR client for environment '%s'", self.env_name)
-        return Client(config=xsoar_client_config, artifact_provider=artifact_provider)
+        return Client(
+            server_url=self._config["base_url"],
+            api_token=self._config["api_token"],
+            server_version=self._config["server_version"],
+            xsiam_auth_id=self._config.get("xsiam_auth_id", ""),
+            verify_ssl=self._config["verify_ssl"],
+            custom_pack_authors=self.custom_pack_authors,
+            artifact_provider=artifact_provider,
+        )
 
     def _create_artifact_provider(self) -> S3ArtifactProvider | AzureArtifactProvider | None:
         """Create the appropriate artifact provider based on config."""

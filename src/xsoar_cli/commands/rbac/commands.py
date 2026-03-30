@@ -56,7 +56,7 @@ def getusergroups(ctx: click.Context, environment: str | None) -> None:
     """Dump all user groups in your environment. XSOAR 8+ only."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    if xsoar_client.config.server_version < 8:
+    if xsoar_client.server_version < 8:
         click.echo("Error: Command not supported for XSOAR server versions less than 8")
         ctx.exit(1)
     results = xsoar_client.rbac.get_user_groups()
