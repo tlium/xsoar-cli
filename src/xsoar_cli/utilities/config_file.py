@@ -24,36 +24,8 @@ def get_config_file_path() -> Path:
     return Path(config_file_path / config_file_name)
 
 
-def get_config_file_contents(filepath: Path):  # noqa: ANN201
-    return json.load(filepath.open("r"))
-
-
-def get_config_file_template_contents() -> dict:
-    return {
-        "default_environment": "dev",
-        "default_new_case_type": "",
-        "custom_pack_authors": ["SOMEONE"],
-        "skip_version_check": True,
-        "server_config": {
-            "dev": {
-                "base_url": "https://xsoar.example.com",
-                "api_token": "YOUR API TOKEN HERE",
-                "artifacts_location": "S3",
-                "s3_bucket_name": "xsoar-cicd",
-                "verify_ssl": "/path/to/your/CA_bundle.pem",
-                "server_version": 6,
-            },
-            "prod": {
-                "base_url": "https://api-xsoar-v8.example.com",
-                "api_token": "YOUR API TOKEN HERE",
-                "artifacts_location": "S3",
-                "s3_bucket_name": "xsoar-cicd-prod",
-                "verify_ssl": False,
-                "server_version": 8,
-                "xsiam_auth_id": 123,
-            },
-        },
-    }
+def get_config_file_contents(filepath: Path) -> dict:
+    return json.loads(filepath.read_text())
 
 
 def load_config(f: Callable) -> Callable:

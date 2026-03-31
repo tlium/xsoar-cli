@@ -25,7 +25,7 @@ from .commands.rbac import commands as rbac_commands
 from .log import LoggingSetup, setup_logging
 from .plugins.manager import PluginManager
 from .utilities.config_file import get_config_file_contents, get_config_file_path
-from .utilities.generic import check_for_update
+from .utilities.version_check import check_for_update
 
 
 class XSOARCliGroup(click.Group):
