@@ -21,10 +21,7 @@ class Cases:
 
     def create(self, data: dict) -> dict:
         """Creates a new case."""
-        if self.client.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/public/v1/incident"
-        else:
-            endpoint = "/incident"
+        endpoint = self.client.resolve_endpoint(v6="/incident", v8="/xsoar/public/v1/incident")
         response = self.client.make_request(endpoint=endpoint, json=data, method="POST")
         response.raise_for_status()
         return response.json()

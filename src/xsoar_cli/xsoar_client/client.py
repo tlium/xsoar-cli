@@ -86,10 +86,7 @@ class Client:
 
     def test_connectivity(self) -> bool:
         """Tests connectivity to the XSOAR server."""
-        if self.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/workers/status"
-        else:
-            endpoint = "/workers/status"
+        endpoint = self.resolve_endpoint(v6="/workers/status", v8="/xsoar/workers/status")
         try:
             response = self.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
@@ -97,3 +94,9 @@ class Client:
             msg = "Failed to connect to XSOAR server"
             raise ConnectionError(msg) from ex
         return True
+
+    def resolve_endpoint(self, *, v6: str, v8: str) -> str:
+        """Return the appropriate endpoint for the server version. Avoid using if/else statements throughout xsoar-client subclasses."""
+        if self.server_version > XSOAR_OLD_VERSION:
+            return v8
+        return v6

@@ -23,11 +23,9 @@ class Packs:
 
     def get_installed(self) -> list[dict]:
         """Fetches a complete list of installed packs."""
-        if self.client.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/public/v1/contentpacks/metadata/installed"
-        else:
-            endpoint = "/contentpacks/metadata/installed"
-
+        endpoint = self.client.resolve_endpoint(
+            v6="/contentpacks/metadata/installed", v8="/xsoar/public/v1/contentpacks/metadata/installed"
+        )
         if self.installed_packs is None:
             response = self.client.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
@@ -36,11 +34,7 @@ class Packs:
 
     def get_installed_expired(self) -> list[dict]:
         """Fetches a complete list of installed expired packs."""
-        if self.client.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/contentpacks/installed-expired"
-        else:
-            endpoint = "/contentpacks/installed-expired"
-
+        endpoint = self.client.resolve_endpoint(v6="/contentpacks/installed-expired", v8="/xsoar/contentpacks/installed-expired")
         if self.installed_expired is None:
             response = self.client.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
