@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Merged xsoar-client into xsoar-cli as the `xsoar_cli.xsoar_client` subpackage. The standalone `xsoar-client` package is no longer a dependency.
 - Command modules now use domain class methods directly (e.g., `client.cases.get()` instead of `client.get_case()`).
+- Missing required environment config keys (`base_url`, `api_token`, `server_version`) now produce a clear error message identifying the environment and missing key, instead of a raw `KeyError`.
+- `verify_ssl` now defaults to `True` when omitted from an environment's config. Previously, a missing key would cause a crash.
 
 ### Removed
 
