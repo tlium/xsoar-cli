@@ -8,7 +8,7 @@ import requests
 from demisto_client.demisto_api.rest import ApiException
 from packaging import version
 
-from .constants import HTTP_CALL_TIMEOUT, XSOAR_OLD_VERSION
+from .constants import HTTP_CALL_TIMEOUT
 
 if TYPE_CHECKING:
     from .client import Client

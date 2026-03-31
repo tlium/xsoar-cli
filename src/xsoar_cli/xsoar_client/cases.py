@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .constants import XSOAR_OLD_VERSION
-
 if TYPE_CHECKING:
     from .client import Client
 

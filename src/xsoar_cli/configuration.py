@@ -125,3 +125,10 @@ class XSOARConfig:
         """Check if an environment has artifact provider configured."""
         env = environment or self.default_environment
         return self._environments[env].has_artifact_provider
+
+    def get_environment(self, environment: str | None = None) -> EnvironmentConfig:
+        """Get the EnvironmentConfig for the specified environment (or default)."""
+        env = environment or self.default_environment
+        if env not in self._environments:
+            raise ValueError(f"Unknown environment: {env}")
+        return self._environments[env]

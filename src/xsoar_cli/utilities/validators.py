@@ -51,7 +51,7 @@ def validate_xsoar_connectivity(
             # Validate connectivity for each environment
             for env_name in envs_to_validate:
                 logger.debug("Testing XSOAR connectivity for environment '%s'", env_name)
-                env_config = config._environments[env_name]
+                env_config = config.get_environment(env_name)
                 client = env_config.client
                 try:
                     client.test_connectivity()
@@ -84,7 +84,7 @@ def validate_artifacts_provider(f: Callable) -> Callable:
             return ctx.invoke(f, *args, **kwargs)
 
         # Test artifact provider connectivity
-        env_config = config._environments[env_name]
+        env_config = config.get_environment(env_name)
         logger.debug("Testing artifact provider connectivity for environment '%s'", env_name)
 
         try:
