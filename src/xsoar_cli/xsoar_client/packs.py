@@ -8,7 +8,7 @@ import requests
 from demisto_client.demisto_api.rest import ApiException
 from packaging import version
 
-from .constants import HTTP_CALL_TIMEOUT, XSOAR_OLD_VERSION
+from .constants import HTTP_CALL_TIMEOUT
 
 if TYPE_CHECKING:
     from .client import Client
@@ -23,26 +23,20 @@ class Packs:
 
     def get_installed(self) -> list[dict]:
         """Fetches a complete list of installed packs."""
-        if self.client.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/public/v1/contentpacks/metadata/installed"
-        else:
-            endpoint = "/contentpacks/metadata/installed"
-
+        endpoint = self.client.resolve_endpoint(
+            v6="/contentpacks/metadata/installed", v8="/xsoar/public/v1/contentpacks/metadata/installed"
+        )
         if self.installed_packs is None:
-            response = self.client._make_request(endpoint=endpoint, method="GET")
+            response = self.client.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
             self.installed_packs = response.json()
         return self.installed_packs
 
     def get_installed_expired(self) -> list[dict]:
         """Fetches a complete list of installed expired packs."""
-        if self.client.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/contentpacks/installed-expired"
-        else:
-            endpoint = "/contentpacks/installed-expired"
-
+        endpoint = self.client.resolve_endpoint(v6="/contentpacks/installed-expired", v8="/xsoar/contentpacks/installed-expired")
         if self.installed_expired is None:
-            response = self.client._make_request(endpoint=endpoint, method="GET")
+            response = self.client.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
             self.installed_expired = response.json()
         return self.installed_expired

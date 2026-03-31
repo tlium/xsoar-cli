@@ -1,24 +1,17 @@
+"""Version checking utilities for xsoar-cli."""
+
+from __future__ import annotations
+
 import importlib.metadata
 import logging
+from typing import TYPE_CHECKING
 
-import requests
-from packaging.version import Version
-
-from xsoar_cli.utilities.config_file import get_config_file_contents, get_config_file_path
+if TYPE_CHECKING:
+    from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 
 PACKAGE_NAME = "xsoar-cli"
-
-
-def parse_string_to_dict(input_string: str | None, delimiter: str) -> dict:
-    if not input_string:
-        return {}
-    # Parse a string into a python dictionary
-    pairs = [pair.split("=", 1) for pair in input_string.split(delimiter)]
-    # Filter pairs that have exactly 2 parts (key and value) after splitting by "="
-    valid_pairs = [pair for pair in pairs if len(pair) == 2]  # noqa: PLR2004
-    return {key.strip(): value.strip() for key, value in valid_pairs}
 
 
 def is_pypi_install(package_name: str) -> bool:
@@ -34,12 +27,19 @@ def is_pypi_install(package_name: str) -> bool:
 
 def get_installed_version(package_name: str) -> Version:
     """Return the currently installed version of a package."""
+    # Lazy import for performance reasons
+    from packaging.version import Version
+
     dist = importlib.metadata.distribution(package_name)
     return Version(dist.version)
 
 
 def get_latest_version(package_name: str) -> Version:
     """Fetch the latest stable version of a package from PyPI."""
+    # Lazy import for performance reasons
+    import requests
+    from packaging.version import Version
+
     headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
     url = f"https://pypi.org/simple/{package_name}/"
     response = requests.get(url, headers=headers, timeout=3)
@@ -50,22 +50,16 @@ def get_latest_version(package_name: str) -> Version:
     return stable[-1] if stable else versions[-1]
 
 
-def check_for_update() -> str | None:
+def check_for_update(config_data: dict | None) -> str | None:
     """Check if a newer version of xsoar-cli is available on PyPI.
 
     Returns a message string if an update is available, None otherwise.
     Skips the check when skip_version_check is absent or True in the config,
     or when the package was not installed from an index.
     """
-    config_file = get_config_file_path()
-    skip_version_check = True
-    if config_file.is_file():
-        config_data = get_config_file_contents(config_file)
-        # Default to skipping version check if skip_version_check does not
-        # exist in config file.
-        skip_version_check = config_data.get("skip_version_check", True)
-
-    if skip_version_check:
+    # Default to skipping version check if config is missing or
+    # skip_version_check is absent/True in the config.
+    if not config_data or config_data.get("skip_version_check", True):
         logger.debug("Skipping version check (disabled in configuration)")
         return None
 

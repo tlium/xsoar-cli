@@ -11,12 +11,40 @@ if TYPE_CHECKING:
 from xsoar_cli.utilities.config_file import (
     get_config_file_contents,
     get_config_file_path,
-    get_config_file_template_contents,
     get_xsoar_config,
     load_config,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_config_file_template_contents() -> dict:
+    """Return the template for a new config file."""
+    return {
+        "default_environment": "dev",
+        "default_new_case_type": "",
+        "custom_pack_authors": ["SOMEONE"],
+        "skip_version_check": True,
+        "server_config": {
+            "dev": {
+                "base_url": "https://xsoar.example.com",
+                "api_token": "YOUR API TOKEN HERE",
+                "artifacts_location": "S3",
+                "s3_bucket_name": "xsoar-cicd",
+                "verify_ssl": "/path/to/your/CA_bundle.pem",
+                "server_version": 6,
+            },
+            "prod": {
+                "base_url": "https://api-xsoar-v8.example.com",
+                "api_token": "YOUR API TOKEN HERE",
+                "artifacts_location": "S3",
+                "s3_bucket_name": "xsoar-cicd-prod",
+                "verify_ssl": False,
+                "server_version": 8,
+                "xsiam_auth_id": 123,
+            },
+        },
+    }
 
 
 @click.group(help="Create, validate, and manage CLI configuration")

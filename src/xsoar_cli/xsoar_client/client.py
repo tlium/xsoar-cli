@@ -55,14 +55,12 @@ class Client:
         self.integrations = Integrations(self)
         self.rbac = Rbac(self)
 
-    def _make_request(
+    def make_request(
         self,
         *,
         endpoint: str,
         method: str,
         json: JSONType = None,
-        files: dict[str, tuple[str, bytes, str]] | None = None,
-        data: dict | None = None,
     ) -> Response:
         """Wrapper for Requests. Sets the appropriate headers and authentication token."""
         url = f"{self.server_url}{endpoint}"
@@ -78,22 +76,23 @@ class Client:
             url=url,
             headers=headers,
             json=json,
-            files=files,
-            data=data,
             verify=self.verify_ssl,
             timeout=self.http_timeout,
         )
 
     def test_connectivity(self) -> bool:
         """Tests connectivity to the XSOAR server."""
-        if self.server_version > XSOAR_OLD_VERSION:
-            endpoint = "/xsoar/workers/status"
-        else:
-            endpoint = "/workers/status"
+        endpoint = self.resolve_endpoint(v6="/workers/status", v8="/xsoar/workers/status")
         try:
-            response = self._make_request(endpoint=endpoint, method="GET")
+            response = self.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
         except Exception as ex:
             msg = "Failed to connect to XSOAR server"
             raise ConnectionError(msg) from ex
         return True
+
+    def resolve_endpoint(self, *, v6: str, v8: str) -> str:
+        """Return the appropriate endpoint for the server version. Avoid using if/else statements throughout xsoar-client subclasses."""
+        if self.server_version > XSOAR_OLD_VERSION:
+            return v8
+        return v6

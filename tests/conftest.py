@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from requests.exceptions import HTTPError
-from xsoar_cli.utilities.config_file import get_config_file_template_contents
+from xsoar_cli.commands.config.commands import get_config_file_template_contents
 
 
 @pytest.fixture
