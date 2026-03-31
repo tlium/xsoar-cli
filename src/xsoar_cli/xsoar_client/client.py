@@ -61,8 +61,6 @@ class Client:
         endpoint: str,
         method: str,
         json: JSONType = None,
-        files: dict[str, tuple[str, bytes, str]] | None = None,
-        data: dict | None = None,
     ) -> Response:
         """Wrapper for Requests. Sets the appropriate headers and authentication token."""
         url = f"{self.server_url}{endpoint}"
@@ -78,8 +76,6 @@ class Client:
             url=url,
             headers=headers,
             json=json,
-            files=files,
-            data=data,
             verify=self.verify_ssl,
             timeout=self.http_timeout,
         )
