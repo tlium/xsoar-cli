@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from packaging.version import Version
 
-from xsoar_cli.utilities.config_file import get_config_file_contents, get_config_file_path
-
 logger = logging.getLogger(__name__)
 
 PACKAGE_NAME = "xsoar-cli"
@@ -52,22 +50,16 @@ def get_latest_version(package_name: str) -> Version:
     return stable[-1] if stable else versions[-1]
 
 
-def check_for_update() -> str | None:
+def check_for_update(config_data: dict | None) -> str | None:
     """Check if a newer version of xsoar-cli is available on PyPI.
 
     Returns a message string if an update is available, None otherwise.
     Skips the check when skip_version_check is absent or True in the config,
     or when the package was not installed from an index.
     """
-    config_file = get_config_file_path()
-    skip_version_check = True
-    if config_file.is_file():
-        config_data = get_config_file_contents(config_file)
-        # Default to skipping version check if skip_version_check does not
-        # exist in config file.
-        skip_version_check = config_data.get("skip_version_check", True)
-
-    if skip_version_check:
+    # Default to skipping version check if config is missing or
+    # skip_version_check is absent/True in the config.
+    if not config_data or config_data.get("skip_version_check", True):
         logger.debug("Skipping version check (disabled in configuration)")
         return None
 

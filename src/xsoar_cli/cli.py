@@ -24,7 +24,7 @@ from .commands.plugins import commands as plugin_commands
 from .commands.rbac import commands as rbac_commands
 from .log import LoggingSetup, setup_logging
 from .plugins.manager import PluginManager
-from .utilities.config_file import get_config_file_contents, get_config_file_path
+from .utilities.config_file import read_config_file
 from .utilities.version_check import check_for_update
 
 
@@ -90,18 +90,15 @@ def _load_plugins() -> tuple[list[str], PluginManager]:
     return core_commands, manager
 
 
-def _configure_logging() -> LoggingSetup:
+def _configure_logging(config_data: dict | None) -> LoggingSetup:
     """Sets up logging, applies log_level from config if present, and logs the invocation."""
     setup = setup_logging()
-    config_file = get_config_file_path()
-    if config_file.is_file():
-        config_data = get_config_file_contents(config_file)
-        if "log_level" in config_data:
-            log_level_str = config_data["log_level"]
-            if log_level_str not in ("DEBUG", "INFO"):
-                click.echo(f"Error: invalid log_level '{log_level_str}' in config file. Valid values are: DEBUG, INFO", err=True)
-                sys.exit(1)
-            setup.handler.setLevel(getattr(logging, log_level_str))
+    if config_data and "log_level" in config_data:
+        log_level_str = config_data["log_level"]
+        if log_level_str not in ("DEBUG", "INFO"):
+            click.echo(f"Error: invalid log_level '{log_level_str}' in config file. Valid values are: DEBUG, INFO", err=True)
+            sys.exit(1)
+        setup.handler.setLevel(getattr(logging, log_level_str))
     setup.logger.info("Executing: %s", " ".join(sys.argv[1:]))
     return setup
 
@@ -123,18 +120,19 @@ def main() -> None:
     """Entry point (pyproject.toml console_scripts). Sets up logging, invokes
     the CLI, and ensures the exit code is logged before the process exits."""
     # Start by setting up logging facilitites
+    config_data = read_config_file()
     global _setup  # noqa: PLW0603
-    _setup = _configure_logging()
+    _setup = _configure_logging(config_data)
     # Check for updates to xsoar-cli
     try:
-        update_message = check_for_update()
+        update_message = check_for_update(config_data)
         if update_message:
             click.echo(update_message, err=True)
     except Exception:
         # Ignore errors during update check (network issues, missing metadata, etc.)
         pass
     try:
-        cli()
+        cli(obj=config_data)
     except SystemExit as e:
         exit_code = e.code if e.code is not None else 0
         # Remove any StreamHandlers added by --debug before logging the exit line.

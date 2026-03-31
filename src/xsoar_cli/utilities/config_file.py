@@ -28,6 +28,14 @@ def get_config_file_contents(filepath: Path) -> dict:
     return json.loads(filepath.read_text())
 
 
+def read_config_file() -> dict | None:
+    """Read and parse the config file. Returns None if the file does not exist."""
+    config_file = get_config_file_path()
+    if not config_file.is_file():
+        return None
+    return get_config_file_contents(config_file)
+
+
 def load_config(f: Callable) -> Callable:
     """
     This function is only to be used as a decorator for various xsoar-cli subcommands. Loads and parses the config file if
@@ -38,17 +46,18 @@ def load_config(f: Callable) -> Callable:
 
     @click.pass_context
     def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:  # noqa: ANN002, ANN003
-        config_file_path = get_config_file_path()
-        logger.debug("Loading config from %s", config_file_path)
-        if not config_file_path.is_file():
-            click.echo(
-                'Config file not found. Please create a template config file using "xsoar-cli config create" and replace placeholder values before retrying.',
-            )
-            ctx.exit(1)
-
-        config_dict = get_config_file_contents(config_file_path)
-        ctx.obj = XSOARConfig(config_dict)
-        logger.debug("Config loaded with environments: %s", ctx.obj.environment_names)
+        # Reuse pre-parsed config from context if available (set by main())
+        if isinstance(ctx.obj, XSOARConfig):
+            logger.debug("Reusing pre-parsed config from context")
+        else:
+            config_dict = ctx.obj if isinstance(ctx.obj, dict) else read_config_file()
+            if config_dict is None:
+                click.echo(
+                    'Config file not found. Please create a template config file using "xsoar-cli config create" and replace placeholder values before retrying.',
+                )
+                ctx.exit(1)
+            ctx.obj = XSOARConfig(config_dict)
+            logger.debug("Config loaded with environments: %s", ctx.obj.environment_names)
 
         # Validate environment if provided
         if "environment" in ctx.params and ctx.params["environment"] is not None:
