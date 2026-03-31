@@ -16,7 +16,7 @@ class Rbac:
             endpoint = "/users"
         else:
             endpoint = "/rbac/get_users"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()
 
@@ -26,7 +26,7 @@ class Rbac:
             endpoint = "/roles"
         else:
             endpoint = "/rbac/get_roles"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()
 
@@ -36,6 +36,6 @@ class Rbac:
             endpoint = "/user_groups"
         else:
             endpoint = "/rbac/get_user_groups"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()

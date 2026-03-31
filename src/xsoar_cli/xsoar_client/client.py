@@ -55,7 +55,7 @@ class Client:
         self.integrations = Integrations(self)
         self.rbac = Rbac(self)
 
-    def _make_request(
+    def make_request(
         self,
         *,
         endpoint: str,
@@ -91,7 +91,7 @@ class Client:
         else:
             endpoint = "/workers/status"
         try:
-            response = self._make_request(endpoint=endpoint, method="GET")
+            response = self.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
         except Exception as ex:
             msg = "Failed to connect to XSOAR server"

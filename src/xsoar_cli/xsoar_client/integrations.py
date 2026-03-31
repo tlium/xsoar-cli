@@ -13,7 +13,7 @@ class Integrations:
     def get_instances(self) -> list:
         """Returns information on all installed integrations and their configured instances."""
         endpoint = "/integration/instances"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()
 

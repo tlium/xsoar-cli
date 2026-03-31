@@ -17,7 +17,7 @@ class Content:
     def get_bundle(self) -> dict[str, StringIO]:
         """Downloads and extracts the custom content bundle."""
         endpoint = "/content/bundle"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         loaded_files: dict[str, StringIO] = {}
 
         with tarfile.open(fileobj=BytesIO(response.content), mode="r") as tar:
@@ -42,7 +42,7 @@ class Content:
             endpoint = "/playbook/search"
         else:
             raise ValueError(f"Invalid value {content_type=}")
-        response = self.client._make_request(endpoint=endpoint, method="POST", json=payload)
+        response = self.client.make_request(endpoint=endpoint, method="POST", json=payload)
         response.raise_for_status()
         return response
 
@@ -50,7 +50,7 @@ class Content:
         """Downloads a content item by type and ID."""
         if item_type == "playbook":
             endpoint = f"/{item_type}/{item_id}/yaml"
-            response = self.client._make_request(endpoint=endpoint, method="GET")
+            response = self.client.make_request(endpoint=endpoint, method="GET")
         else:
             msg = 'Uknown item_type selected for download. Must be one of ["playbook"]'
             raise ValueError(msg)
@@ -61,7 +61,7 @@ class Content:
         """Attaches a content item to the server-managed version."""
         if item_type == "playbook":
             endpoint = f"/{item_type}/attach/{item_id}"
-            response = self.client._make_request(endpoint=endpoint, method="POST")
+            response = self.client.make_request(endpoint=endpoint, method="POST")
         else:
             msg = 'Uknown item_type selected. Must be one of ["playbook"]'
             raise ValueError(msg)
@@ -71,7 +71,7 @@ class Content:
         """Detaches a content item from the server-managed version."""
         if item_type == "playbook":
             endpoint = f"/{item_type}/detach/{item_id}"
-            response = self.client._make_request(endpoint=endpoint, method="POST")
+            response = self.client.make_request(endpoint=endpoint, method="POST")
         else:
             msg = 'Uknown item_type selected. Must be one of ["playbook"]'
             raise ValueError(msg)
@@ -80,20 +80,20 @@ class Content:
     def _list_playbooks(self):
         endpoint = "/playbook/search"
         payload = {"query": "hidden:F AND deprecated:F"}
-        response = self.client._make_request(endpoint=endpoint, json=payload, method="POST")
+        response = self.client.make_request(endpoint=endpoint, json=payload, method="POST")
         response.raise_for_status()
         return response.json()["playbooks"]
 
     def _list_scripts(self):
         endpoint = "/automation/search"
         payload = {"query": "", "stripContext": False}
-        response = self.client._make_request(endpoint=endpoint, json=payload, method="POST")
+        response = self.client.make_request(endpoint=endpoint, json=payload, method="POST")
         response.raise_for_status()
         return response.json()["scripts"]
 
     def _list_commands(self):
         endpoint = "/user/commands"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()
 

@@ -15,7 +15,7 @@ class Cases:
     def get(self, case_id: int) -> dict:
         """Fetches a case by ID."""
         endpoint = f"/incident/load/{case_id}"
-        response = self.client._make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()
 
@@ -25,6 +25,6 @@ class Cases:
             endpoint = "/xsoar/public/v1/incident"
         else:
             endpoint = "/incident"
-        response = self.client._make_request(endpoint=endpoint, json=data, method="POST")
+        response = self.client.make_request(endpoint=endpoint, json=data, method="POST")
         response.raise_for_status()
         return response.json()

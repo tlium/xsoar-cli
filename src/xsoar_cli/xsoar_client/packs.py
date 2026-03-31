@@ -29,7 +29,7 @@ class Packs:
             endpoint = "/contentpacks/metadata/installed"
 
         if self.installed_packs is None:
-            response = self.client._make_request(endpoint=endpoint, method="GET")
+            response = self.client.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
             self.installed_packs = response.json()
         return self.installed_packs
@@ -42,7 +42,7 @@ class Packs:
             endpoint = "/contentpacks/installed-expired"
 
         if self.installed_expired is None:
-            response = self.client._make_request(endpoint=endpoint, method="GET")
+            response = self.client.make_request(endpoint=endpoint, method="GET")
             response.raise_for_status()
             self.installed_expired = response.json()
         return self.installed_expired
