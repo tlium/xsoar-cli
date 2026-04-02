@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 import click
 from requests.exceptions import HTTPError
 
+from xsoar_cli.error_handling.connection import ConnectionErrorHandler
 from xsoar_cli.error_handling.http import HTTPErrorHandler
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.validators import validate_environments, validate_xsoar_connectivity
+from xsoar_cli.utilities.validators import validate_environments
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,6 @@ def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
 @click.option("--dest", required=True, show_default=True, help="Destination environment")
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity(lambda ctx: [ctx.params["source"], ctx.params["dest"]])
 def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
     """Clone a case from source to destination environment.
 
@@ -82,8 +82,19 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
         ctx.exit(1)
 
-    # Grab configi and set up source and destination xsoar-client objects
+    # Test connectivity to both environments before proceeding
     config = get_xsoar_config(ctx)
+    for env_name in (source, dest):
+        logger.debug("Testing XSOAR connectivity for environment '%s'", env_name)
+        try:
+            config.get_client(env_name).test_connectivity()
+        except ConnectionError as ex:
+            handler = ConnectionErrorHandler()
+            logger.info("Connection failed for environment '%s': %s", env_name, handler.get_message(ex))
+            click.echo(f"Connection failed for '{env_name}': {handler.get_message(ex)}")
+            ctx.exit(1)
+        logger.debug("Connectivity OK for environment '%s'", env_name)
+
     xsoar_source_client: Client = config.get_client(source)
     xsoar_dest_client: Client = config.get_client(dest)
 

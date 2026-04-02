@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Callable
 from functools import update_wrapper
-from typing import cast
 
 import click
 
@@ -16,51 +15,30 @@ def validate_environments(*args, **kwargs) -> bool:  # noqa: ANN002, ANN003
     return all(config.has_environment(env) for env in args)
 
 
-def validate_xsoar_connectivity(
-    environments: str | list[str] | Callable[[click.Context], str | list[str]] | None = None,
-) -> Callable:
-    """
-    Decorator that validates XSOAR server connectivity. Must be called with parentheses.
+def validate_xsoar_connectivity() -> Callable:
+    """Decorator that validates XSOAR server connectivity before a command runs.
 
-    Args:
-        environments: Environments to validate connectivity for. Can be:
-            - None: Validate the environment from ctx.params["environment"] or default_environment
-            - str: Validate a single named environment
-            - list[str]: Validate multiple named environments
-            - Callable: A function taking ctx and returning str or list[str] of environments to validate
+    Resolves the target environment from ctx.params["environment"], falling back
+    to the default environment. Must be called with parentheses.
     """
 
     def decorator(f: Callable) -> Callable:
         @click.pass_context
         def wrapper(ctx: click.Context, *args, **kwargs) -> Callable:
             config = get_xsoar_config(ctx)
+            env_name = ctx.params.get("environment") or config.default_environment
 
-            # Resolve environment names to validate
-            if callable(environments):
-                env_resolver = cast(Callable[[click.Context], str | list[str]], environments)
-                result = env_resolver(ctx)
-                envs_to_validate = [result] if isinstance(result, str) else list(result)
-            elif environments is None:
-                env_name = ctx.params.get("environment") or config.default_environment
-                envs_to_validate = [env_name]
-            elif isinstance(environments, str):
-                envs_to_validate = [environments]
-            else:
-                envs_to_validate = list(environments)
-
-            # Validate connectivity for each environment
-            for env_name in envs_to_validate:
-                logger.debug("Testing XSOAR connectivity for environment '%s'", env_name)
-                env_config = config.get_environment(env_name)
-                client = env_config.client
-                try:
-                    client.test_connectivity()
-                except ConnectionError as ex:
-                    handler = ConnectionErrorHandler()
-                    logger.info("Connection failed for environment '%s': %s", env_name, handler.get_message(ex))
-                    click.echo(f"Connection failed for '{env_name}': {handler.get_message(ex)}")
-                    ctx.exit(1)
-                logger.debug("Connectivity OK for environment '%s'", env_name)
+            logger.debug("Testing XSOAR connectivity for environment '%s'", env_name)
+            env_config = config.get_environment(env_name)
+            client = env_config.client
+            try:
+                client.test_connectivity()
+            except ConnectionError as ex:
+                handler = ConnectionErrorHandler()
+                logger.info("Connection failed for environment '%s': %s", env_name, handler.get_message(ex))
+                click.echo(f"Connection failed for '{env_name}': {handler.get_message(ex)}")
+                ctx.exit(1)
+            logger.debug("Connectivity OK for environment '%s'", env_name)
 
             return ctx.invoke(f, *args, **kwargs)
 
