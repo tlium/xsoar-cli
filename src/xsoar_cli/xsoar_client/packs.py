@@ -102,14 +102,12 @@ class Packs:
 
     def deploy(self, *, pack_id: str, pack_version: str, custom: bool) -> bool:
         """Downloads and deploys a content pack. Raises RuntimeError on upload failure."""
-        params = {}
         filedata = self.download(pack_id=pack_id, pack_version=pack_version, custom=custom)
-        if custom:
-            params["skip_validation"] = "false"
-            params["skip_verify"] = "true"
-        else:
-            params["skip_validation"] = "false"
-            params["skip_verify"] = "false"
+        params = {
+            "skip_validation": "false",
+            # Deploy will fail unless we skip signature verification for custom packs.
+            "skip_verify": "true" if custom else "false",
+        }
 
         with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
             tmp.write(filedata)
