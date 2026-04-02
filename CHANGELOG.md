@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed typo "Uknown" in error messages for `Content.download_item`, `Content.attach_item`, and `Content.detach_item`.
+- Fixed `content list` command function shadowing the Python builtin `list()`. The function is renamed internally to `list_content` while the CLI-facing command name remains `list`.
+- Fixed `Packs.deploy` temp file handling: the file is now written and closed via a context manager, and cleaned up in a `finally` block. Previously the temp file was never deleted and the pattern would fail on Windows.
+
 ### Changed
+
+- `Packs.get_outdated` now logs a warning instead of printing to stderr when a custom pack is installed but not found in the artifacts repository. The domain layer no longer produces user-facing output directly.
+- `S3ArtifactProvider` now initializes the boto3 session and S3 resource lazily on first use, matching the pattern used by `AzureArtifactProvider`. Previously, construction failed immediately if AWS credentials were missing, even when the artifact provider was not needed by the current command.
+- Added missing return type annotations to `Content._list_playbooks`, `Content._list_scripts`, `Content._list_commands`, and `Content.list`.
+
 
 - Merged xsoar-client into xsoar-cli as the `xsoar_cli.xsoar_client` subpackage. The standalone `xsoar-client` package is no longer a dependency.
 - Command modules now use domain class methods directly (e.g., `client.cases.get()` instead of `client.get_case()`).

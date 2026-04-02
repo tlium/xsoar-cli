@@ -77,27 +77,27 @@ class Content:
             raise ValueError(msg)
         response.raise_for_status()
 
-    def _list_playbooks(self):
+    def _list_playbooks(self) -> list[dict]:
         endpoint = "/playbook/search"
         payload = {"query": "hidden:F AND deprecated:F"}
         response = self.client.make_request(endpoint=endpoint, json=payload, method="POST")
         response.raise_for_status()
         return response.json()["playbooks"]
 
-    def _list_scripts(self):
+    def _list_scripts(self) -> list[dict]:
         endpoint = "/automation/search"
         payload = {"query": "", "stripContext": False}
         response = self.client.make_request(endpoint=endpoint, json=payload, method="POST")
         response.raise_for_status()
         return response.json()["scripts"]
 
-    def _list_commands(self):
+    def _list_commands(self) -> list[dict]:
         endpoint = "/user/commands"
         response = self.client.make_request(endpoint=endpoint, method="GET")
         response.raise_for_status()
         return response.json()
 
-    def list(self, item_type: str):
+    def list(self, item_type: str) -> list[dict] | dict[str, list[dict]]:
         if item_type == "playbooks":
             return self._list_playbooks()
         if item_type == "scripts":

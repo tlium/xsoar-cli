@@ -12,8 +12,20 @@ class S3ArtifactProvider(BaseArtifactProvider):
     def __init__(self, *, bucket_name: str, verify_ssl: str | bool = True) -> None:
         self.bucket_name = bucket_name
         self.verify_ssl = verify_ssl
-        self.session = boto3.session.Session()
-        self.s3 = self.session.resource("s3")
+        self._session = None
+        self._s3 = None
+
+    @property
+    def session(self) -> boto3.session.Session:
+        if self._session is None:
+            self._session = boto3.session.Session()
+        return self._session
+
+    @property
+    def s3(self):
+        if self._s3 is None:
+            self._s3 = self.session.resource("s3")
+        return self._s3
 
     def test_connection(self) -> bool:
         """Test connectivity to the configured S3 bucket. This will raise an exception if connection fails."""
@@ -39,7 +51,7 @@ class S3ArtifactProvider(BaseArtifactProvider):
 
     def get_latest_version(self, pack_id: str) -> str:
         """Fetch the latest version of a Pack in the configured S3 bucket."""
-        client = boto3.client("s3", verify=self.verify_ssl)
+        client = self.session.client("s3", verify=self.verify_ssl)
         result = client.list_objects_v2(
             Bucket=self.bucket_name,
             Prefix=f"content/packs/{pack_id}/",

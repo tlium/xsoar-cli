@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sys
+import logging
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,6 +13,9 @@ from .constants import HTTP_CALL_TIMEOUT
 
 if TYPE_CHECKING:
     from .client import Client
+
+
+logger = logging.getLogger(__name__)
 
 
 class Packs:
@@ -124,8 +127,7 @@ class Packs:
                 try:
                     latest_version = self.client.artifact_provider.get_latest_version(pack["id"])
                 except ValueError:
-                    msg = f"WARNING: custom pack {pack['id']} installed on XSOAR server, but cannot find pack in artifacts repo."
-                    print(msg, file=sys.stderr)
+                    logger.warning("Custom pack '%s' installed on XSOAR server, but cannot find pack in artifacts repo", pack["id"])
                     continue
                 if latest_version == pack["currentVersion"]:
                     continue
