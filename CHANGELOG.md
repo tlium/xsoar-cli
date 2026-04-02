@@ -15,9 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `Packs.get_outdated` now logs a warning instead of printing to stderr when a custom pack is installed but not found in the artifacts repository. The domain layer no longer produces user-facing output directly.
+- `Packs.get_outdated` now returns an `OutdatedResult` NamedTuple containing both the outdated packs list and a list of skipped custom pack IDs. The `pack get-outdated` and `manifest update` commands now warn the user when custom packs are installed but not found in the artifacts repository.
 - `S3ArtifactProvider` now initializes the boto3 session and S3 resource lazily on first use, matching the pattern used by `AzureArtifactProvider`. Previously, construction failed immediately if AWS credentials were missing, even when the artifact provider was not needed by the current command.
 - Added missing return type annotations to `Content._list_playbooks`, `Content._list_scripts`, `Content._list_commands`, and `Content.list`.
-
+- Simplified redundant `skip_validation`/`skip_verify` branching in `Packs.deploy`. Both branches set `skip_validation` to the same value; the conditional is now only on `skip_verify`.
+- Simplified `validate_xsoar_connectivity` decorator to only handle the single-environment case. The `case clone` command now validates connectivity for both environments inline instead of using a lambda passed to the decorator.
 
 - Merged xsoar-client into xsoar-cli as the `xsoar_cli.xsoar_client` subpackage. The standalone `xsoar-client` package is no longer a dependency.
 - Command modules now use domain class methods directly (e.g., `client.cases.get()` instead of `client.get_case()`).
