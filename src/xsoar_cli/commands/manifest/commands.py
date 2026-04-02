@@ -166,8 +166,14 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     logger.info("Updating manifest '%s' (environment: '%s')", manifest, environment or config.default_environment)
     manifest_data = load_manifest(manifest)
     click.echo("Fetching outdated packs from XSOAR server. This may take a minute...")
-    outdated_installed_packs = xsoar_client.packs.get_outdated()
+    result = xsoar_client.packs.get_outdated()
+    outdated_installed_packs = result.outdated
     logger.debug("Found %d outdated pack(s) on server", len(outdated_installed_packs))
+    if result.skipped:
+        logger.info("Skipped %d custom pack(s) not found in artifacts repo", len(result.skipped))
+        click.echo(f"Warning: {len(result.skipped)} custom pack(s) installed but not found in artifacts repo:", err=True)
+        for pack_id in result.skipped:
+            click.echo(f"  - {pack_id}", err=True)
 
     changes_made = False
     for key in MANIFEST_KEYS:
