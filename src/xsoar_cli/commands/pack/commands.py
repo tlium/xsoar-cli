@@ -53,8 +53,14 @@ def get_outdated(ctx: click.Context, environment: str | None) -> None:
     logger.info("Fetching outdated packs (environment: '%s')", active_env)
     xsoar_client: Client = config.get_client(environment)
     click.echo("Fetching outdated packs. This may take a little while...", err=True)
-    outdated_packs = xsoar_client.packs.get_outdated()
+    result = xsoar_client.packs.get_outdated()
+    outdated_packs = result.outdated
     logger.debug("Found %d outdated pack(s)", len(outdated_packs))
+    if result.skipped:
+        logger.info("Skipped %d custom pack(s) not found in artifacts repo", len(result.skipped))
+        click.echo(f"Warning: {len(result.skipped)} custom pack(s) installed but not found in artifacts repo:", err=True)
+        for pack_id in result.skipped:
+            click.echo(f"  - {pack_id}", err=True)
     if not outdated_packs:
         logger.info("No outdated packs found on '%s'", active_env)
         click.echo("No outdated packs found")

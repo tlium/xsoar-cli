@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import requests
 from demisto_client.demisto_api.rest import ApiException
@@ -16,6 +16,15 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+class OutdatedResult(NamedTuple):
+    """Result from get_outdated(). Separates actionable outdated packs from
+    custom packs that were skipped because they could not be found in the
+    artifacts repository."""
+
+    outdated: list[dict]
+    skipped: list[str]
 
 
 class Packs:
@@ -116,10 +125,15 @@ class Packs:
             Path(tmp_path).unlink(missing_ok=True)
         return True
 
-    def get_outdated(self) -> list[dict]:
-        """Returns a list of packs that have updates available."""
+    def get_outdated(self) -> OutdatedResult:
+        """Returns outdated packs and any custom packs that were skipped.
+
+        Custom packs are skipped when they are installed on the server but
+        cannot be found in the artifacts repository.
+        """
         expired_packs = self.get_installed_expired()
         update_available = []
+        skipped = []
         for pack in expired_packs:
             if pack["author"] in self.custom_pack_authors:
                 if not self.client.artifact_provider:
@@ -128,6 +142,7 @@ class Packs:
                     latest_version = self.client.artifact_provider.get_latest_version(pack["id"])
                 except ValueError:
                     logger.warning("Custom pack '%s' installed on XSOAR server, but cannot find pack in artifacts repo", pack["id"])
+                    skipped.append(pack["id"])
                     continue
                 if latest_version == pack["currentVersion"]:
                     continue
@@ -149,7 +164,7 @@ class Packs:
                 }
                 update_available.append(tmpobj)
 
-        return update_available
+        return OutdatedResult(outdated=update_available, skipped=skipped)
 
     def get_latest_custom_version(self, pack_id: str) -> str:
         """Gets the latest version of a custom pack from the artifacts repository."""
