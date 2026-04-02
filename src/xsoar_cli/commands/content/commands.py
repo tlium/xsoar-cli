@@ -41,7 +41,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     click.echo(f"Getting detached content items ({content_type=})")
 
 
-@click.command()
+@click.command("list")
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option(
     "--type",
@@ -56,7 +56,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def list(ctx: click.Context, environment: str | None, content_type: str, detail: bool, verbose: bool) -> None:
+def list_content(ctx: click.Context, environment: str | None, content_type: str, detail: bool, verbose: bool) -> None:
     """
     List detached content items. The purpose of this function is to list out available commands,
     playbooks and scripts, primarily to facilitate better AI generated playbooks"""
@@ -68,9 +68,7 @@ def list(ctx: click.Context, environment: str | None, content_type: str, detail:
         ctx.exit(0)
 
     # Individual type calls return a bare list, normalize to dict for filter_content.
-    # Note: isinstance(json_blob, list) cannot be used here because the function
-    # name "list" shadows the builtin.
-    if not isinstance(json_blob, dict):
+    if isinstance(json_blob, list):
         json_blob = {content_type: json_blob}
 
     filtered = filter_content(json_blob, detail=detail)
@@ -78,4 +76,4 @@ def list(ctx: click.Context, environment: str | None, content_type: str, detail:
 
 
 content.add_command(get_detached)
-content.add_command(list)
+content.add_command(list_content)
