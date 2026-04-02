@@ -41,6 +41,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     click.echo(f"Getting detached content items ({content_type=})")
 
 
+# We name the command in the decorator here to avoid shadowing the builtin list.
 @click.command("list")
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option(
