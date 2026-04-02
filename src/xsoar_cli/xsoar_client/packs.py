@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import requests
@@ -98,15 +99,18 @@ class Packs:
             params["skip_validation"] = "false"
             params["skip_verify"] = "false"
 
-        tmp = tempfile.NamedTemporaryFile()  # noqa: SIM115
-        with open(tmp.name, "wb") as f:  # noqa: PTH123
-            f.write(filedata)
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+            tmp.write(filedata)
+            tmp.flush()
+            tmp_path = tmp.name
 
         try:
-            self.client.demisto_py_instance.upload_content_packs(tmp.name, **params)
+            self.client.demisto_py_instance.upload_content_packs(tmp_path, **params)
         except ApiException as ex:
             msg = f"Exception when calling DefaulApi->upload_content_packs: {ex!s}\n"
             raise RuntimeError(msg) from ex
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
         return True
 
     def get_outdated(self) -> list[dict]:

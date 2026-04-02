@@ -52,7 +52,7 @@ class Content:
             endpoint = f"/{item_type}/{item_id}/yaml"
             response = self.client.make_request(endpoint=endpoint, method="GET")
         else:
-            msg = 'Uknown item_type selected for download. Must be one of ["playbook"]'
+            msg = 'Unknown item_type selected for download. Must be one of ["playbook"]'
             raise ValueError(msg)
         response.raise_for_status()
         return response.content
@@ -63,7 +63,7 @@ class Content:
             endpoint = f"/{item_type}/attach/{item_id}"
             response = self.client.make_request(endpoint=endpoint, method="POST")
         else:
-            msg = 'Uknown item_type selected. Must be one of ["playbook"]'
+            msg = 'Unknown item_type selected. Must be one of ["playbook"]'
             raise ValueError(msg)
         response.raise_for_status()
 
@@ -73,7 +73,7 @@ class Content:
             endpoint = f"/{item_type}/detach/{item_id}"
             response = self.client.make_request(endpoint=endpoint, method="POST")
         else:
-            msg = 'Uknown item_type selected. Must be one of ["playbook"]'
+            msg = 'Unknown item_type selected. Must be one of ["playbook"]'
             raise ValueError(msg)
         response.raise_for_status()
 
