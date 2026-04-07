@@ -23,6 +23,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# -- Handler base class and implementations ----------------------------------
+
+
 class ContentHandler(ABC):
     """Base class for content type download handlers."""
 
@@ -77,6 +80,8 @@ class LayoutHandler(ContentHandler):
     def write(self, filepath: pathlib.Path, data: dict) -> None:
         filepath.write_text(json.dumps(data, indent=4))
 
+
+# -- Registry and helpers ----------------------------------------------------
 
 HANDLERS: dict[str, ContentHandler] = {
     "playbook": PlaybookHandler(),
