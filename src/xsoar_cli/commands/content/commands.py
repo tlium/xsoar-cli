@@ -1,5 +1,6 @@
 import json
 import logging
+import pathlib
 from typing import TYPE_CHECKING
 
 import click
@@ -76,5 +77,44 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
     click.echo(json.dumps(filtered, indent=4))
 
 
+@click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "--type",
+    "content_type",
+    type=click.Choice(["playbook"], case_sensitive=False),
+    required=True,
+    help="Type of content item to download.",
+)
+@click.argument("name", type=str)
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity()
+def download(ctx: click.Context, environment: str | None, content_type: str, name: str) -> None:
+    """Download a content item by name."""
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+
+    if content_type == "playbook":
+        logger.info("Downloading playbook '%s' (environment: '%s')", name, environment or config.default_environment)
+        try:
+            click.echo(f"Downloading playbook '{name}'...", nl=False)
+            data = xsoar_client.content.download_playbook(name)
+            click.echo("ok.")
+        except Exception as ex:  # noqa: BLE001
+            click.echo("FAILED.")
+            logger.info("Failed to download playbook '%s': %s", name, ex)
+            click.echo(f"Error: {ex}")
+            ctx.exit(1)
+            return
+
+        filename = f"{name.replace(' ', '_')}.yml"
+        filepath = pathlib.Path.cwd() / filename
+        filepath.write_bytes(data)
+        logger.debug("Written playbook YAML to %s", filepath)
+        click.echo(f"Written to: {filepath}")
+
+
 content.add_command(get_detached)
 content.add_command(list_content)
+content.add_command(download)
