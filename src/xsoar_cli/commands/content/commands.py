@@ -88,17 +88,26 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
     required=True,
     help="Type of content item to download.",
 )
+@click.option(
+    "--output",
+    "output_path",
+    default=None,
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    help="Path to the content repository root. Defaults to current working directory.",
+)
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def download(ctx: click.Context, environment: str | None, content_type: str, name: str) -> None:
+def download(ctx: click.Context, environment: str | None, content_type: str, output_path: str | None, name: str) -> None:
     """Download a content item by name.
 
     Attempts to write the downloaded item into the appropriate content pack
     directory under Packs/<pack_id>/. If the target directory does not exist,
     offers to save to the current working directory instead. If the target file
     does not already exist, prompts for confirmation before writing.
+
+    Use --output to specify the content repository root when running outside of it.
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
@@ -121,7 +130,8 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
         filename = f"{name.replace(' ', '_')}.yml"
         subdir = "Playbooks"
 
-        filepath = _resolve_output_path(pack_id, subdir, filename)
+        base_path = pathlib.Path(output_path) if output_path else None
+        filepath = _resolve_output_path(pack_id, subdir, filename, cwd=base_path)
         if filepath is None:
             click.echo("Download discarded.")
             return
@@ -147,7 +157,8 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
         filename = f"layoutscontainer-{name.replace(' ', '_')}.json"
         subdir = "Layouts"
 
-        filepath = _resolve_output_path(pack_id, subdir, filename)
+        base_path = pathlib.Path(output_path) if output_path else None
+        filepath = _resolve_output_path(pack_id, subdir, filename, cwd=base_path)
         if filepath is None:
             click.echo("Download discarded.")
             return

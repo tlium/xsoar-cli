@@ -119,6 +119,36 @@ class TestContentDownloadPlaybookCommand:
         assert "FAILED" in result.output
         assert "Playbook 'Nonexistent' not found" in result.output
 
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
+    def test_output_option_writes_to_specified_path(self, mock_download, mock_connectivity, mock_config_file, tmp_path) -> None:  # noqa: ANN001
+        """--output points to a content repo root outside cwd."""
+        repo_root = tmp_path / "my-repo"
+        pack_dir = repo_root / "Packs" / "MyPack" / "Playbooks"
+        pack_dir.mkdir(parents=True)
+        existing = pack_dir / "Test_Playbook.yml"
+        existing.write_text("old")
+        mock_download.return_value = PLAYBOOK_YAML.encode()
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "playbook", "--output", str(repo_root), "Test Playbook"])
+        assert result.exit_code == 0
+        assert existing.read_text() == PLAYBOOK_YAML
+
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
+    def test_output_option_new_file_confirm_yes(self, mock_download, mock_connectivity, mock_config_file, tmp_path) -> None:  # noqa: ANN001
+        """--output with pack dir present but file missing. User confirms."""
+        repo_root = tmp_path / "my-repo"
+        pack_dir = repo_root / "Packs" / "MyPack" / "Playbooks"
+        pack_dir.mkdir(parents=True)
+        mock_download.return_value = PLAYBOOK_YAML.encode()
+        runner = CliRunner()
+        result = runner.invoke(
+            cli.cli, ["content", "download", "--type", "playbook", "--output", str(repo_root), "Test Playbook"], input="y\n"
+        )
+        assert result.exit_code == 0
+        assert (pack_dir / "Test_Playbook.yml").exists()
+
 
 class TestContentDownloadLayoutCommand:
     """Tests for the `content download --type layout` CLI command."""
@@ -192,6 +222,20 @@ class TestContentDownloadLayoutCommand:
         assert result.exit_code == 1
         assert "FAILED" in result.output
         assert "Layout 'Nonexistent' not found" in result.output
+
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
+    def test_output_option_writes_to_specified_path(self, mock_download, mock_connectivity, mock_config_file, tmp_path) -> None:  # noqa: ANN001
+        repo_root = tmp_path / "my-repo"
+        pack_dir = repo_root / "Packs" / "SomePack" / "Layouts"
+        pack_dir.mkdir(parents=True)
+        existing = pack_dir / "layoutscontainer-Test_Layout.json"
+        existing.write_text("{}")
+        mock_download.return_value = {"id": "test-layout", "name": "Test Layout", "packID": "SomePack"}
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "--output", str(repo_root), "Test Layout"])
+        assert result.exit_code == 0
+        assert '"name": "Test Layout"' in existing.read_text()
 
 
 class TestContentDownloadMissingType:

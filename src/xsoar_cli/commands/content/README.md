@@ -51,6 +51,7 @@ The command resolves the content item's pack ID and writes the file to the appro
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
 - `--type [playbook|layout]` - Type of content item to download (required)
+- `--output PATH` - Path to the content repository root. Defaults to current working directory. Useful when running xsoar-cli from outside the content repository.
 
 **Arguments:**
 - `NAME` - Display name of the content item to download
@@ -65,4 +66,5 @@ Spaces in names are replaced with underscores in filenames.
 ```
 xsoar-cli content download --type playbook "AWS GuardDuty"
 xsoar-cli content download --type layout "Incident Layout" --environment prod
+xsoar-cli content download --type playbook "My Playbook" --output /path/to/content-repo
 ```
