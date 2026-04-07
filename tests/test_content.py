@@ -21,11 +21,12 @@ PLAYBOOK_YAML_NO_PACK = "id: test-playbook\nname: Test Playbook\n"
 class TestContentDownloadPlaybookCommand:
     """Tests for the `content download --type playbook` CLI command."""
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
     def test_overwrites_existing_file(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         """File already exists in the pack directory. Should overwrite without prompts."""
         monkeypatch.chdir(tmp_path)
@@ -40,10 +41,13 @@ class TestContentDownloadPlaybookCommand:
         assert "ok." in result.output
         assert existing.read_text() == PLAYBOOK_YAML
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
-    def test_new_file_confirm_yes(self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+    def test_new_file_confirm_yes(
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
         """Pack directory exists but file does not. User confirms writing."""
         monkeypatch.chdir(tmp_path)
         pack_dir = tmp_path / "Packs" / "MyPack" / "Playbooks"
@@ -69,11 +73,12 @@ class TestContentDownloadPlaybookCommand:
         assert "discarded" in result.output.lower()
         assert not (pack_dir / "Test_Playbook.yml").exists()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
     def test_missing_dir_fallback_to_cwd(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         """Pack directory does not exist. User opts to save to cwd, then confirms new file."""
         monkeypatch.chdir(tmp_path)
@@ -98,11 +103,12 @@ class TestContentDownloadPlaybookCommand:
         assert result.exit_code == 0
         assert "discarded" in result.output.lower()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
     def test_no_pack_id_falls_back_to_cwd(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         """Playbook YAML has no packID. Falls back to cwd, user confirms."""
         monkeypatch.chdir(tmp_path)
@@ -113,10 +119,13 @@ class TestContentDownloadPlaybookCommand:
         assert result.exit_code == 0
         assert (tmp_path / "Test_Playbook.yml").exists()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
-    def test_spaces_in_name(self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+    def test_spaces_in_name(
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
         monkeypatch.chdir(tmp_path)
         pack_dir = tmp_path / "Packs" / "MyPack" / "Playbooks"
         pack_dir.mkdir(parents=True)
@@ -139,11 +148,12 @@ class TestContentDownloadPlaybookCommand:
         assert "FAILED" in result.output
         assert "Playbook 'Nonexistent' not found" in result.output
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
     def test_output_option_writes_to_specified_path(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path
     ) -> None:  # noqa: ANN001
         """--output points to a content repo root outside cwd."""
         repo_root = tmp_path / "my-repo"
@@ -157,11 +167,12 @@ class TestContentDownloadPlaybookCommand:
         assert result.exit_code == 0
         assert existing.read_text() == PLAYBOOK_YAML
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
     def test_output_option_new_file_confirm_yes(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path
     ) -> None:  # noqa: ANN001
         """--output with pack dir present but file missing. User confirms."""
         repo_root = tmp_path / "my-repo"
@@ -175,11 +186,12 @@ class TestContentDownloadPlaybookCommand:
         assert result.exit_code == 0
         assert (pack_dir / "Test_Playbook.yml").exists()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
     def test_runs_demisto_sdk_format(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         """demisto-sdk format should be called after writing a playbook."""
         monkeypatch.chdir(tmp_path)
@@ -198,15 +210,35 @@ class TestContentDownloadPlaybookCommand:
         assert call_args[1] == "format"
         assert str(existing) in call_args
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
+    @patch("xsoar_cli.commands.content.commands.subprocess.run")
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_playbook")
+    def test_reattaches_after_write(
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        """attach_item should be called with the correct type and name after writing."""
+        monkeypatch.chdir(tmp_path)
+        pack_dir = tmp_path / "Packs" / "MyPack" / "Playbooks"
+        pack_dir.mkdir(parents=True)
+        existing = pack_dir / "Test_Playbook.yml"
+        existing.write_text("old")
+        mock_download.return_value = PLAYBOOK_YAML.encode()
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "playbook", "Test Playbook"])
+        assert result.exit_code == 0
+        mock_attach.assert_called_once_with("playbook", "Test Playbook")
+
 
 class TestContentDownloadLayoutCommand:
     """Tests for the `content download --type layout` CLI command."""
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
     def test_overwrites_existing_file(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         monkeypatch.chdir(tmp_path)
         pack_dir = tmp_path / "Packs" / "SomePack" / "Layouts"
@@ -220,10 +252,13 @@ class TestContentDownloadLayoutCommand:
         assert "ok." in result.output
         assert '"name": "Test Layout"' in existing.read_text()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
-    def test_new_file_confirm_yes(self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+    def test_new_file_confirm_yes(
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
         monkeypatch.chdir(tmp_path)
         pack_dir = tmp_path / "Packs" / "SomePack" / "Layouts"
         pack_dir.mkdir(parents=True)
@@ -247,11 +282,12 @@ class TestContentDownloadLayoutCommand:
         assert "discarded" in result.output.lower()
         assert not (pack_dir / "layoutscontainer-Test_Layout.json").exists()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
     def test_missing_dir_fallback_to_cwd(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         monkeypatch.chdir(tmp_path)
         mock_download.return_value = {"id": "test-layout", "name": "Test Layout", "packID": "SomePack"}
@@ -283,11 +319,12 @@ class TestContentDownloadLayoutCommand:
         assert "FAILED" in result.output
         assert "Layout 'Nonexistent' not found" in result.output
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
     def test_output_option_writes_to_specified_path(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path
     ) -> None:  # noqa: ANN001
         repo_root = tmp_path / "my-repo"
         pack_dir = repo_root / "Packs" / "SomePack" / "Layouts"
@@ -300,11 +337,12 @@ class TestContentDownloadLayoutCommand:
         assert result.exit_code == 0
         assert '"name": "Test Layout"' in existing.read_text()
 
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
     @patch("xsoar_cli.commands.content.commands.subprocess.run")
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
     @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
     def test_runs_demisto_sdk_format(
-        self, mock_download, mock_connectivity, mock_subprocess, mock_config_file, tmp_path, monkeypatch
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
     ) -> None:  # noqa: ANN001
         """demisto-sdk format should be called after writing a layout."""
         monkeypatch.chdir(tmp_path)
@@ -318,6 +356,25 @@ class TestContentDownloadLayoutCommand:
         assert result.exit_code == 0
         assert "demisto-sdk format" in result.output.lower()
         mock_subprocess.assert_called_once()
+
+    @patch("xsoar_cli.xsoar_client.content.Content.attach_item")
+    @patch("xsoar_cli.commands.content.commands.subprocess.run")
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
+    def test_reattaches_after_write(
+        self, mock_download, mock_connectivity, mock_subprocess, mock_attach, mock_config_file, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        """attach_item should be called with the correct type and name after writing."""
+        monkeypatch.chdir(tmp_path)
+        pack_dir = tmp_path / "Packs" / "SomePack" / "Layouts"
+        pack_dir.mkdir(parents=True)
+        existing = pack_dir / "layoutscontainer-Test_Layout.json"
+        existing.write_text("{}")
+        mock_download.return_value = {"id": "test-layout", "name": "Test Layout", "packID": "SomePack"}
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "Test Layout"])
+        assert result.exit_code == 0
+        mock_attach.assert_called_once_with("layout", "Test Layout")
 
 
 class TestContentDownloadMissingType:
@@ -408,6 +465,12 @@ class TestPlaybookHandler:
     def test_format_after_download(self) -> None:
         assert PlaybookHandler.format_after_download is True
 
+    def test_item_type(self) -> None:
+        assert PlaybookHandler.item_type == "playbook"
+
+    def test_reattach_after_download(self) -> None:
+        assert PlaybookHandler.reattach_after_download is True
+
 
 class TestLayoutHandler:
     """Tests for the LayoutHandler class."""
@@ -437,6 +500,12 @@ class TestLayoutHandler:
 
     def test_format_after_download(self) -> None:
         assert LayoutHandler.format_after_download is True
+
+    def test_item_type(self) -> None:
+        assert LayoutHandler.item_type == "layout"
+
+    def test_reattach_after_download(self) -> None:
+        assert LayoutHandler.reattach_after_download is True
 
 
 class TestHandlersRegistry:

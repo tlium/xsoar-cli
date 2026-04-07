@@ -138,6 +138,17 @@ def download(ctx: click.Context, environment: str | None, content_type: str, out
     logger.debug("Written %s to %s", content_type, filepath)
     click.echo(f"Written to: {filepath}")
 
+    if handler.reattach_after_download:
+        click.echo(f"Re-attaching {content_type} '{name}'...", nl=False)
+        logger.debug("Re-attaching %s '%s'", content_type, name)
+        try:
+            xsoar_client.content.attach_item(handler.item_type, name)
+            click.echo("ok.")
+        except Exception as ex:  # noqa: BLE001
+            click.echo("FAILED.")
+            logger.warning("Failed to re-attach %s '%s': %s", content_type, name, ex)
+            click.echo(f"Warning: re-attach failed: {ex}")
+
     if handler.format_after_download:
         click.echo("Running demisto-sdk format...")
         logger.debug("Running demisto-sdk format on %s", filepath)

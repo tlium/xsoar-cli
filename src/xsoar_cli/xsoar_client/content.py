@@ -63,21 +63,25 @@ class Content:
     def attach_item(self, item_type: str, item_id: str) -> None:
         """Attaches a content item to the server-managed version."""
         if item_type == "playbook":
-            endpoint = f"/{item_type}/attach/{item_id}"
-            response = self.client.make_request(endpoint=endpoint, method="POST")
+            endpoint = f"/playbook/attach/{item_id}"
+        elif item_type == "layout":
+            endpoint = f"/layout/{item_id}/attach"
         else:
-            msg = 'Unknown item_type selected. Must be one of ["playbook"]'
+            msg = f'Unknown item_type "{item_type}". Must be one of ["playbook", "layout"]'
             raise ValueError(msg)
+        response = self.client.make_request(endpoint=endpoint, method="POST")
         response.raise_for_status()
 
     def detach_item(self, item_type: str, item_id: str) -> None:
         """Detaches a content item from the server-managed version."""
         if item_type == "playbook":
-            endpoint = f"/{item_type}/detach/{item_id}"
-            response = self.client.make_request(endpoint=endpoint, method="POST")
+            endpoint = f"/playbook/detach/{item_id}"
+        elif item_type == "layout":
+            endpoint = f"/layout/{item_id}/detach"
         else:
-            msg = 'Unknown item_type selected. Must be one of ["playbook"]'
+            msg = f'Unknown item_type "{item_type}". Must be one of ["playbook", "layout"]'
             raise ValueError(msg)
+        response = self.client.make_request(endpoint=endpoint, method="POST")
         response.raise_for_status()
 
     def _resolve_playbook_id(self, name: str) -> str | None:
