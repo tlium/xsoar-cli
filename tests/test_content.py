@@ -53,7 +53,7 @@ class TestContentDownloadCommand:
         result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "Test Layout"])
         assert result.exit_code == 0
         assert "ok." in result.output
-        output_file = tmp_path / "Test_Layout.json"
+        output_file = tmp_path / "layoutscontainer-Test_Layout.json"
         assert output_file.exists()
         assert '"name": "Test Layout"' in output_file.read_text()
 
@@ -65,7 +65,7 @@ class TestContentDownloadCommand:
         runner = CliRunner()
         result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "My Cool Layout"])
         assert result.exit_code == 0
-        output_file = tmp_path / "My_Cool_Layout.json"
+        output_file = tmp_path / "layoutscontainer-My_Cool_Layout.json"
         assert output_file.exists()
 
     @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)

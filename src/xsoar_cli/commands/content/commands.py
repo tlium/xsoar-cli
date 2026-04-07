@@ -127,7 +127,7 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
             ctx.exit(1)
             return
 
-        filename = f"{name.replace(' ', '_')}.json"
+        filename = f"layoutscontainer-{name.replace(' ', '_')}.json"
         filepath = pathlib.Path.cwd() / filename
         filepath.write_text(json.dumps(data, indent=4))
         logger.debug("Written layout JSON to %s", filepath)
