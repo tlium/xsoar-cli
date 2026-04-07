@@ -18,6 +18,7 @@ PLAYBOOK_YAML = "id: test-playbook\nname: Test Playbook\ncontentitemexportablefi
 PLAYBOOK_YAML_NO_PACK = "id: test-playbook\nname: Test Playbook\n"
 
 
+@patch("pathlib.Path.is_file", MagicMock(return_value=True))
 class TestContentDownloadPlaybookCommand:
     """Tests for the `content download --type playbook` CLI command."""
 
@@ -230,6 +231,7 @@ class TestContentDownloadPlaybookCommand:
         mock_attach.assert_called_once_with("playbook", "Test Playbook")
 
 
+@patch("pathlib.Path.is_file", MagicMock(return_value=True))
 class TestContentDownloadLayoutCommand:
     """Tests for the `content download --type layout` CLI command."""
 
@@ -377,6 +379,7 @@ class TestContentDownloadLayoutCommand:
         mock_attach.assert_called_once_with("layout", "Test Layout")
 
 
+@patch("pathlib.Path.is_file", MagicMock(return_value=True))
 class TestContentDownloadMissingType:
     def test_download_missing_type(self, mock_config_file) -> None:  # noqa: ANN001
         runner = CliRunner()
