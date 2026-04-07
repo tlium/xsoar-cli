@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-04-07
+
 ### Added
 
 - `content download` subcommand for downloading individual content items by name. Supports playbooks and layouts (`xsoar-cli content download --type playbook|layout <name>`).
