@@ -1,9 +1,11 @@
 import json
 import logging
 import pathlib
+from io import StringIO
 from typing import TYPE_CHECKING
 
 import click
+import yaml
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.content import filter_content
@@ -91,7 +93,13 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
 @load_config
 @validate_xsoar_connectivity()
 def download(ctx: click.Context, environment: str | None, content_type: str, name: str) -> None:
-    """Download a content item by name."""
+    """Download a content item by name.
+
+    Attempts to write the downloaded item into the appropriate content pack
+    directory under Packs/<pack_id>/. If the target directory does not exist,
+    offers to save to the current working directory instead. If the target file
+    does not already exist, prompts for confirmation before writing.
+    """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
 
@@ -99,7 +107,7 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
         logger.info("Downloading playbook '%s' (environment: '%s')", name, environment or config.default_environment)
         try:
             click.echo(f"Downloading playbook '{name}'...", nl=False)
-            data = xsoar_client.content.download_playbook(name)
+            raw_data = xsoar_client.content.download_playbook(name)
             click.echo("ok.")
         except Exception as ex:  # noqa: BLE001
             click.echo("FAILED.")
@@ -108,9 +116,17 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
             ctx.exit(1)
             return
 
+        playbook_data = yaml.safe_load(StringIO(raw_data.decode("utf-8")))
+        pack_id = playbook_data.get("contentitemexportablefields", {}).get("contentitemfields", {}).get("packID")
         filename = f"{name.replace(' ', '_')}.yml"
-        filepath = pathlib.Path.cwd() / filename
-        filepath.write_bytes(data)
+        subdir = "Playbooks"
+
+        filepath = _resolve_output_path(pack_id, subdir, filename)
+        if filepath is None:
+            click.echo("Download discarded.")
+            return
+
+        filepath.write_bytes(raw_data)
         logger.debug("Written playbook YAML to %s", filepath)
         click.echo(f"Written to: {filepath}")
 
@@ -127,11 +143,54 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
             ctx.exit(1)
             return
 
+        pack_id = data.get("packID")
         filename = f"layoutscontainer-{name.replace(' ', '_')}.json"
-        filepath = pathlib.Path.cwd() / filename
+        subdir = "Layouts"
+
+        filepath = _resolve_output_path(pack_id, subdir, filename)
+        if filepath is None:
+            click.echo("Download discarded.")
+            return
+
         filepath.write_text(json.dumps(data, indent=4))
         logger.debug("Written layout JSON to %s", filepath)
         click.echo(f"Written to: {filepath}")
+
+
+def _resolve_output_path(pack_id: str | None, subdir: str, filename: str, *, cwd: pathlib.Path | None = None) -> pathlib.Path | None:
+    """Determines where to write a downloaded content item.
+
+    Returns the resolved file path, or None if the user chose to discard.
+
+    Rules:
+    - If pack_id is known, target is Packs/<pack_id>/<subdir>/<filename>.
+    - If the target directory does not exist, warn and offer cwd as fallback.
+    - If the target file does not already exist, prompt for confirmation.
+    - If the target file already exists, overwrite silently.
+    """
+    if cwd is None:
+        cwd = pathlib.Path.cwd()
+
+    if pack_id:
+        target_dir = cwd / "Packs" / pack_id / subdir
+    else:
+        logger.warning("Could not determine pack ID, falling back to current directory")
+        target_dir = cwd
+
+    if not target_dir.is_dir():
+        click.echo(f"Warning: target directory does not exist: {target_dir}")
+        if not click.confirm("Save to current working directory instead?"):
+            return None
+        target_dir = cwd
+
+    filepath = target_dir / filename
+
+    if not filepath.exists():
+        click.echo(f"File does not exist: {filepath}")
+        if not click.confirm("Write to this path?"):
+            return None
+
+    return filepath
 
 
 content.add_command(get_detached)
