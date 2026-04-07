@@ -27,6 +27,7 @@ class ContentHandler(ABC):
     """Base class for content type download handlers."""
 
     subdir: str
+    format_after_download: bool = False
 
     @abstractmethod
     def download(self, client: Client, name: str) -> Any:
@@ -47,6 +48,7 @@ class ContentHandler(ABC):
 
 class PlaybookHandler(ContentHandler):
     subdir = "Playbooks"
+    format_after_download = True
 
     def download(self, client: Client, name: str) -> bytes:
         return client.content.download_playbook(name)
@@ -64,6 +66,7 @@ class PlaybookHandler(ContentHandler):
 
 class LayoutHandler(ContentHandler):
     subdir = "Layouts"
+    format_after_download = True
 
     def download(self, client: Client, name: str) -> dict:
         return client.content.download_layout(name)

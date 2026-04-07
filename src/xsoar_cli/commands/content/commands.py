@@ -1,6 +1,7 @@
 import json
 import logging
 import pathlib
+import subprocess
 from typing import TYPE_CHECKING
 
 import click
@@ -136,6 +137,23 @@ def download(ctx: click.Context, environment: str | None, content_type: str, out
     handler.write(filepath, data)
     logger.debug("Written %s to %s", content_type, filepath)
     click.echo(f"Written to: {filepath}")
+
+    if handler.format_after_download:
+        click.echo("Running demisto-sdk format...")
+        logger.debug("Running demisto-sdk format on %s", filepath)
+        subprocess.run(
+            [
+                "demisto-sdk",
+                "format",
+                "--assume-no",
+                "--no-validate",
+                "--no-graph",
+                "--from-version",
+                "6.10.0",
+                str(filepath),
+            ],
+            check=False,
+        )  # noqa: S603, S607
 
 
 content.add_command(get_detached)
