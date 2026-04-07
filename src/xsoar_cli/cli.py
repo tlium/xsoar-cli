@@ -64,14 +64,15 @@ def cli(ctx: click.Context, debug: bool) -> None:
 
 
 def _register_commands() -> None:
-    cli.add_command(config_commands.config)
     cli.add_command(case_commands.case)
+    cli.add_command(config_commands.config)
     cli.add_command(content_commands.content)
-    cli.add_command(pack_commands.pack)
+
+    cli.add_command(graph_commands.graph)
     cli.add_command(integration_commands.integration)
     cli.add_command(manifest_commands.manifest)
+    cli.add_command(pack_commands.pack)
     cli.add_command(playbook_commands.playbook)
-    cli.add_command(graph_commands.graph)
     cli.add_command(plugin_commands.plugins)
     cli.add_command(rbac_commands.rbac)
 

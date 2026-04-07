@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import tarfile
 from io import BytesIO, StringIO
 from typing import TYPE_CHECKING
@@ -8,6 +9,8 @@ from requests.models import Response
 
 if TYPE_CHECKING:
     from .client import Client
+
+logger = logging.getLogger(__name__)
 
 
 class Content:
@@ -60,22 +63,87 @@ class Content:
     def attach_item(self, item_type: str, item_id: str) -> None:
         """Attaches a content item to the server-managed version."""
         if item_type == "playbook":
-            endpoint = f"/{item_type}/attach/{item_id}"
-            response = self.client.make_request(endpoint=endpoint, method="POST")
+            endpoint = f"/playbook/attach/{item_id}"
+        elif item_type == "layout":
+            endpoint = f"/layout/{item_id}/attach"
         else:
-            msg = 'Unknown item_type selected. Must be one of ["playbook"]'
+            msg = f'Unknown item_type "{item_type}". Must be one of ["playbook", "layout"]'
             raise ValueError(msg)
+        response = self.client.make_request(endpoint=endpoint, method="POST")
         response.raise_for_status()
 
     def detach_item(self, item_type: str, item_id: str) -> None:
         """Detaches a content item from the server-managed version."""
         if item_type == "playbook":
-            endpoint = f"/{item_type}/detach/{item_id}"
-            response = self.client.make_request(endpoint=endpoint, method="POST")
+            endpoint = f"/playbook/detach/{item_id}"
+        elif item_type == "layout":
+            endpoint = f"/layout/{item_id}/detach"
         else:
-            msg = 'Unknown item_type selected. Must be one of ["playbook"]'
+            msg = f'Unknown item_type "{item_type}". Must be one of ["playbook", "layout"]'
             raise ValueError(msg)
+        response = self.client.make_request(endpoint=endpoint, method="POST")
         response.raise_for_status()
+
+    def _resolve_playbook_id(self, name: str) -> str | None:
+        """Searches for a playbook by name and returns its ID.
+
+        Needed because XSOAR uses the playbook ID in download URLs, and the ID
+        can differ from the display name (e.g., UUIDs for custom playbooks).
+        """
+        endpoint = "/playbook/search"
+        payload = {"query": f"name:{name}"}
+        response = self.client.make_request(endpoint=endpoint, method="POST", json=payload)
+        response.raise_for_status()
+        playbooks = response.json().get("playbooks") or []
+        for playbook in playbooks:
+            if playbook.get("name", "").lower() == name.lower():
+                playbook_id = playbook["id"]
+                logger.debug("Resolved playbook name '%s' to ID '%s'", name, playbook_id)
+                return playbook_id
+        return None
+
+    def download_playbook(self, name: str) -> bytes:
+        """Downloads a playbook by name. Returns raw YAML bytes.
+
+        Tries GET /playbook/{name}/yaml first. If that fails (name differs
+        from ID), resolves the ID via /playbook/search and retries.
+        """
+        endpoint = f"/playbook/{name}/yaml"
+        response = self.client.make_request(endpoint=endpoint, method="GET")
+        if response.ok:
+            return response.content
+
+        logger.debug(
+            "Direct download for playbook '%s' failed (status %s), attempting ID resolution",
+            name,
+            response.status_code,
+        )
+        playbook_id = self._resolve_playbook_id(name)
+        if playbook_id is None:
+            msg = f"Playbook '{name}' not found"
+            raise ValueError(msg)
+
+        endpoint = f"/playbook/{playbook_id}/yaml"
+        response = self.client.make_request(endpoint=endpoint, method="GET")
+        response.raise_for_status()
+        return response.content
+
+    def download_layout(self, name: str) -> dict:
+        """Downloads a layout by name. Returns the layout as a dict.
+
+        Fetches all layouts via GET /layouts and filters by name client-side.
+        There is no per-item endpoint for layouts.
+        """
+        endpoint = "/layouts"
+        response = self.client.make_request(endpoint=endpoint, method="GET")
+        response.raise_for_status()
+        layouts = response.json()
+        for layout in layouts:
+            if layout.get("name", "").lower() == name.lower():
+                logger.debug("Found layout '%s' (id: '%s')", name, layout.get("id"))
+                return layout
+        msg = f"Layout '{name}' not found"
+        raise ValueError(msg)
 
     def _list_playbooks(self) -> list[dict]:
         endpoint = "/playbook/search"
