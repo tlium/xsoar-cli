@@ -1,14 +1,13 @@
 import json
 import logging
 import pathlib
-from io import StringIO
 from typing import TYPE_CHECKING
 
 import click
-import yaml
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.content import filter_content
+from xsoar_cli.utilities.download_content_handlers import HANDLERS, resolve_output_path
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
 if TYPE_CHECKING:
@@ -84,7 +83,7 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
 @click.option(
     "--type",
     "content_type",
-    type=click.Choice(["playbook", "layout"], case_sensitive=False),
+    type=click.Choice(sorted(HANDLERS.keys()), case_sensitive=False),
     required=True,
     help="Type of content item to download.",
 )
@@ -111,97 +110,32 @@ def download(ctx: click.Context, environment: str | None, content_type: str, out
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
+    handler = HANDLERS[content_type]
 
-    if content_type == "playbook":
-        logger.info("Downloading playbook '%s' (environment: '%s')", name, environment or config.default_environment)
-        try:
-            click.echo(f"Downloading playbook '{name}'...", nl=False)
-            raw_data = xsoar_client.content.download_playbook(name)
-            click.echo("ok.")
-        except Exception as ex:  # noqa: BLE001
-            click.echo("FAILED.")
-            logger.info("Failed to download playbook '%s': %s", name, ex)
-            click.echo(f"Error: {ex}")
-            ctx.exit(1)
-            return
+    logger.info("Downloading %s '%s' (environment: '%s')", content_type, name, environment or config.default_environment)
+    try:
+        click.echo(f"Downloading {content_type} '{name}'...", nl=False)
+        data = handler.download(xsoar_client, name)
+        click.echo("ok.")
+    except Exception as ex:  # noqa: BLE001
+        click.echo("FAILED.")
+        logger.info("Failed to download %s '%s': %s", content_type, name, ex)
+        click.echo(f"Error: {ex}")
+        ctx.exit(1)
+        return
 
-        playbook_data = yaml.safe_load(StringIO(raw_data.decode("utf-8")))
-        pack_id = playbook_data.get("contentitemexportablefields", {}).get("contentitemfields", {}).get("packID")
-        filename = f"{name.replace(' ', '_')}.yml"
-        subdir = "Playbooks"
+    pack_id = handler.extract_pack_id(data)
+    filename = handler.build_filename(name)
+    base_path = pathlib.Path(output_path) if output_path else None
 
-        base_path = pathlib.Path(output_path) if output_path else None
-        filepath = _resolve_output_path(pack_id, subdir, filename, cwd=base_path)
-        if filepath is None:
-            click.echo("Download discarded.")
-            return
+    filepath = resolve_output_path(pack_id, handler.subdir, filename, cwd=base_path)
+    if filepath is None:
+        click.echo("Download discarded.")
+        return
 
-        filepath.write_bytes(raw_data)
-        logger.debug("Written playbook YAML to %s", filepath)
-        click.echo(f"Written to: {filepath}")
-
-    elif content_type == "layout":
-        logger.info("Downloading layout '%s' (environment: '%s')", name, environment or config.default_environment)
-        try:
-            click.echo(f"Downloading layout '{name}'...", nl=False)
-            data = xsoar_client.content.download_layout(name)
-            click.echo("ok.")
-        except Exception as ex:  # noqa: BLE001
-            click.echo("FAILED.")
-            logger.info("Failed to download layout '%s': %s", name, ex)
-            click.echo(f"Error: {ex}")
-            ctx.exit(1)
-            return
-
-        pack_id = data.get("packID")
-        filename = f"layoutscontainer-{name.replace(' ', '_')}.json"
-        subdir = "Layouts"
-
-        base_path = pathlib.Path(output_path) if output_path else None
-        filepath = _resolve_output_path(pack_id, subdir, filename, cwd=base_path)
-        if filepath is None:
-            click.echo("Download discarded.")
-            return
-
-        filepath.write_text(json.dumps(data, indent=4))
-        logger.debug("Written layout JSON to %s", filepath)
-        click.echo(f"Written to: {filepath}")
-
-
-def _resolve_output_path(pack_id: str | None, subdir: str, filename: str, *, cwd: pathlib.Path | None = None) -> pathlib.Path | None:
-    """Determines where to write a downloaded content item.
-
-    Returns the resolved file path, or None if the user chose to discard.
-
-    Rules:
-    - If pack_id is known, target is Packs/<pack_id>/<subdir>/<filename>.
-    - If the target directory does not exist, warn and offer cwd as fallback.
-    - If the target file does not already exist, prompt for confirmation.
-    - If the target file already exists, overwrite silently.
-    """
-    if cwd is None:
-        cwd = pathlib.Path.cwd()
-
-    if pack_id:
-        target_dir = cwd / "Packs" / pack_id / subdir
-    else:
-        logger.warning("Could not determine pack ID, falling back to current directory")
-        target_dir = cwd
-
-    if not target_dir.is_dir():
-        click.echo(f"Warning: target directory does not exist: {target_dir}")
-        if not click.confirm("Save to current working directory instead?"):
-            return None
-        target_dir = cwd
-
-    filepath = target_dir / filename
-
-    if not filepath.exists():
-        click.echo(f"File does not exist: {filepath}")
-        if not click.confirm("Write to this path?"):
-            return None
-
-    return filepath
+    handler.write(filepath, data)
+    logger.debug("Written %s to %s", content_type, filepath)
+    click.echo(f"Written to: {filepath}")
 
 
 content.add_command(get_detached)
