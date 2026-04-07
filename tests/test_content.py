@@ -44,6 +44,40 @@ class TestContentDownloadCommand:
         assert "FAILED" in result.output
         assert "Playbook 'Nonexistent' not found" in result.output
 
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
+    def test_download_layout(self, mock_download, mock_connectivity, mock_config_file, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+        monkeypatch.chdir(tmp_path)
+        mock_download.return_value = {"id": "test-layout", "name": "Test Layout", "kind": "edit"}
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "Test Layout"])
+        assert result.exit_code == 0
+        assert "ok." in result.output
+        output_file = tmp_path / "Test_Layout.json"
+        assert output_file.exists()
+        assert '"name": "Test Layout"' in output_file.read_text()
+
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
+    def test_download_layout_spaces_in_name(self, mock_download, mock_connectivity, mock_config_file, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+        monkeypatch.chdir(tmp_path)
+        mock_download.return_value = {"id": "my-layout", "name": "My Cool Layout"}
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "My Cool Layout"])
+        assert result.exit_code == 0
+        output_file = tmp_path / "My_Cool_Layout.json"
+        assert output_file.exists()
+
+    @patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True)
+    @patch("xsoar_cli.xsoar_client.content.Content.download_layout")
+    def test_download_layout_failure(self, mock_download, mock_connectivity, mock_config_file) -> None:  # noqa: ANN001
+        mock_download.side_effect = ValueError("Layout 'Nonexistent' not found")
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["content", "download", "--type", "layout", "Nonexistent"])
+        assert result.exit_code == 1
+        assert "FAILED" in result.output
+        assert "Layout 'Nonexistent' not found" in result.output
+
     def test_download_missing_type(self, mock_config_file) -> None:  # noqa: ANN001
         runner = CliRunner()
         result = runner.invoke(cli.cli, ["content", "download", "SomeName"])
@@ -170,3 +204,58 @@ class TestResolvePlaybookId:
         content = Content(mock_client)
         result = content._resolve_playbook_id("Anything")
         assert result is None
+
+
+class TestDownloadLayout:
+    """Tests for the Content.download_layout method."""
+
+    def test_download_matching_layout(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = [
+            {"id": "layout-1", "name": "Incident Layout"},
+            {"id": "layout-2", "name": "Alert Layout"},
+        ]
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        result = content.download_layout("Alert Layout")
+        assert result == {"id": "layout-2", "name": "Alert Layout"}
+
+    def test_case_insensitive_match(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = [
+            {"id": "layout-1", "name": "Incident Layout"},
+        ]
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        result = content.download_layout("incident layout")
+        assert result == {"id": "layout-1", "name": "Incident Layout"}
+
+    def test_layout_not_found(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = [
+            {"id": "layout-1", "name": "Incident Layout"},
+        ]
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        with pytest.raises(ValueError, match="Layout 'Nonexistent' not found"):
+            content.download_layout("Nonexistent")
+
+    def test_empty_layouts_list(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = []
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        with pytest.raises(ValueError, match="Layout 'Anything' not found"):
+            content.download_layout("Anything")
