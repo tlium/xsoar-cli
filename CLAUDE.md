@@ -74,8 +74,25 @@ src/xsoar_cli/            # Main package (src layout)
   plugins/                # Plugin system infrastructure
     manager.py            # PluginManager
 tests/                    # Test suite
-  conftest.py             # Shared fixtures
-  test_*.py               # Test modules per command group
+  conftest.py             # Root fixtures (mock_config_file, factory fixtures)
+  test_data/              # Shared test data files (JSON fixtures, etc.)
+  cli/                    # CLI integration tests (CliRunner-based)
+    conftest.py           # CLI fixtures (invoke helper, composite mock fixtures)
+    test_base.py          # Root CLI tests (--help, --version)
+    test_case.py          # Case command group
+    test_config.py        # Config validate command group
+    test_content.py       # Content download command group
+    test_graph.py         # Graph command group
+    test_manifest.py      # Manifest command group
+    test_pack.py          # Pack command group
+    test_playbook.py      # Playbook command group
+    test_plugins.py       # Plugins command group
+  unit/                   # Direct unit tests (no CliRunner)
+    conftest.py           # Unit fixtures (mock_client)
+    test_content_domain.py    # Content domain class (download_playbook, download_layout)
+    test_content_handlers.py  # Handlers, resolve_output_path, HANDLERS registry
+    test_error_handling.py    # ConnectionErrorHandler, HTTPErrorHandler
+    test_plugin_manager.py    # PluginManager, plugin conflict detection
 ```
 
 ## Common Commands
@@ -94,7 +111,13 @@ uv run pytest
 uv run pytest --cov=src/xsoar_cli
 
 # Run a single test file
-uv run pytest tests/test_manifest.py
+uv run pytest tests/cli/test_manifest.py
+
+# Run only CLI integration tests
+uv run pytest tests/cli/
+
+# Run only unit tests
+uv run pytest tests/unit/
 
 # Format code
 black src/ tests/
@@ -120,11 +143,20 @@ uv run xsoar-cli --help
 - Type hints are used throughout; `str | None` union syntax (Python 3.10+)
 - Heavy third-party imports (`xsoar_cli.xsoar_client`, `xsoar_dependency_graph`, `demisto_client`, etc.) must be deferred into the function or method bodies that use them, not imported at module level. This avoids loading slow transitive dependencies (boto3, azure-storage-blob, matplotlib, networkx, etc.) at CLI startup, keeping `--help` and `--version` fast. Use `from __future__ import annotations` together with a `TYPE_CHECKING` block so type hints remain clean and unquoted. Mark each deferred import with the comment `# Lazy import for performance reasons`. When patching deferred imports in tests, patch at the source (e.g., `xsoar_cli.xsoar_client.client.Client`) rather than the importing module (`xsoar_cli.configuration.Client`)
 - The XSOAR client uses domain classes (`client.cases`, `client.packs`, `client.rbac`, etc.) for API operations. Command modules should call the domain class methods directly (e.g., `xsoar_client.cases.get()`) rather than methods on the Client class itself
-- Tests must not produce side effects on the real filesystem, such as writing to the log file or modifying the user's config file. Tests invoke `cli()` directly via Click's `CliRunner`, bypassing `main()` and its logging setup
-- Tests must mock all config file I/O. Any test that exercises code paths touching `get_config_file_contents`, `get_config_file_path`, or `Path.write_text` on the config file must patch these to prevent real filesystem access. The `mock_config_file` fixture in `conftest.py` is the standard way to do this
+- Tests are split into two layers: `tests/cli/` for CLI integration tests (CliRunner-based) and `tests/unit/` for direct unit tests (no CliRunner). CLI tests verify the full command path (argument parsing, config loading, output, exit codes). Unit tests verify individual classes and functions in isolation
+- Tests must not produce side effects on the real filesystem, such as writing to the log file or modifying the user's config file. CLI tests invoke `cli()` directly via Click's `CliRunner`, bypassing `main()` and its logging setup
+- Tests must mock all config file I/O. The `mock_config_file` fixture in the root `conftest.py` patches both `get_config_file_contents` and `Path.is_file`, so tests that use it (or any composite fixture that depends on it) do not need separate `@patch("pathlib.Path.is_file", ...)` decorators
 - Tests use `unittest.mock.patch` to mock external dependencies (`xsoar_cli.xsoar_client`, config file I/O)
 - Test classes follow `class TestX` naming; test methods use `test_` prefix
-- Fixtures are defined in `tests/conftest.py` and requested via `request.getfixturevalue()` for conditional use
+- Fixtures follow a three-level hierarchy:
+  - `tests/conftest.py` (root): globally shared fixtures (`mock_config_file`, factory fixtures like `make_mock_client`, `make_http_error`, `make_case_response`, `make_case_create_response`)
+  - `tests/cli/conftest.py`: CLI-layer fixtures (`invoke` helper, composite mock fixtures like `mock_xsoar_env`, `mock_content_env`, `mock_case_env`)
+  - `tests/unit/conftest.py`: unit-layer fixtures (`mock_client` for domain class constructors)
+- CLI tests use the `invoke` fixture (callable that wraps `CliRunner.invoke`) instead of instantiating `CliRunner` directly. Usage: `result = invoke(["config", "validate"])`
+- CLI tests use composite mock fixtures (`mock_xsoar_env`, `mock_content_env`, `mock_case_env`) instead of stacking `@patch` decorators. These fixtures yield a `SimpleNamespace` with named attributes for each mock, so tests can customize behavior: `mock_xsoar_env.client.test_connectivity.side_effect = ConnectionError()`
+- Factory fixtures return callables that produce mock objects with configurable behavior. Use `make_mock_client(connectivity_ok=False)` instead of hardcoded fixture variants
+- Each CLI test class covers one subcommand or logical feature area. Use explicit, descriptively named test methods instead of conditional parametrize with `request.getfixturevalue()`
+- When adding tests for a new command group, create `tests/cli/test_<group>.py` with classes per subcommand, using the `invoke` fixture and the appropriate composite mock fixture. Add unit tests for any new domain classes or utilities in `tests/unit/`
 
 ## Configuration
 
