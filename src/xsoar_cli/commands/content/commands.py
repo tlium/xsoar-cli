@@ -82,7 +82,7 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
 @click.option(
     "--type",
     "content_type",
-    type=click.Choice(["playbook"], case_sensitive=False),
+    type=click.Choice(["playbook", "layout"], case_sensitive=False),
     required=True,
     help="Type of content item to download.",
 )
@@ -112,6 +112,25 @@ def download(ctx: click.Context, environment: str | None, content_type: str, nam
         filepath = pathlib.Path.cwd() / filename
         filepath.write_bytes(data)
         logger.debug("Written playbook YAML to %s", filepath)
+        click.echo(f"Written to: {filepath}")
+
+    elif content_type == "layout":
+        logger.info("Downloading layout '%s' (environment: '%s')", name, environment or config.default_environment)
+        try:
+            click.echo(f"Downloading layout '{name}'...", nl=False)
+            data = xsoar_client.content.download_layout(name)
+            click.echo("ok.")
+        except Exception as ex:  # noqa: BLE001
+            click.echo("FAILED.")
+            logger.info("Failed to download layout '%s': %s", name, ex)
+            click.echo(f"Error: {ex}")
+            ctx.exit(1)
+            return
+
+        filename = f"{name.replace(' ', '_')}.json"
+        filepath = pathlib.Path.cwd() / filename
+        filepath.write_text(json.dumps(data, indent=4))
+        logger.debug("Written layout JSON to %s", filepath)
         click.echo(f"Written to: {filepath}")
 
 
