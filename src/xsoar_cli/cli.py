@@ -15,6 +15,7 @@ import click
 from .commands.case import commands as case_commands
 from .commands.config import commands as config_commands
 from .commands.content import commands as content_commands
+from .commands.download import commands as download_commands
 from .commands.graph import commands as graph_commands
 from .commands.integration import commands as integration_commands
 from .commands.manifest import commands as manifest_commands
@@ -64,14 +65,15 @@ def cli(ctx: click.Context, debug: bool) -> None:
 
 
 def _register_commands() -> None:
-    cli.add_command(config_commands.config)
     cli.add_command(case_commands.case)
+    cli.add_command(config_commands.config)
     cli.add_command(content_commands.content)
-    cli.add_command(pack_commands.pack)
+    cli.add_command(download_commands.download)
+    cli.add_command(graph_commands.graph)
     cli.add_command(integration_commands.integration)
     cli.add_command(manifest_commands.manifest)
+    cli.add_command(pack_commands.pack)
     cli.add_command(playbook_commands.playbook)
-    cli.add_command(graph_commands.graph)
     cli.add_command(plugin_commands.plugins)
     cli.add_command(rbac_commands.rbac)
 
