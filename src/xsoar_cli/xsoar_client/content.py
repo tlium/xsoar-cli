@@ -124,6 +124,23 @@ class Content:
         response.raise_for_status()
         return response.content
 
+    def download_layout(self, name: str) -> dict:
+        """Downloads a layout by name. Returns the layout as a dict.
+
+        Fetches all layouts via GET /layouts and filters by name client-side.
+        There is no per-item endpoint for layouts.
+        """
+        endpoint = "/layouts"
+        response = self.client.make_request(endpoint=endpoint, method="GET")
+        response.raise_for_status()
+        layouts = response.json()
+        for layout in layouts:
+            if layout.get("name", "").lower() == name.lower():
+                logger.debug("Found layout '%s' (id: '%s')", name, layout.get("id"))
+                return layout
+        msg = f"Layout '{name}' not found"
+        raise ValueError(msg)
+
     def _list_playbooks(self) -> list[dict]:
         endpoint = "/playbook/search"
         payload = {"query": "hidden:F AND deprecated:F"}
