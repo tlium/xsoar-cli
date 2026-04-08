@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
+from unittest.mock import patch
+
+from xsoar_cli.commands.config.commands import get_config_file_template_contents
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from tests.cli.conftest import InvokeHelper
 
 
@@ -137,6 +143,39 @@ class TestConfigValidateMutualExclusivity:
         result = invoke(["config", "validate", "--all", "--only-test-environment", "prod"])
         assert result.exit_code != 0
         assert "mutually exclusive" in result.output
+
+
+class TestConfigSetVersionCheck:
+    """Tests for config set-version-check."""
+
+    def test_enable_sets_skip_to_false(self, invoke: InvokeHelper, mock_config_file, tmp_path: Path) -> None:
+        config_data = get_config_file_template_contents()
+        config_data["skip_version_check"] = True
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps(config_data, indent=4))
+        with patch("xsoar_cli.commands.config.commands.get_config_file_path", return_value=config_file):
+            result = invoke(["config", "set-version-check", "--enable"])
+        assert result.exit_code == 0
+        assert "Version check enabled." in result.output
+        updated = json.loads(config_file.read_text())
+        assert updated["skip_version_check"] is False
+
+    def test_disable_sets_skip_to_true(self, invoke: InvokeHelper, mock_config_file, tmp_path: Path) -> None:
+        config_data = get_config_file_template_contents()
+        config_data["skip_version_check"] = False
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps(config_data, indent=4))
+        with patch("xsoar_cli.commands.config.commands.get_config_file_path", return_value=config_file):
+            result = invoke(["config", "set-version-check", "--disable"])
+        assert result.exit_code == 0
+        assert "Version check disabled." in result.output
+        updated = json.loads(config_file.read_text())
+        assert updated["skip_version_check"] is True
+
+    def test_no_flag_shows_usage_error(self, invoke: InvokeHelper, mock_config_file) -> None:
+        result = invoke(["config", "set-version-check"])
+        assert result.exit_code != 0
+        assert "--enable" in result.output or "--disable" in result.output
 
 
 class TestConfigValidateVerbose:
