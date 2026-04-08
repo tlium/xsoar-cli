@@ -85,58 +85,23 @@ pip uninstall xsoar-cli
 
 xsoar-cli supports tab completion for Bash, Zsh, and Fish. Completion covers commands, subcommands, and options.
 
-### Zsh
-
-Generate the completion script and place it in a directory on your `fpath`:
+The easiest way to set up completions is with the built-in command:
 
 ```bash
-mkdir -p ~/.zfunc
-_XSOAR_CLI_COMPLETE=zsh_source xsoar-cli > ~/.zfunc/_xsoar-cli
+xsoar-cli completions install
 ```
 
-Then add the following to your `~/.zshrc` **before** `compinit` is called:
+This auto-detects your shell and writes the completion script to the appropriate location. Use `--shell` to specify a shell explicitly. For Zsh, Oh My Zsh is detected automatically.
 
-```
-fpath+=~/.zfunc
-autoload -Uz compinit && compinit
-```
-
-Reload your shell with `exec zsh`.
-
-**Oh My Zsh** users can skip the `~/.zshrc` edit. Oh My Zsh adds `$ZSH_CUSTOM/completions` to `fpath` and runs `compinit` automatically:
+To remove completions:
 
 ```bash
-mkdir -p ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/completions
-_XSOAR_CLI_COMPLETE=zsh_source xsoar-cli > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/completions/_xsoar-cli
+xsoar-cli completions uninstall
 ```
 
-Reload your shell with `exec zsh`.
+Regenerate completions after upgrading xsoar-cli by running `xsoar-cli completions install` again.
 
-### Bash
-
-```bash
-_XSOAR_CLI_COMPLETE=bash_source xsoar-cli > ~/.xsoar-cli-complete.bash
-```
-
-Add to your `~/.bashrc`:
-
-```
-source ~/.xsoar-cli-complete.bash
-```
-
-Reload your shell with `source ~/.bashrc`.
-
-### Fish
-
-```bash
-_XSOAR_CLI_COMPLETE=fish_source xsoar-cli > ~/.config/fish/completions/xsoar-cli.fish
-```
-
-No further configuration needed. Fish loads completions from this directory automatically.
-
-### Regenerating completions
-
-Regenerate the completion file after upgrading xsoar-cli if new commands or options were added. Re-run the same generation command for your shell.
+For manual setup or details, see the [completions command documentation](src/xsoar_cli/commands/completions/README.md).
 
 ## Configuration
 
@@ -263,6 +228,7 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 ### Commands
 
 - **[case](src/xsoar_cli/commands/case/README.md)** - Retrieve case details and clone cases between environments
+- **[completions](src/xsoar_cli/commands/completions/README.md)** - Install and manage shell completion
 - **[content](src/xsoar_cli/commands/content/README.md)** - Inspect and manage content items on your XSOAR server
 - **[config](src/xsoar_cli/commands/config/README.md)** - Create, validate, and manage CLI configuration files
 - **[graph](src/xsoar_cli/commands/graph/README.md)** - Generate visual dependency graphs for content packs
