@@ -101,3 +101,21 @@ Set the Azure Blob Storage SAS token for an environment in the configuration fil
 xsoar-cli config set-azure-token my-sas-token
 xsoar-cli config set-azure-token --environment prod my-sas-token
 ```
+
+## Set Version Check
+
+Enable or disable the version update check on CLI startup. When enabled, the CLI checks PyPI for newer versions and prints a notice to stderr.
+
+**Syntax:** `xsoar-cli config set-version-check [OPTIONS]`
+
+**Options:**
+- `--enable` - Enable the version update check
+- `--disable` - Disable the version update check
+
+One of `--enable` or `--disable` must be provided.
+
+**Examples:**
+```
+xsoar-cli config set-version-check --enable
+xsoar-cli config set-version-check --disable
+```

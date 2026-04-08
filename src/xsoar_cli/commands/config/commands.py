@@ -203,8 +203,28 @@ def set_azure_token(ctx: click.Context, environment: str, sastoken: str) -> None
     logger.info("Azure SAS token updated for environment '%s'", environment)
 
 
+@click.command()
+@click.option("--enable", "action", flag_value="enable", help="Enable the version update check on CLI startup.")
+@click.option("--disable", "action", flag_value="disable", help="Disable the version update check on CLI startup.")
+@click.pass_context
+@load_config
+def set_version_check(ctx: click.Context, action: str | None) -> None:  # noqa: ARG001
+    """Enable or disable the version update check on CLI startup."""
+    if action is None:
+        raise click.UsageError("Specify either --enable or --disable.")
+    config_file = get_config_file_path()
+    config_data = json.loads(config_file.read_text())
+    # skip_version_check is the inverse: enabling the check means skip=False.
+    config_data["skip_version_check"] = action == "disable"
+    config_file.write_text(json.dumps(config_data, indent=4))
+    state = "enabled" if action == "enable" else "disabled"
+    logger.info("Version check %s", state)
+    click.echo(f"Version check {state}.")
+
+
 config.add_command(create)
 config.add_command(validate)
 config.add_command(show)
 config.add_command(set_credentials)
 config.add_command(set_azure_token)
+config.add_command(set_version_check)
