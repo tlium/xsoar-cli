@@ -14,6 +14,7 @@ import sys
 import click
 
 from .commands.case import commands as case_commands
+from .commands.completions import commands as completions_commands
 from .commands.config import commands as config_commands
 from .commands.content import commands as content_commands
 from .commands.graph import commands as graph_commands
@@ -65,6 +66,7 @@ def cli(ctx: click.Context, debug: bool) -> None:
 
 def _register_commands() -> None:
     cli.add_command(case_commands.case)
+    cli.add_command(completions_commands.completions)
     cli.add_command(config_commands.config)
     cli.add_command(content_commands.content)
 
