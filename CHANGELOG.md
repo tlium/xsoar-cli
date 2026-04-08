@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-04-08
+
 ### Changed
 
 - `manifest generate` now uses an `--output-dir` option (default: current directory) instead of a positional path argument. The output file is always named `xsoar_config.json`. Prompts for confirmation if the file already exists.
