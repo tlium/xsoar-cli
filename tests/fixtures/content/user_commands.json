@@ -1,1 +1,71 @@
-{}
+[
+    {
+        "brand": "EWS v2",
+        "category": "Email",
+        "name": "EWS_Main",
+        "commands": [
+            {
+                "name": "ews-search-mailbox",
+                "description": "Search for items in a mailbox.",
+                "arguments": [
+                    { "name": "query", "required": true, "deprecated": false, "description": "Search query" },
+                    { "name": "limit", "required": false, "deprecated": false, "description": "Max results" }
+                ],
+                "outputs": [
+                    { "contextPath": "EWS.Items.id", "description": "Item ID", "type": "string" },
+                    { "contextPath": "EWS.Items.subject", "description": "Item subject", "type": "string" }
+                ]
+            },
+            {
+                "name": "ews-get-attachment",
+                "description": "Get an attachment from an item.",
+                "arguments": [
+                    { "name": "item-id", "required": true, "deprecated": false, "description": "The item ID" }
+                ],
+                "outputs": []
+            }
+        ]
+    },
+    {
+        "brand": "EWS v2",
+        "category": "Email",
+        "name": "EWS_Secondary",
+        "commands": [
+            {
+                "name": "ews-search-mailbox",
+                "description": "Search for items in a mailbox.",
+                "arguments": [
+                    { "name": "query", "required": true, "deprecated": false, "description": "Search query" },
+                    { "name": "limit", "required": false, "deprecated": false, "description": "Max results" }
+                ],
+                "outputs": [
+                    { "contextPath": "EWS.Items.id", "description": "Item ID", "type": "string" },
+                    { "contextPath": "EWS.Items.subject", "description": "Item subject", "type": "string" }
+                ]
+            },
+            {
+                "name": "ews-get-attachment",
+                "description": "Get an attachment from an item.",
+                "arguments": [
+                    { "name": "item-id", "required": true, "deprecated": false, "description": "The item ID" }
+                ],
+                "outputs": []
+            }
+        ]
+    },
+    {
+        "brand": "VirusTotal",
+        "category": "Threat Intelligence",
+        "name": "VirusTotal_Prod",
+        "commands": [
+            {
+                "name": "vt-file-scan",
+                "description": "Scan a file with VirusTotal.",
+                "arguments": [
+                    { "name": "file", "required": true, "deprecated": false, "description": "File entry ID to scan" }
+                ],
+                "outputs": [{ "contextPath": "VirusTotal.Scan.id", "description": "Scan ID", "type": "string" }]
+            }
+        ]
+    }
+]

@@ -1,1 +1,12 @@
-[]
+[
+    {
+        "id": "Administrator",
+        "name": "Administrator",
+        "permissions": { "demisto": ["adminPage", "scripts", "playbooks"] }
+    },
+    {
+        "id": "Analyst",
+        "name": "Analyst",
+        "permissions": { "demisto": ["scripts", "playbooks"] }
+    }
+]

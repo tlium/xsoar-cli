@@ -1,1 +1,26 @@
-{}
+{
+    "custom_packs": [
+        {
+            "id": "MyOrg_EDR",
+            "version": "2.0.0"
+        },
+        {
+            "id": "MyOrg_CommonScripts",
+            "version": "1.0.0"
+        }
+    ],
+    "marketplace_packs": [
+        {
+            "id": "CommonScripts",
+            "version": "1.14.20"
+        },
+        {
+            "id": "Phishing",
+            "version": "3.6.1"
+        },
+        {
+            "id": "EWS",
+            "version": "2.4.8"
+        }
+    ]
+}

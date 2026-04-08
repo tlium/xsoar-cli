@@ -1,1 +1,12 @@
-[]
+[
+    {
+        "id": "group-uuid-001",
+        "name": "SOC Team",
+        "data": ["analyst1", "analyst2"]
+    },
+    {
+        "id": "group-uuid-002",
+        "name": "Admins",
+        "data": ["admin"]
+    }
+]

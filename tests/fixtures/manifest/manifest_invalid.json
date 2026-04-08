@@ -1,1 +1,15 @@
-{}
+# This file is intentionally invalid JSON because JSON does not support comments
+{
+    "custom_packs": [
+        {
+            "id": "MyOrg_EDR"  # syntax error: missing ","
+            "version": "2.0.0"
+        }
+    ],
+    "marketplace_packs": [
+        {
+            "id": "CommonScripts",
+            "version": "1.14.20"
+        }
+    ]
+}

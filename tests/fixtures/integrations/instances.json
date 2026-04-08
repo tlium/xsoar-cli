@@ -1,1 +1,26 @@
-[]
+[
+    {
+        "id": "instance-uuid-001",
+        "name": "EWS_Main",
+        "brand": "EWS v2",
+        "enabled": "true",
+        "defaultIgnored": "false",
+        "configvalues": {}
+    },
+    {
+        "id": "instance-uuid-002",
+        "name": "EWS_Secondary",
+        "brand": "EWS v2",
+        "enabled": "false",
+        "defaultIgnored": "false",
+        "configvalues": {}
+    },
+    {
+        "id": "instance-uuid-003",
+        "name": "VirusTotal_Prod",
+        "brand": "VirusTotal",
+        "enabled": "true",
+        "defaultIgnored": "false",
+        "configvalues": {}
+    }
+]
