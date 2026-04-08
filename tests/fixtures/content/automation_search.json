@@ -1,0 +1,33 @@
+{
+    "scripts": [
+        {
+            "id": "SetAndHandleEmpty",
+            "name": "SetAndHandleEmpty",
+            "comment": "Set a value in context under the key you entered, even if the value is empty.",
+            "arguments": [
+                { "name": "key", "required": true, "deprecated": false, "description": "The key to set" },
+                { "name": "value", "required": false, "deprecated": false, "description": "The value to set" }
+            ],
+            "type": "python3",
+            "tags": ["Utility"]
+        },
+        {
+            "id": "Print",
+            "name": "Print",
+            "comment": "Prints text to war room (Markdown supported).",
+            "arguments": [
+                { "name": "value", "required": true, "deprecated": false, "description": "The value to print" }
+            ],
+            "type": "python3",
+            "tags": ["Utility"]
+        },
+        {
+            "id": "LegacyScript",
+            "name": "LegacyScript",
+            "comment": "A deprecated utility script.",
+            "arguments": null,
+            "type": "javascript",
+            "tags": []
+        }
+    ]
+}

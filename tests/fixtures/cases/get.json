@@ -1,0 +1,26 @@
+{
+    "id": "12345",
+    "version": 3,
+    "name": "Phishing Investigation",
+    "type": "Phishing",
+    "status": 1,
+    "severity": 2,
+    "owner": "admin",
+    "created": "2024-06-15T08:30:00Z",
+    "modified": "2024-06-15T09:45:00Z",
+    "details": "Suspicious email reported by user",
+    "labels": [
+        {"type": "Email", "value": "phish@example.com"},
+        {"type": "Reporter", "value": "jdoe"}
+    ],
+    "attachment": null,
+    "cacheVersn": 2,
+    "sizeInBytes": 4096,
+    "dbotMirrorId": "",
+    "dbotMirrorInstance": "",
+    "dbotMirrorDirection": "",
+    "dbotDirtyFields": [],
+    "dbotCurrentDirtyFields": [],
+    "dbotMirrorTags": [],
+    "dbotMirrorLastSync": ""
+}

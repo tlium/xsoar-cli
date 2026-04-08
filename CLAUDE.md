@@ -45,12 +45,13 @@ src/xsoar_cli/            # Main package (src layout)
     http.py               # HTTPErrorHandler
   utilities/              # Shared helpers and validators
     config_file.py        # Config file I/O, get_xsoar_config, load_config
-    validators.py         # Connectivity and artifact provider validators
+    content.py            # Content filter helpers (summarize/filter scripts, playbooks, commands)
+    download_content_handlers.py  # Download content type handlers
     manifest.py           # Manifest comparison helpers
-    generic.py            # General-purpose helpers
+    validators.py         # Connectivity and artifact provider validators
+    version_check.py      # PyPI version check utilities
   xsoar_client/           # XSOAR API client (merged from xsoar-client)
     client.py             # Client class, HTTP request handling
-    config.py             # ClientConfig dataclass
     constants.py          # Shared constants (XSOAR_OLD_VERSION, HTTP_CALL_TIMEOUT)
     cases.py              # Cases domain class
     content.py            # Content domain class
@@ -64,6 +65,7 @@ src/xsoar_cli/            # Main package (src layout)
   commands/               # CLI command groups
     case/                 # Case operations command group
     config/               # Config management command group
+    content/              # Content download/list command group
     graph/                # Dependency graph command group
     integration/          # Integration instance config command group
     manifest/             # Manifest validate/deploy command group
@@ -75,7 +77,16 @@ src/xsoar_cli/            # Main package (src layout)
     manager.py            # PluginManager
 tests/                    # Test suite
   conftest.py             # Root fixtures (mock_config_file, factory fixtures)
-  test_data/              # Shared test data files (JSON fixtures, etc.)
+  fixtures/               # JSON API response fixtures, grouped by domain
+    cases/                # Case API responses (get.json, create.json)
+    content/              # Content search responses (playbook, automation, commands)
+    integrations/         # Integration instance responses
+    manifest/             # Manifest definitions and server response fixtures
+    packs/                # Pack list responses (installed, installed-expired)
+    rbac/                 # RBAC responses (users, roles, user_groups)
+  mock_content/           # Mock XSOAR content repository structures
+    Packs/                # Pack directory layouts for graph tests
+    Download/             # Downloaded content items
   cli/                    # CLI integration tests (CliRunner-based)
     conftest.py           # CLI fixtures (invoke helper, composite mock fixtures)
     test_base.py          # Root CLI tests (--help, --version)
@@ -88,14 +99,29 @@ tests/                    # Test suite
     test_playbook.py      # Playbook command group
     test_plugins.py       # Plugins command group
   unit/                   # Direct unit tests (no CliRunner)
-    conftest.py           # Unit fixtures (mock_client)
-    test_content_domain.py    # Content domain class (download_playbook, download_layout)
+    conftest.py           # Unit fixtures (mock_client, load_test_data)
+    test_artifact_azure.py    # Azure artifact provider
+    test_artifact_base.py     # Base artifact provider (get_pack_path)
+    test_artifact_s3.py       # S3 artifact provider
+    test_cases.py             # Cases domain class
+    test_client.py            # Client core (make_request, resolve_endpoint, connectivity)
+    test_config_file.py       # Config file utilities (load_config, read_config_file)
+    test_content_domain.py    # Content domain class (all methods)
+    test_content_filters.py   # Content filter utilities (summarize, filter, dispatch)
     test_content_handlers.py  # Handlers, resolve_output_path, HANDLERS registry
     test_error_handling.py    # ConnectionErrorHandler, HTTPErrorHandler
+    test_integrations.py      # Integrations domain class
+    test_manifest_utils.py    # Manifest comparison helpers
+    test_packs.py             # Packs domain class
     test_plugin_manager.py    # PluginManager, plugin conflict detection
+    test_rbac.py              # RBAC domain class
+    test_validators.py        # Validator decorators (connectivity, artifact provider)
+    test_version_check.py     # Version check utilities
 ```
 
 ## Common Commands
+
+Always use `--no-pager` when running git commands (e.g. `git --no-pager log`, `git --no-pager diff`). The terminal tool runs in a pty, so git may launch an interactive pager that blocks indefinitely.
 
 ```sh
 # Install dependencies

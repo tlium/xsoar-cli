@@ -1,0 +1,32 @@
+[
+    {
+        "id": "CommonScripts",
+        "currentVersion": "1.14.20",
+        "name": "Common Scripts",
+        "author": "Cortex XSOAR"
+    },
+    {
+        "id": "Phishing",
+        "currentVersion": "3.6.1",
+        "name": "Phishing",
+        "author": "Cortex XSOAR"
+    },
+    {
+        "id": "MyOrg_EDR",
+        "currentVersion": "2.0.0",
+        "name": "MyOrg EDR Pack",
+        "author": "MyOrg"
+    },
+    {
+        "id": "MyOrg_CommonScripts",
+        "currentVersion": "1.0.0",
+        "name": "MyOrg Common Scripts",
+        "author": "MyOrg"
+    },
+    {
+        "id": "EWS",
+        "currentVersion": "2.4.8",
+        "name": "EWS",
+        "author": "Cortex XSOAR"
+    }
+]

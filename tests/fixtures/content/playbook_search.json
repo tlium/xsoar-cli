@@ -1,0 +1,37 @@
+{
+    "playbooks": [
+        {
+            "id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
+            "name": "Phishing Investigation - Generic v2",
+            "inputs": [
+                { "key": "EmailFrom", "value": {}, "description": "The sender email address" },
+                { "key": "EmailSubject", "value": {}, "description": "The email subject line" }
+            ],
+            "outputs": [
+                { "contextPath": "Email.From", "description": "Sender address", "type": "string" },
+                { "contextPath": "Email.IsPhishing", "description": "Whether the email is phishing", "type": "boolean" }
+            ],
+            "tasks": { "0": { "id": "0", "type": "start" }, "1": { "id": "1", "type": "regular" } },
+            "deprecated": false,
+            "hidden": false
+        },
+        {
+            "id": "Malware_Investigation",
+            "name": "Malware Investigation",
+            "inputs": [],
+            "outputs": null,
+            "tasks": { "0": { "id": "0", "type": "start" } },
+            "deprecated": false,
+            "hidden": false
+        },
+        {
+            "id": "aabbccdd-1122-3344-5566-778899aabbcc",
+            "name": "Access Investigation - Generic",
+            "inputs": null,
+            "outputs": [],
+            "tasks": {},
+            "deprecated": false,
+            "hidden": false
+        }
+    ]
+}

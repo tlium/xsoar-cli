@@ -1,0 +1,22 @@
+{
+    "id": "12346",
+    "name": "Phishing Investigation",
+    "created": "2024-06-15T10:00:00Z",
+    "modified": "2024-06-15T10:00:00Z",
+    "details": "Suspicious email reported by user",
+    "status": 1,
+    "severity": 2,
+    "owner": "admin",
+    "version": 1,
+    "labels": [],
+    "attachment": null,
+    "cacheVersn": 0,
+    "sizeInBytes": 0,
+    "dbotMirrorId": "",
+    "dbotMirrorInstance": "",
+    "dbotMirrorDirection": "",
+    "dbotDirtyFields": [],
+    "dbotCurrentDirtyFields": [],
+    "dbotMirrorTags": [],
+    "dbotMirrorLastSync": ""
+}

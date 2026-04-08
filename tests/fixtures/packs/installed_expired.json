@@ -1,0 +1,32 @@
+[
+    {
+        "id": "MyOrg_EDR",
+        "currentVersion": "2.0.0",
+        "name": "MyOrg EDR Pack",
+        "author": "MyOrg",
+        "updateAvailable": false,
+        "changelog": {}
+    },
+    {
+        "id": "Phishing",
+        "currentVersion": "3.6.1",
+        "name": "Phishing",
+        "author": "Cortex XSOAR",
+        "updateAvailable": true,
+        "changelog": {
+            "3.6.1": { "releaseNotes": "Bug fixes.", "released": "2024-03-01T00:00:00Z" },
+            "3.7.0": { "releaseNotes": "New detection rules.", "released": "2024-06-01T00:00:00Z" },
+            "3.7.1": { "releaseNotes": "Hotfix.", "released": "2024-06-15T00:00:00Z" }
+        }
+    },
+    {
+        "id": "EWS",
+        "currentVersion": "2.4.8",
+        "name": "EWS",
+        "author": "Cortex XSOAR",
+        "updateAvailable": false,
+        "changelog": {
+            "2.4.8": { "releaseNotes": "Maintenance release.", "released": "2024-02-01T00:00:00Z" }
+        }
+    }
+]

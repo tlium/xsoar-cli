@@ -1,0 +1,20 @@
+[
+    {
+        "id": "admin",
+        "username": "admin",
+        "name": "Admin User",
+        "email": "admin@example.com",
+        "roles": { "demisto": ["Administrator"] },
+        "phone": "",
+        "accUser": false
+    },
+    {
+        "id": "analyst1",
+        "username": "analyst1",
+        "name": "Jane Doe",
+        "email": "jane.doe@example.com",
+        "roles": { "demisto": ["Analyst"] },
+        "phone": "+1234567890",
+        "accUser": false
+    }
+]

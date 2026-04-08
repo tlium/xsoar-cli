@@ -2,14 +2,14 @@
 {
     "custom_packs": [
         {
-            "id": "Some_pack"  # syntax error: missing ","
+            "id": "MyOrg_EDR"  # syntax error: missing ","
             "version": "2.0.0"
         }
     ],
     "marketplace_packs": [
         {
-            "id": "Some_other_pack",
-            "version": "2.0.0"
+            "id": "CommonScripts",
+            "version": "1.14.20"
         }
     ]
 }

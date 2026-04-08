@@ -6,9 +6,24 @@ handlers, and utilities in isolation.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+
+_FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+
+
+@pytest.fixture
+def load_test_data():  # noqa: ANN201
+    """Load a JSON fixture from the fixtures directory by relative path."""
+
+    def _load(relative_path: str) -> dict | list:
+        path = _FIXTURES_DIR / relative_path
+        return json.loads(path.read_text())
+
+    return _load
 
 
 @pytest.fixture

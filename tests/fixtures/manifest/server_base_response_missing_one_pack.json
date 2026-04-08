@@ -1,0 +1,20 @@
+[
+    {
+        "id": "CommonScripts",
+        "currentVersion": "1.14.20",
+        "name": "Common Scripts",
+        "author": "Cortex XSOAR"
+    },
+    {
+        "id": "Phishing",
+        "currentVersion": "3.6.1",
+        "name": "Phishing",
+        "author": "Cortex XSOAR"
+    },
+    {
+        "id": "EWS",
+        "currentVersion": "2.4.8",
+        "name": "EWS",
+        "author": "Cortex XSOAR"
+    }
+]
