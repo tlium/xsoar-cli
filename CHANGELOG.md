@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `completions install` command to generate and install shell completion scripts for Bash, Zsh (including Oh My Zsh), and Fish. Auto-detects the current shell from `$SHELL`, overridable with `--shell`.
+- `completions uninstall` command to remove previously installed completion scripts.
+- Shell completion no longer triggers the version update check or logging setup, which previously leaked output into completion results.
+
 ## [2.0.2] - 2026-04-08
 
 ### Changed
