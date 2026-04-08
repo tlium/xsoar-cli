@@ -97,6 +97,8 @@ tests/                    # Test suite
 
 ## Common Commands
 
+Always use `--no-pager` when running git commands (e.g. `git --no-pager log`, `git --no-pager diff`). The terminal tool runs in a pty, so git may launch an interactive pager that blocks indefinitely.
+
 ```sh
 # Install dependencies
 uv sync
