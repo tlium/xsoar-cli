@@ -81,6 +81,63 @@ Or with pip:
 pip uninstall xsoar-cli
 ```
 
+## Shell Completion
+
+xsoar-cli supports tab completion for Bash, Zsh, and Fish. Completion covers commands, subcommands, and options.
+
+### Zsh
+
+Generate the completion script and place it in a directory on your `fpath`:
+
+```bash
+mkdir -p ~/.zfunc
+_XSOAR_CLI_COMPLETE=zsh_source xsoar-cli > ~/.zfunc/_xsoar-cli
+```
+
+Then add the following to your `~/.zshrc` **before** `compinit` is called:
+
+```
+fpath+=~/.zfunc
+autoload -Uz compinit && compinit
+```
+
+Reload your shell with `exec zsh`.
+
+**Oh My Zsh** users can skip the `~/.zshrc` edit. Oh My Zsh adds `$ZSH_CUSTOM/completions` to `fpath` and runs `compinit` automatically:
+
+```bash
+mkdir -p ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/completions
+_XSOAR_CLI_COMPLETE=zsh_source xsoar-cli > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/completions/_xsoar-cli
+```
+
+Reload your shell with `exec zsh`.
+
+### Bash
+
+```bash
+_XSOAR_CLI_COMPLETE=bash_source xsoar-cli > ~/.xsoar-cli-complete.bash
+```
+
+Add to your `~/.bashrc`:
+
+```
+source ~/.xsoar-cli-complete.bash
+```
+
+Reload your shell with `source ~/.bashrc`.
+
+### Fish
+
+```bash
+_XSOAR_CLI_COMPLETE=fish_source xsoar-cli > ~/.config/fish/completions/xsoar-cli.fish
+```
+
+No further configuration needed. Fish loads completions from this directory automatically.
+
+### Regenerating completions
+
+Regenerate the completion file after upgrading xsoar-cli if new commands or options were added. Re-run the same generation command for your shell.
+
 ## Configuration
 
 The xsoar-cli config file is located in `~/.config/xsoar-cli/config.json`. To create a configuration file from template, please run:
