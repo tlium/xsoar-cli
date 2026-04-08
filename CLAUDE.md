@@ -70,7 +70,6 @@ src/xsoar_cli/            # Main package (src layout)
     integration/          # Integration instance config command group
     manifest/             # Manifest validate/deploy command group
     pack/                 # Pack operations command group
-    playbook/             # Playbook download command group
     plugins/              # Plugin CLI commands
     rbac/                 # RBAC dump command group
   plugins/                # Plugin system infrastructure
@@ -96,7 +95,6 @@ tests/                    # Test suite
     test_graph.py         # Graph command group
     test_manifest.py      # Manifest command group
     test_pack.py          # Pack command group
-    test_playbook.py      # Playbook command group
     test_plugins.py       # Plugins command group
   unit/                   # Direct unit tests (no CliRunner)
     conftest.py           # Unit fixtures (mock_client, load_test_data)

@@ -7,7 +7,6 @@ A command-line interface for managing Palo Alto Networks XSOAR (Cortex XSOAR) th
 **Key Features:**
 - **Content Management**: Validate and deploy content packs with declarative manifests
 - **Case Operations**: Retrieve case details and clone cases between environments
-- **Playbook Development**: Download playbooks for local editing and testing
 - **Dependency Analysis**: Generate visual graphs of content pack dependencies
 - **Plugin System**: Extend functionality with custom commands
 
@@ -42,9 +41,6 @@ This CLI tool is made to be run from the root of a content repository. Some comm
 - XSOAR servers version 6 or 8
 - Python 3.10+ (tested with Python 3.10-3.14, earlier versions may work but are untested)
 - [uv](https://docs.astral.sh/uv/) for installation
-
-### Additional Requirements
-- **demisto-sdk** - Required by `xsoar-cli playbook download`. Should be installed separately.
 
 
 ## Installation
@@ -216,7 +212,6 @@ For more information on a specific command execute `xsoar-cli <command> --help`.
 - **[integration](src/xsoar_cli/commands/integration/README.md)** - Save and load integration instance configuration
 - **[manifest](src/xsoar_cli/commands/manifest/README.md)** - Validate and deploy content using declarative manifests
 - **[pack](src/xsoar_cli/commands/pack/README.md)** - Manage content pack operations and information
-- **[playbook](src/xsoar_cli/commands/playbook/README.md)** - Download playbooks for local editing and development
 - **[plugins](src/xsoar_cli/commands/plugins/README.md)** - Extend CLI functionality with custom commands
 - **[rbac](src/xsoar_cli/commands/rbac/README.md)** - Dump roles, users and user groups from XSOAR
 
