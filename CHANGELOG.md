@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-04-08
+
 ### Added
 
 - `completions install` command to generate and install shell completion scripts for Bash, Zsh (including Oh My Zsh), and Fish. Auto-detects the current shell from `$SHELL`, overridable with `--shell`.
