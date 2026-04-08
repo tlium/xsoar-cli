@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-04-08
+
 ### Changed
 
 - Redesigned test suite into a two-layer structure: `tests/cli/` for CLI integration tests (CliRunner-based) and `tests/unit/` for direct unit tests. Replaced repetitive `@patch` decorator stacking and manual `CliRunner` instantiation with shared fixtures (`invoke`, `mock_xsoar_env`, `mock_content_env`, `mock_case_env`) and factory fixtures (`make_mock_client`, `make_http_error`, `make_case_response`).
