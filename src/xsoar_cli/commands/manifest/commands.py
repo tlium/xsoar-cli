@@ -118,18 +118,31 @@ def manifest() -> None:
     """Various commands to interact/update/deploy content packs defined in the xsoar_config.json manifest."""
 
 
+MANIFEST_FILENAME = "xsoar_config.json"
+
+
 @click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.argument("manifest_path", type=str)
+@click.option(
+    "--output-dir",
+    type=click.Path(exists=True, file_okay=False),
+    default=".",
+    show_default=True,
+    help="Directory to write xsoar_config.json to.",
+)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
-def generate(ctx: click.Context, environment: str | None, manifest_path: str) -> None:
+def generate(ctx: click.Context, environment: str | None, output_dir: str) -> None:
     """Generate a new xsoar_config.json manifest from installed content packs.
 
     This command assumes that you do not have any custom content packs uploaded to XSOAR.
     All packs will be added as "marketplace_packs" in the manifest.
     """
+    manifest_path = str(Path(output_dir) / MANIFEST_FILENAME)
+    if Path(manifest_path).is_file():
+        click.confirm(f"{manifest_path} already exists. Overwrite?", abort=True)
+
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     logger.info("Generating manifest from installed packs (environment: '%s')", environment or config.default_environment)
@@ -151,7 +164,7 @@ def generate(ctx: click.Context, environment: str | None, manifest_path: str) ->
 
 @click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.argument("manifest", type=str)
+@click.argument("manifest", type=click.Path(exists=True))
 @click.pass_context
 @load_config
 @validate_artifacts_provider
@@ -239,7 +252,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     default="diff",
     help="Validate the full manifest, or only the definitions that diff with installed versions",
 )
-@click.argument("manifest", type=str)
+@click.argument("manifest", type=click.Path(exists=True))
 @click.pass_context
 @load_config
 @validate_artifacts_provider
@@ -304,7 +317,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
 
 @click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
-@click.argument("manifest", type=str)
+@click.argument("manifest", type=click.Path(exists=True))
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity()
@@ -362,7 +375,7 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--verbose", is_flag=True, default=False)
 @click.option("--yes", is_flag=True, default=False)
-@click.argument("manifest", type=str)
+@click.argument("manifest", type=click.Path(exists=True))
 @click.pass_context
 @load_config
 @validate_artifacts_provider

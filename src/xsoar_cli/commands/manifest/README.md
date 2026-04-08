@@ -4,20 +4,19 @@ Content pack deployment management commands using a declarative configuration fi
 
 ## Generate
 
-Generate a new manifest file from currently installed content packs. Assumes all packs are marketplace packs (no custom packs).
+Generate a new manifest file from currently installed content packs. Assumes all packs are marketplace packs (no custom packs). The output file is always named `xsoar_config.json`. Prompts for confirmation if the file already exists.
 
-**Syntax:** `xsoar-cli manifest generate [OPTIONS] MANIFEST_PATH`
+**Syntax:** `xsoar-cli manifest generate [OPTIONS]`
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
-
-**Arguments:**
-- `MANIFEST_PATH` - Path where the new manifest file will be created
+- `--output-dir DIRECTORY` - Directory to write xsoar_config.json to (default: current directory)
 
 **Examples:**
 ```
-xsoar-cli manifest generate ./xsoar_config.json
-xsoar-cli manifest generate --environment prod ./xsoar_config.json
+xsoar-cli manifest generate
+xsoar-cli manifest generate --output-dir /path/to/repo
+xsoar-cli manifest generate --environment prod
 ```
 
 ## Validate
