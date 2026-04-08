@@ -8,6 +8,7 @@
 
 import logging
 import logging.handlers
+import os
 import sys
 
 import click
@@ -119,6 +120,13 @@ _setup: LoggingSetup | None = None
 def main() -> None:
     """Entry point (pyproject.toml console_scripts). Sets up logging, invokes
     the CLI, and ensures the exit code is logged before the process exits."""
+    # When Click is handling shell completion (Bash, Zsh, Fish) it re-invokes
+    # the CLI with _XSOAR_CLI_COMPLETE set. Skip logging and the version check
+    # so their output does not leak into the completion results.
+    if "_XSOAR_CLI_COMPLETE" in os.environ:
+        cli()
+        return
+
     # Start by setting up logging facilitites
     config_data = read_config_file()
     global _setup  # noqa: PLW0603
