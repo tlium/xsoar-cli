@@ -34,6 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `content download` subcommand for downloading individual content items by name. Supports playbooks and layouts (`xsoar-cli content download --type playbook|layout <name>`).
+- `content download --output` option to specify the content repository root directory. Useful when running xsoar-cli from outside the content repository.
+- `content download` automatically runs `demisto-sdk format` on downloaded files to ensure they conform to the content repository standard.
+- `content download` re-attaches downloaded content items to their pack after writing, so they no longer appear as detached in XSOAR.
+- `content download` resolves the content item's pack ID and writes to the correct `Packs/<pack_id>/` directory. Prompts for fallback to the current working directory if the pack directory does not exist.
 
 ## [2.0.0] - 2026-04-07
 
