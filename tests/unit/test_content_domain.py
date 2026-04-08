@@ -323,56 +323,6 @@ class TestGetDetached:
 
 
 # ===========================================================================
-# Content.download_item
-# ===========================================================================
-
-
-class TestDownloadItem:
-    """Tests for the Content.download_item method."""
-
-    def test_playbook_happy_path(self) -> None:
-        mock_client = MagicMock()
-        response = MagicMock()
-        response.content = b"id: my-playbook\nname: My Playbook\n"
-        response.raise_for_status.return_value = None
-        mock_client.make_request.return_value = response
-
-        content = Content(mock_client)
-        result = content.download_item("playbook", "my-playbook")
-
-        assert result == b"id: my-playbook\nname: My Playbook\n"
-        mock_client.make_request.assert_called_once_with(endpoint="/playbook/my-playbook/yaml", method="GET")
-
-    def test_calls_raise_for_status(self) -> None:
-        mock_client = MagicMock()
-        response = MagicMock()
-        response.content = b"data"
-        response.raise_for_status.return_value = None
-        mock_client.make_request.return_value = response
-
-        content = Content(mock_client)
-        content.download_item("playbook", "test-id")
-
-        response.raise_for_status.assert_called_once()
-
-    def test_unsupported_type_raises(self) -> None:
-        mock_client = MagicMock()
-        content = Content(mock_client)
-        with pytest.raises(ValueError, match="Unknown item_type"):
-            content.download_item("script", "some-id")
-
-    def test_http_error_propagates(self) -> None:
-        mock_client = MagicMock()
-        response = MagicMock()
-        response.raise_for_status.side_effect = HTTPError("404 Not Found")
-        mock_client.make_request.return_value = response
-
-        content = Content(mock_client)
-        with pytest.raises(HTTPError, match="404 Not Found"):
-            content.download_item("playbook", "nonexistent")
-
-
-# ===========================================================================
 # Content.attach_item
 # ===========================================================================
 

@@ -49,17 +49,6 @@ class Content:
         response.raise_for_status()
         return response
 
-    def download_item(self, item_type: str, item_id: str) -> bytes:
-        """Downloads a content item by type and ID."""
-        if item_type == "playbook":
-            endpoint = f"/{item_type}/{item_id}/yaml"
-            response = self.client.make_request(endpoint=endpoint, method="GET")
-        else:
-            msg = 'Unknown item_type selected for download. Must be one of ["playbook"]'
-            raise ValueError(msg)
-        response.raise_for_status()
-        return response.content
-
     def attach_item(self, item_type: str, item_id: str) -> None:
         """Attaches a content item to the server-managed version."""
         if item_type == "playbook":
