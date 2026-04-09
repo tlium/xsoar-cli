@@ -23,7 +23,7 @@ def rbac() -> None:
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def getroles(ctx: click.Context, environment: str | None) -> None:
     """Dump all roles in your environment."""
     config = get_xsoar_config(ctx)
@@ -36,7 +36,7 @@ def getroles(ctx: click.Context, environment: str | None) -> None:
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def getusers(ctx: click.Context, environment: str | None) -> None:
     """Dump all users in your environment."""
     config = get_xsoar_config(ctx)

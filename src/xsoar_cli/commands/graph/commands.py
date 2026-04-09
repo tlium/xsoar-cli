@@ -77,7 +77,7 @@ def graph() -> None:
 @click.command()
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_repo_path: str, environment: str | None) -> None:
     """BETA
 
@@ -100,7 +100,7 @@ def generate(ctx: click.Context, packs: tuple[Path], repo_path: str, upstream_re
 @_common_graph_options
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def export(
     ctx: click.Context,
     packs: tuple[Path],

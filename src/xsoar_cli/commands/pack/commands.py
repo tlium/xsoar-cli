@@ -23,7 +23,7 @@ def pack() -> None:
 @click.argument("pack_id", type=str)
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
     """Delete a content pack from the server."""
     config = get_xsoar_config(ctx)
@@ -45,7 +45,7 @@ def delete(ctx: click.Context, environment: str | None, pack_id: str) -> None:
 @click.pass_context
 @load_config
 @validate_artifacts_provider
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def get_outdated(ctx: click.Context, environment: str | None) -> None:
     """Print a list of outdated content packs."""
     config = get_xsoar_config(ctx)

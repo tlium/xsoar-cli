@@ -25,7 +25,7 @@ def integration() -> None:
 @click.argument("name", type=str, required=False, default=None)
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def dump(ctx: click.Context, environment: str | None, name: str | None, all: bool) -> None:
     """Dump integration instance configuration to stdout as JSON."""
     config = get_xsoar_config(ctx)

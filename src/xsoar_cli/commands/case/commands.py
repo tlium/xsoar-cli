@@ -8,7 +8,7 @@ from requests.exceptions import HTTPError
 from xsoar_cli.error_handling.connection import ConnectionErrorHandler
 from xsoar_cli.error_handling.http import HTTPErrorHandler
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.validators import validate_environments
+from xsoar_cli.utilities.validators import validate_environments, validate_xsoar_connectivity
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ def case() -> None:
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
+@validate_xsoar_connectivity
 def get(ctx: click.Context, casenumber: int, environment: str | None) -> None:
     """Retrieve and display a single case.
 
@@ -160,6 +161,7 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
 @click.argument("name", type=str, default="Test case created from xsoar-cli")
 @click.pass_context
 @load_config
+@validate_xsoar_connectivity
 def create(  # noqa: PLR0913
     ctx: click.Context,
     environment: str | None,

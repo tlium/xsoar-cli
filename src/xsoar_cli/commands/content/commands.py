@@ -35,7 +35,7 @@ def content() -> None:
 )
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def get_detached(ctx: click.Context, environment: str | None, content_type: str) -> None:
     """List detached content items."""
     config = get_xsoar_config(ctx)
@@ -60,7 +60,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
 @click.option("--verbose", is_flag=True, default=False, help="Output the full unfiltered response.")
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def list_content(ctx: click.Context, environment: str | None, content_type: str, detail: bool, verbose: bool) -> None:
     """
     List detached content items. The purpose of this function is to list out available commands,
@@ -99,7 +99,7 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def download(ctx: click.Context, environment: str | None, content_type: str, output_path: str | None, name: str) -> None:
     """Download a content item by name.
 

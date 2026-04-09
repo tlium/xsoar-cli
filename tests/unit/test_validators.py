@@ -70,7 +70,7 @@ class TestValidateXsoarConnectivity:
         config = _make_config(connectivity_ok=True)
 
         @click.command()
-        @validate_xsoar_connectivity()
+        @validate_xsoar_connectivity
         @click.pass_context
         def dummy(ctx: click.Context) -> None:
             click.echo("executed")
@@ -86,7 +86,7 @@ class TestValidateXsoarConnectivity:
         config = _make_config(connectivity_ok=False)
 
         @click.command()
-        @validate_xsoar_connectivity()
+        @validate_xsoar_connectivity
         @click.pass_context
         def dummy(ctx: click.Context) -> None:
             click.echo("should not run")
@@ -104,7 +104,7 @@ class TestValidateXsoarConnectivity:
 
         @click.command()
         @click.option("--environment", default=None)
-        @validate_xsoar_connectivity()
+        @validate_xsoar_connectivity
         @click.pass_context
         def dummy(ctx: click.Context, environment: str | None) -> None:
             click.echo("executed")
@@ -119,7 +119,7 @@ class TestValidateXsoarConnectivity:
         config = _make_config(default_environment="dev", connectivity_ok=True)
 
         @click.command()
-        @validate_xsoar_connectivity()
+        @validate_xsoar_connectivity
         @click.pass_context
         def dummy(ctx: click.Context) -> None:
             click.echo("executed")
