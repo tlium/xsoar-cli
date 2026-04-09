@@ -43,49 +43,7 @@ no-op stub.
 
 ---
 
-### 1b. Missing `raise_for_status()` in `Content.get_bundle()`
-
-**File:** `src/xsoar_cli/xsoar_client/content.py` (line 19-24)
-
-Every other domain method that fetches data calls `response.raise_for_status()` to surface HTTP
-errors. `get_bundle()` does not. A failed HTTP response will silently pass through and then blow up
-on `tarfile.open()` with a confusing error about corrupt tar data.
-
-```python
-def get_bundle(self) -> dict[str, StringIO]:
-    """Downloads and extracts the custom content bundle."""
-    endpoint = "/content/bundle"
-    response = self.client.make_request(endpoint=endpoint, method="GET")
-    loaded_files: dict[str, StringIO] = {}
-```
-
-**Fix:** Add `response.raise_for_status()` after the `make_request` call.
-
----
-
-### 1c. `Content.get_detached()` returns raw `Response` instead of parsed data
-
-**File:** `src/xsoar_cli/xsoar_client/content.py` (line 32-42)
-
-All other domain methods return parsed results (`dict`, `list[dict]`, `bytes`). `get_detached()`
-returns the raw `requests.Response` object, leaking the HTTP transport layer. The caller in
-`commands/content/commands.py` then has to call `.json()` itself.
-
-Additionally, the status message in the command is printed after the data (line 43-44 in
-`commands/content/commands.py`), which is backwards compared to every other command:
-
-```python
-response = xsoar_client.content.get_detached(content_type)
-click.echo(json.dumps(response.json(), indent=4))
-click.echo(f"Getting detached content items ({content_type=})")
-```
-
-**Fix:** Have `get_detached()` return parsed data (e.g., `dict`), add `raise_for_status()`, and
-fix the message ordering in the command.
-
----
-
-### 1d. `PluginManager.__init__` creates real directories at import time
+### 1b. `PluginManager.__init__` creates real directories at import time
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 31-36)
 
@@ -245,7 +203,7 @@ if not self.plugins_dir.exists():
     return plugin_names
 ```
 
-**Fix:** Remove the guard, or if the constructor is changed to defer directory creation (see 1d),
+**Fix:** Remove the guard, or if the constructor is changed to defer directory creation (see 1b),
 keep it as a legitimate check.
 
 ---
@@ -313,42 +271,21 @@ def description(self) -> Optional[str]:
 
 ---
 
-### 3c. Unused `@click.pass_context` on group functions
+### 3c. Click group help text declared inconsistently
 
-**Files:**
-- `src/xsoar_cli/commands/integration/commands.py` (line 16-19)
-- `src/xsoar_cli/commands/pack/commands.py` (line 15-18)
-- `src/xsoar_cli/commands/rbac/commands.py` (line 16-19)
-
-Three group functions accept `ctx` but never use it:
-
-```python
-@click.group()
-@click.pass_context
-def integration(ctx: click.Context) -> None:
-    """(BETA) Save/load integration configuration for an integration instance."""
-```
-
-**Fix:** Remove `@click.pass_context` and the `ctx` parameter from all three groups.
-
----
-
-### 3d. Click group help text declared inconsistently
-
-Three different patterns are used across the 10 command groups:
+Two different patterns are used across the 10 command groups:
 
 | Pattern | Modules |
 |---------|---------|
 | `help=` in decorator, body is `pass` | case, completions, config, graph, plugins |
-| Docstring on function | content, manifest |
-| `@click.pass_context` + docstring + unused `ctx` | integration, pack, rbac |
+| Docstring on function | content, integration, manifest, pack, rbac |
 
 **Fix:** Pick one pattern and apply it across all groups. The `help=` in decorator with `pass`
 body is the most common.
 
 ---
 
-### 3e. `TYPE_CHECKING` block placement inconsistencies
+### 3d. `TYPE_CHECKING` block placement inconsistencies
 
 **Files:**
 - `src/xsoar_cli/commands/config/commands.py` (line 7-9): `TYPE_CHECKING` block placed before
@@ -361,7 +298,7 @@ isort ordering.
 
 ---
 
-### 3f. Missing `-> None` return type annotations
+### 3e. Missing `-> None` return type annotations
 
 **Files:**
 - `src/xsoar_cli/commands/plugins/commands.py`: All 4 functions (`plugins`, `list_plugins`,
@@ -375,7 +312,7 @@ All other modules consistently annotate `-> None` on void functions.
 
 ---
 
-### 3g. Bare `list` return types instead of `list[dict]`
+### 3f. Bare `list` return types instead of `list[dict]`
 
 **Files:**
 - `src/xsoar_cli/xsoar_client/integrations.py` (line 14): `get_instances() -> list`
@@ -388,7 +325,7 @@ Compare with `Packs` and `Content`, which use the more specific `list[dict]`.
 
 ---
 
-### 3h. Inconsistent JSON output formatting
+### 3g. Inconsistent JSON output formatting
 
 **Trailing newline:** `integration dump` and all `rbac` commands append `+ "\n"` to
 `json.dumps()` output. `click.echo()` already appends a newline, so this produces a double blank
@@ -406,7 +343,7 @@ newline) and apply it everywhere.
 
 ---
 
-### 3i. Inconsistent decorator ordering on `graph` commands
+### 3h. Inconsistent decorator ordering on `graph` commands
 
 **File:** `src/xsoar_cli/commands/graph/commands.py`
 
@@ -417,7 +354,7 @@ newline) and apply it everywhere.
 
 ---
 
-### 3j. Missing docstrings in domain classes and artifact providers
+### 3i. Missing docstrings in domain classes and artifact providers
 
 **File:** `src/xsoar_cli/xsoar_client/content.py`
 - `_list_playbooks` (line 116)
@@ -437,7 +374,7 @@ All other domain class methods and S3 provider methods have docstrings.
 
 ---
 
-### 3k. Missing return type annotations on artifact provider lazy properties
+### 3j. Missing return type annotations on artifact provider lazy properties
 
 **Files:**
 - `src/xsoar_cli/xsoar_client/artifact_providers/s3.py` (line 20-22): `s3` property missing
@@ -451,7 +388,7 @@ Their sibling properties (`session`, `service`) have return types.
 
 ---
 
-### 3l. Inconsistent logging in domain classes
+### 3k. Inconsistent logging in domain classes
 
 **Files with a logger:** `content.py`, `packs.py`
 
@@ -465,7 +402,7 @@ debug logging.
 
 ---
 
-### 3m. Formal docstring style in plugin ABC
+### 3l. Formal docstring style in plugin ABC
 
 **File:** `src/xsoar_cli/plugins/__init__.py` (line 38-45)
 
@@ -493,7 +430,7 @@ def get(self, case_id: int) -> dict:
 
 ---
 
-### 3n. `assert` for type check in `log.py`
+### 3m. `assert` for type check in `log.py`
 
 **File:** `src/xsoar_cli/log.py` (line 44)
 
@@ -684,9 +621,8 @@ The package has no summary. This shows up empty on PyPI and in `pip show`.
 
 Tackle these in the following order:
 
-1. **Bugs** (1a-1d): Fix the `integration load` decorator, add `raise_for_status()` to
-   `get_bundle()`, fix `get_detached()` return type and command output order, address the
-   `PluginManager` side-effect.
+1. **Bugs** (1a-1b): Fix the `integration load` decorator, address the `PluginManager`
+   side-effect.
 
 2. **Design inconsistencies** (2a-2h): Normalize validator decorators, bring `case` commands in
    line with the error-handling pattern, resolve the circular import, fix the builtin shadowing,
@@ -695,12 +631,12 @@ Tackle these in the following order:
 3. **Sweep: `from __future__ import annotations`** (3a): A single focused pass across all 13
    source modules.
 
-4. **Sweep: Type hints and return annotations** (3b, 3f, 3g, 3k): Normalize `Optional` to
+4. **Sweep: Type hints and return annotations** (3b, 3e, 3f, 3j): Normalize `Optional` to
    `str | None`, add missing `-> None`, use `list[dict]` consistently.
 
-5. **Sweep: Docstrings and structural patterns** (3d, 3e, 3h, 3i, 3j, 3l, 3m, 3n): Normalize
-   Click group declarations, `TYPE_CHECKING` placement, JSON output formatting, decorator
-   ordering, add missing docstrings and loggers.
+5. **Sweep: Docstrings and structural patterns** (3c, 3d, 3g, 3h, 3i, 3k, 3l, 3m):
+   Normalize Click group declarations, `TYPE_CHECKING` placement, JSON output formatting,
+   decorator ordering, add missing docstrings and loggers.
 
 6. **Test cleanup** (4a-4i): Extract shared helpers, normalize fixture usage, add missing
    annotations and docstrings.
