@@ -28,7 +28,7 @@ def content() -> None:
 @click.option(
     "--type",
     "content_type",
-    type=click.Choice(["scripts", "playbooks", "all"], case_sensitive=False),
+    type=click.Choice(["scripts", "playbooks"], case_sensitive=False),
     default="all",
     show_default=True,
     help="Type of content items to retrieve.",
@@ -41,8 +41,8 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     response = xsoar_client.content.get_detached(content_type)
-    click.echo(json.dumps(response.json(), indent=4))
-    click.echo(f"Getting detached content items ({content_type=})")
+    data = json.loads(response)
+    click.echo(json.dumps(data, indent=4))
 
 
 # We name the command in the decorator here to avoid shadowing the builtin list.
