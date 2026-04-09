@@ -21,6 +21,7 @@ class Content:
         """Downloads and extracts the custom content bundle."""
         endpoint = "/content/bundle"
         response = self.client.make_request(endpoint=endpoint, method="GET")
+        response.raise_for_status()
         loaded_files: dict[str, StringIO] = {}
 
         with tarfile.open(fileobj=BytesIO(response.content), mode="r") as tar:
@@ -34,7 +35,7 @@ class Content:
                     loaded_files[file_name] = file_data
         return loaded_files
 
-    def get_detached(self, content_type: str | None) -> Response:
+    def get_detached(self, content_type: str | None) -> bytes:
         """Returns detached content. Currently supports script, playbooks, layouts.
         Where content_type must be either "playbooks" or "scripts".
         """
@@ -47,7 +48,7 @@ class Content:
             raise ValueError(f"Invalid value {content_type=}")
         response = self.client.make_request(endpoint=endpoint, method="POST", json=payload)
         response.raise_for_status()
-        return response
+        return response.content
 
     def attach_item(self, item_type: str, item_id: str) -> None:
         """Attaches a content item to the server-managed version."""
