@@ -45,7 +45,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
 
 
 @click.command()
-def load(ctx: click.Context) -> None:
+def load() -> None:
     """Load integration instance configuration into XSOAR from a JSON file. Not yet implemented."""
     logger.debug("integration loadconfig command not implemented")
     click.echo("Command not implemented")
