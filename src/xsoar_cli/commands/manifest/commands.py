@@ -116,6 +116,7 @@ def _check_pack_availability(
 @click.group()
 def manifest() -> None:
     """Various commands to interact/update/deploy content packs defined in the xsoar_config.json manifest."""
+    pass
 
 
 MANIFEST_FILENAME = "xsoar_config.json"
@@ -132,7 +133,7 @@ MANIFEST_FILENAME = "xsoar_config.json"
 )
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def generate(ctx: click.Context, environment: str | None, output_dir: str) -> None:
     """Generate a new xsoar_config.json manifest from installed content packs.
 
@@ -168,7 +169,7 @@ def generate(ctx: click.Context, environment: str | None, output_dir: str) -> No
 @click.pass_context
 @load_config
 @validate_artifacts_provider
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
     """Update manifest on disk with latest available content pack versions."""
     # Lazy import for performance reasons
@@ -256,7 +257,7 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
 @click.pass_context
 @load_config
 @validate_artifacts_provider
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def validate(ctx: click.Context, environment: str | None, mode: str, manifest: str) -> None:
     """Validate manifest JSON and content pack availability.
 
@@ -320,7 +321,7 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
 @click.argument("manifest", type=click.Path(exists=True))
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
     """Prints out the differences (if any) between what is defined in the xsoar_config.json manifest and what is actually
     installed on the XSOAR server."""
@@ -379,7 +380,7 @@ def diff(ctx: click.Context, manifest: str, environment: str | None) -> None:
 @click.pass_context
 @load_config
 @validate_artifacts_provider
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def deploy(ctx: click.Context, environment: str | None, manifest: str, verbose: bool, yes: bool) -> None:  # noqa: FBT001
     """Deploy content packs to the server as defined in the xsoar_config.json manifest.
 

@@ -38,10 +38,12 @@ class AzureArtifactProvider(BaseArtifactProvider):
         return self._container_client
 
     def test_connection(self) -> bool:
+        """Test connectivity to the configured Azure Blob Storage Container"""
         self.container_client.get_container_properties()
         return True
 
     def is_available(self, *, pack_id: str, pack_version: str) -> bool:
+        """Check if a Pack ID with specific version is available"""
         key_name = self.get_pack_path(pack_id, pack_version)
         blob_client = self.container_client.get_blob_client(blob=key_name)
         try:
@@ -51,11 +53,13 @@ class AzureArtifactProvider(BaseArtifactProvider):
             return False
 
     def download(self, *, pack_id: str, pack_version: str) -> bytes:
+        """Download a Pack given by ID and version"""
         key_name = self.get_pack_path(pack_id, pack_version)
         download_stream = self.container_client.download_blob(blob=key_name)
         return download_stream.readall()
 
     def get_latest_version(self, pack_id: str) -> str:
+        """Fetch the latest version of a Pack"""
         prefix = f"content/packs/{pack_id}/"
         iter_names = self.container_client.list_blob_names(name_starts_with=prefix)
         version_list = [x.split("/")[3] for x in list(iter_names)]

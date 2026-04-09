@@ -14,9 +14,10 @@ from xsoar_cli.plugins.manager import PluginManager
 logger = logging.getLogger(__name__)
 
 
-@click.group(help="Manage XSOAR CLI plugins")
+@click.group()
 def plugins():
-    """Plugin management commands."""
+    """Manage XSOAR CLI plugins"""
+    pass
 
 
 @click.command(help="List all available and loaded plugins")

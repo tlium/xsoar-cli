@@ -5,15 +5,15 @@ from typing import TYPE_CHECKING
 
 import click
 
-if TYPE_CHECKING:
-    from xsoar_cli.xsoar_client.client import Client
-
 from xsoar_cli.utilities.config_file import (
     get_config_file_contents,
     get_config_file_path,
     get_xsoar_config,
     load_config,
 )
+
+if TYPE_CHECKING:
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +47,9 @@ def get_config_file_template_contents() -> dict:
     }
 
 
-@click.group(help="Create, validate, and manage CLI configuration")
+@click.group()
 def config() -> None:
+    """Create, validate, and manage CLI configuration"""
     pass
 
 
@@ -67,8 +68,7 @@ def show(ctx: click.Context, masked: bool) -> None:
             if "azure_storage_access_token" in config["server_config"][key]:
                 config["server_config"][key]["azure_storage_access_token"] = "*****"  # noqa: S105
 
-    print(json.dumps(config, indent=4))
-    ctx.exit()
+    click.echo(json.dumps(config, indent=4))
 
 
 @click.command()

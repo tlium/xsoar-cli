@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def content() -> None:
-    """Inspect and manage content items."""
+    """Inspect and manage content items"""
+    pass
 
 
 @click.command()
@@ -27,21 +28,21 @@ def content() -> None:
 @click.option(
     "--type",
     "content_type",
-    type=click.Choice(["scripts", "playbooks", "all"], case_sensitive=False),
+    type=click.Choice(["scripts", "playbooks"], case_sensitive=False),
     default="all",
     show_default=True,
     help="Type of content items to retrieve.",
 )
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def get_detached(ctx: click.Context, environment: str | None, content_type: str) -> None:
     """List detached content items."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     response = xsoar_client.content.get_detached(content_type)
-    click.echo(json.dumps(response.json(), indent=4))
-    click.echo(f"Getting detached content items ({content_type=})")
+    data = json.loads(response)
+    click.echo(json.dumps(data, indent=4))
 
 
 # We name the command in the decorator here to avoid shadowing the builtin list.
@@ -59,7 +60,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
 @click.option("--verbose", is_flag=True, default=False, help="Output the full unfiltered response.")
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def list_content(ctx: click.Context, environment: str | None, content_type: str, detail: bool, verbose: bool) -> None:
     """
     List detached content items. The purpose of this function is to list out available commands,
@@ -98,7 +99,7 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def download(ctx: click.Context, environment: str | None, content_type: str, output_path: str | None, name: str) -> None:
     """Download a content item by name.
 

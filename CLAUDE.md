@@ -64,6 +64,7 @@ src/xsoar_cli/            # Main package (src layout)
       azure.py            # AzureArtifactProvider (Azure Blob Storage)
   commands/               # CLI command groups
     case/                 # Case operations command group
+    completions/          # Shell autocompletion command group
     config/               # Config management command group
     content/              # Content download/list command group
     graph/                # Dependency graph command group
@@ -124,9 +125,6 @@ Always use `--no-pager` when running git commands (e.g. `git --no-pager log`, `g
 ```sh
 # Install dependencies
 uv sync
-uv pip install -r requirements.txt
-uv pip install -r requirements_dev.txt
-uv pip install -e .
 
 # Run all tests
 uv run pytest

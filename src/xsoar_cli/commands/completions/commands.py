@@ -73,8 +73,9 @@ def _resolve_shell(shell_name: str | None) -> str:
     return detected
 
 
-@click.group(help="Install and manage shell completion for xsoar-cli.")
+@click.group()
 def completions() -> None:
+    """Install and manage shell completion for xsoar-cli"""
     pass
 
 
