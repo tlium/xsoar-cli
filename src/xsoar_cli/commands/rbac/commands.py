@@ -49,7 +49,7 @@ def getusers(ctx: click.Context, environment: str | None) -> None:
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 def getusergroups(ctx: click.Context, environment: str | None) -> None:
     """Dump all user groups in your environment. XSOAR 8+ only."""
     config = get_xsoar_config(ctx)
