@@ -150,6 +150,7 @@ def mock_case_env(mock_config_file, make_case_response, make_case_create_respons
     import types as _types
 
     with (
+        patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True) as mock_conn,
         patch("xsoar_cli.xsoar_client.cases.Cases.get") as mock_get,
         patch("xsoar_cli.xsoar_client.cases.Cases.create") as mock_create,
     ):
@@ -157,6 +158,7 @@ def mock_case_env(mock_config_file, make_case_response, make_case_create_respons
         mock_create.return_value = make_case_create_response()
         ns = _types.SimpleNamespace(
             config=mock_config_file,
+            connectivity=mock_conn,
             get=mock_get,
             create=mock_create,
         )
