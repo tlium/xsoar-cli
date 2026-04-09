@@ -15,7 +15,6 @@ numbers so it can be addressed independently.
 - [2. Design Inconsistencies](#2-design-inconsistencies)
 - [3. Structural and Convention Inconsistencies](#3-structural-and-convention-inconsistencies)
 - [4. Test Suite Inconsistencies](#4-test-suite-inconsistencies)
-- [5. Documentation Drift](#5-documentation-drift)
 - [Priority Recommendation](#priority-recommendation)
 
 ---
@@ -61,7 +60,7 @@ thing (validate a precondition before a command runs) but require different synt
 
 ```python
 @validate_artifacts_provider
-@validate_xsoar_connectivity()
+@validate_xsoar_connectivity
 ```
 
 `validate_xsoar_connectivity` takes no parameters, so the factory pattern adds no value.
@@ -132,24 +131,7 @@ for 404.
 
 ---
 
-### 2e. `print()` instead of `click.echo()` in config show
-
-**File:** `src/xsoar_cli/commands/config/commands.py` (line 70-71)
-
-This is the only `print()` call across all command modules. The convention is `click.echo()` for
-all user-facing output. The `ctx.exit()` on the next line is also unnecessary since the function
-returns naturally. No other command does this for a successful path.
-
-```python
-print(json.dumps(config, indent=4))
-ctx.exit()
-```
-
-**Fix:** Replace `print()` with `click.echo()` and remove the `ctx.exit()` call.
-
----
-
-### 2f. Builtin `all` shadowed in `integration dump`
+### 2e. Builtin `all` shadowed in `integration dump`
 
 **File:** `src/xsoar_cli/commands/integration/commands.py` (line 24, 29)
 
@@ -168,7 +150,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all: boo
 
 ---
 
-### 2g. Dead code in `PluginManager.discover_plugins()`
+### 2f. Dead code in `PluginManager.discover_plugins()`
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 43-45)
 
@@ -187,7 +169,7 @@ keep it as a legitimate check.
 
 ---
 
-### 2h. Redundant re-import in `PluginManager._load_module_from_file`
+### 2g. Redundant re-import in `PluginManager._load_module_from_file`
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 73-74)
 
@@ -333,13 +315,7 @@ newline) and apply it everywhere.
 
 ---
 
-### 3i. Missing docstrings in domain classes and artifact providers
-
-**File:** `src/xsoar_cli/xsoar_client/content.py`
-- `_list_playbooks` (line 116)
-- `_list_scripts` (line 123)
-- `_list_commands` (line 130)
-- `list` (line 136)
+### 3i. Missing docstrings in artifact providers
 
 **File:** `src/xsoar_cli/xsoar_client/artifact_providers/azure.py`
 - `test_connection` (line 33)
@@ -347,7 +323,7 @@ newline) and apply it everywhere.
 - `download` (line 45)
 - `get_latest_version` (line 50)
 
-All other domain class methods and S3 provider methods have docstrings.
+All S3 provider methods have docstrings. The Azure provider methods do not.
 
 **Fix:** Add docstrings to all affected methods.
 
@@ -553,47 +529,6 @@ have one.
 
 ---
 
-## 5. Documentation Drift
-
-### 5a. CLAUDE.md references files that do not exist
-
-**File:** `CLAUDE.md` (line 127-128)
-
-```
-uv pip install -r requirements.txt
-uv pip install -r requirements_dev.txt
-```
-
-Neither `requirements.txt` nor `requirements_dev.txt` exist. Dependencies are managed via
-`pyproject.toml` and `uv.lock`.
-
-**Fix:** Remove or replace the stale install commands.
-
----
-
-### 5b. `commands/completions/` not listed in CLAUDE.md project layout
-
-**File:** `CLAUDE.md`
-
-The `completions` command group is imported, registered in `cli.py`, and has its own `README.md`,
-but is entirely absent from the project layout section in CLAUDE.md.
-
-**Fix:** Add `completions/` to the project layout.
-
----
-
-### 5c. Empty `description` in `pyproject.toml`
-
-**File:** `pyproject.toml` (line 8)
-
-```toml
-description = ''
-```
-
-The package has no summary. This shows up empty on PyPI and in `pip show`.
-
-**Fix:** Add a meaningful description.
-
 ---
 
 ## Priority Recommendation
@@ -602,9 +537,9 @@ Tackle these in the following order:
 
 1. **Bugs** (1a): Address the `PluginManager` side-effect.
 
-2. **Design inconsistencies** (2a-2h): Normalize validator decorators, bring `case` commands in
+2. **Design inconsistencies** (2a-2g): Normalize validator decorators, bring `case` commands in
    line with the error-handling pattern, resolve the circular import, fix the builtin shadowing,
-   use `click.echo()` consistently, remove dead code.
+   remove dead code.
 
 3. **Sweep: `from __future__ import annotations`** (3a): A single focused pass across all 13
    source modules.
@@ -618,5 +553,3 @@ Tackle these in the following order:
 
 6. **Test cleanup** (4a-4i): Extract shared helpers, normalize fixture usage, add missing
    annotations and docstrings.
-
-7. **Documentation** (5a-5c): Update CLAUDE.md, fill in pyproject description.
