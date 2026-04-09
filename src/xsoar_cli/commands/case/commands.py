@@ -84,7 +84,12 @@ def clone(ctx: click.Context, casenumber: int, source: str, dest: str) -> None:
         click.echo(f"Error: cannot find environments {source} and/or {dest} in config")
         ctx.exit(1)
 
-    # Test connectivity to both environments before proceeding
+    # Test connectivity to both environments before proceeding. This is the only function that does
+    # explicit connectivity testing and error handling due to the fact that it is the only function
+    # that operates on multiple environments. If later a new command or sub-command is added to
+    # xsoar-cli that operates on multiple environments, then a new decorator should be created to
+    # handle connectivity testing for multiple environments (@validate_xsoar_connectivity only tests
+    # a single environment)
     config = get_xsoar_config(ctx)
     for env_name in (source, dest):
         logger.debug("Testing XSOAR connectivity for environment '%s'", env_name)
