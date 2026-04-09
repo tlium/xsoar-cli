@@ -22,28 +22,7 @@ numbers so it can be addressed independently.
 
 ## 1. Bugs and Bug Risks
 
-### 1a. Missing `@click.pass_context` on `integration load`
-
-**File:** `src/xsoar_cli/commands/integration/commands.py` (line 48-52)
-
-The function declares `ctx: click.Context` as a parameter but has no `@click.pass_context`
-decorator. Click will interpret `ctx` as a positional argument, not the context object. Invoking
-this command will fail at runtime with a `TypeError`.
-
-```python
-@click.command()
-def load(ctx: click.Context) -> None:
-    """Load integration instance configuration into XSOAR from a JSON file. Not yet implemented."""
-    logger.debug("integration loadconfig command not implemented")
-    click.echo("Command not implemented")
-```
-
-**Fix:** Either add `@click.pass_context`, or remove the `ctx` parameter since the command is a
-no-op stub.
-
----
-
-### 1b. `PluginManager.__init__` creates real directories at import time
+### 1a. `PluginManager.__init__` creates real directories at import time
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 31-36)
 
@@ -203,7 +182,7 @@ if not self.plugins_dir.exists():
     return plugin_names
 ```
 
-**Fix:** Remove the guard, or if the constructor is changed to defer directory creation (see 1b),
+**Fix:** Remove the guard, or if the constructor is changed to defer directory creation (see 1a),
 keep it as a legitimate check.
 
 ---
@@ -621,8 +600,7 @@ The package has no summary. This shows up empty on PyPI and in `pip show`.
 
 Tackle these in the following order:
 
-1. **Bugs** (1a-1b): Fix the `integration load` decorator, address the `PluginManager`
-   side-effect.
+1. **Bugs** (1a): Address the `PluginManager` side-effect.
 
 2. **Design inconsistencies** (2a-2h): Normalize validator decorators, bring `case` commands in
    line with the error-handling pattern, resolve the circular import, fix the builtin shadowing,
