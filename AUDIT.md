@@ -118,32 +118,6 @@ handler type.
 
 ---
 
-## 3. Test Suite Inconsistencies
-
-### 3a. `test_base.py` missing type hints and imports
-
-**File:** `tests/cli/test_base.py` (line 14)
-
-The `invoke` parameter is not type-hinted as `InvokeHelper`, and the file lacks the
-`TYPE_CHECKING` import block that all other CLI test files include. Also missing a module
-docstring.
-
-**Fix:** Add the `TYPE_CHECKING` block, type-hint `invoke` as `InvokeHelper`, add a module
-docstring.
-
----
-
-### 3b. Missing class docstring
-
-**File:** `tests/cli/test_content.py` (line 168)
-
-`TestContentDownloadMissingType` has no class docstring while all other classes in the same file
-have one.
-
-**Fix:** Add a class docstring.
-
----
-
 ## Priority Recommendation
 
 Tackle these in the following order:
@@ -155,5 +129,3 @@ Tackle these in the following order:
 
 3. **Sweep: Structural patterns** (2b, 2d, 2e): Normalize decorator ordering, add missing
    loggers, replace `assert` with explicit type check.
-
-4. **Test cleanup** (3a-3b): Add missing type hints, imports, and docstrings.
