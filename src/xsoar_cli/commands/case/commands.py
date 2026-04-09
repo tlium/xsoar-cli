@@ -10,6 +10,9 @@ from xsoar_cli.error_handling.http import HTTPErrorHandler
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_environments, validate_xsoar_connectivity
 
+if TYPE_CHECKING:
+    from xsoar_cli.xsoar_client.client import Client
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,10 +23,6 @@ def parse_string_to_dict(input_string: str | None, delimiter: str) -> dict:
     pairs = [pair.split("=", 1) for pair in input_string.split(delimiter)]
     valid_pairs = [pair for pair in pairs if len(pair) == 2]  # noqa: PLR2004
     return {key.strip(): value.strip() for key, value in valid_pairs}
-
-
-if TYPE_CHECKING:
-    from xsoar_cli.xsoar_client.client import Client
 
 
 @click.group()

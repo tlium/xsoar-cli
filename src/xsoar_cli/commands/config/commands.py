@@ -5,15 +5,15 @@ from typing import TYPE_CHECKING
 
 import click
 
-if TYPE_CHECKING:
-    from xsoar_cli.xsoar_client.client import Client
-
 from xsoar_cli.utilities.config_file import (
     get_config_file_contents,
     get_config_file_path,
     get_xsoar_config,
     load_config,
 )
+
+if TYPE_CHECKING:
+    from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
 
