@@ -34,7 +34,7 @@ class S3ArtifactProvider(BaseArtifactProvider):
         return True
 
     def is_available(self, *, pack_id: str, pack_version: str) -> bool:
-        """Check if a Pack ID with specific version is available in the configured S3 bucket."""
+        """Check if a Pack ID with specific version is available."""
         key_name = self.get_pack_path(pack_id, pack_version)
         try:
             self.s3.Object(self.bucket_name, key_name).load()
@@ -43,14 +43,14 @@ class S3ArtifactProvider(BaseArtifactProvider):
             return False
 
     def download(self, *, pack_id: str, pack_version: str) -> bytes:
-        """Download a Pack given by ID and version from the configured S3 bucket."""
+        """Download a Pack given by ID and version."""
         key_name = self.get_pack_path(pack_id, pack_version)
         obj = self.s3.Object(bucket_name=self.bucket_name, key=key_name)
         response = obj.get()
         return response["Body"].read()
 
     def get_latest_version(self, pack_id: str) -> str:
-        """Fetch the latest version of a Pack in the configured S3 bucket."""
+        """Fetch the latest version of a Pack."""
         client = self.session.client("s3", verify=self.verify_ssl)
         result = client.list_objects_v2(
             Bucket=self.bucket_name,
