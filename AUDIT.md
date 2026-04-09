@@ -149,34 +149,7 @@ setattr(module, "XSOARPlugin", XSOARPlugin)
 
 ## 3. Structural and Convention Inconsistencies
 
-### 3a. `from __future__ import annotations` missing in 13 source modules
-
-The convention is to use `from __future__ import annotations` together with a `TYPE_CHECKING`
-block so type hints remain clean and unquoted. Only 3 of 10 command modules have it.
-
-**Missing in:**
-
-| File | Notes |
-|------|-------|
-| `src/xsoar_cli/cli.py` | Entry point |
-| `src/xsoar_cli/log.py` | Logging setup |
-| `src/xsoar_cli/utilities/config_file.py` | Config I/O |
-| `src/xsoar_cli/utilities/validators.py` | Validator decorators |
-| `src/xsoar_cli/plugins/__init__.py` | Plugin ABC |
-| `src/xsoar_cli/plugins/manager.py` | Plugin manager |
-| `src/xsoar_cli/commands/case/commands.py` | Case commands |
-| `src/xsoar_cli/commands/config/commands.py` | Config commands |
-| `src/xsoar_cli/commands/content/commands.py` | Content commands |
-| `src/xsoar_cli/commands/integration/commands.py` | Integration commands |
-| `src/xsoar_cli/commands/pack/commands.py` | Pack commands |
-| `src/xsoar_cli/commands/rbac/commands.py` | RBAC commands |
-| `src/xsoar_cli/commands/plugins/commands.py` | Plugin commands |
-
-**Fix:** Add `from __future__ import annotations` to all source modules in a single sweep.
-
----
-
-### 3b. `Optional[str]` instead of `str | None` in plugins
+### 3a. `Optional[str]` instead of `str | None` in plugins
 
 **File:** `src/xsoar_cli/plugins/__init__.py` (line 33)
 
@@ -193,7 +166,7 @@ def description(self) -> Optional[str]:
 
 ---
 
-### 3c. Click group help text declared inconsistently
+### 3b. Click group help text declared inconsistently
 
 Two different patterns are used across the 10 command groups:
 
@@ -207,7 +180,7 @@ body is the most common.
 
 ---
 
-### 3d. `TYPE_CHECKING` block placement inconsistencies
+### 3c. `TYPE_CHECKING` block placement inconsistencies
 
 **Files:**
 - `src/xsoar_cli/commands/config/commands.py` (line 7-9): `TYPE_CHECKING` block placed before
@@ -220,7 +193,7 @@ isort ordering.
 
 ---
 
-### 3e. Missing `-> None` return type annotations
+### 3d. Missing `-> None` return type annotations
 
 **Files:**
 - `src/xsoar_cli/commands/plugins/commands.py`: All 4 functions (`plugins`, `list_plugins`,
@@ -234,7 +207,7 @@ All other modules consistently annotate `-> None` on void functions.
 
 ---
 
-### 3f. Bare `list` return types instead of `list[dict]`
+### 3e. Bare `list` return types instead of `list[dict]`
 
 **Files:**
 - `src/xsoar_cli/xsoar_client/integrations.py` (line 14): `get_instances() -> list`
@@ -247,7 +220,7 @@ Compare with `Packs` and `Content`, which use the more specific `list[dict]`.
 
 ---
 
-### 3g. Inconsistent JSON output formatting
+### 3f. Inconsistent JSON output formatting
 
 **Trailing newline:** `integration dump` and all `rbac` commands append `+ "\n"` to
 `json.dumps()` output. `click.echo()` already appends a newline, so this produces a double blank
@@ -265,7 +238,7 @@ newline) and apply it everywhere.
 
 ---
 
-### 3h. Inconsistent decorator ordering on `graph` commands
+### 3g. Inconsistent decorator ordering on `graph` commands
 
 **File:** `src/xsoar_cli/commands/graph/commands.py`
 
@@ -276,7 +249,7 @@ newline) and apply it everywhere.
 
 ---
 
-### 3i. Missing docstrings in artifact providers
+### 3h. Missing docstrings in artifact providers
 
 **File:** `src/xsoar_cli/xsoar_client/artifact_providers/azure.py`
 - `test_connection` (line 33)
@@ -290,7 +263,7 @@ All S3 provider methods have docstrings. The Azure provider methods do not.
 
 ---
 
-### 3j. Missing return type annotations on artifact provider lazy properties
+### 3i. Missing return type annotations on artifact provider lazy properties
 
 **Files:**
 - `src/xsoar_cli/xsoar_client/artifact_providers/s3.py` (line 20-22): `s3` property missing
@@ -304,7 +277,7 @@ Their sibling properties (`session`, `service`) have return types.
 
 ---
 
-### 3k. Inconsistent logging in domain classes
+### 3j. Inconsistent logging in domain classes
 
 **Files with a logger:** `content.py`, `packs.py`
 
@@ -318,7 +291,7 @@ debug logging.
 
 ---
 
-### 3l. Formal docstring style in plugin ABC
+### 3k. Formal docstring style in plugin ABC
 
 **File:** `src/xsoar_cli/plugins/__init__.py` (line 38-45)
 
@@ -346,7 +319,7 @@ def get(self, case_id: int) -> dict:
 
 ---
 
-### 3m. `assert` for type check in `log.py`
+### 3l. `assert` for type check in `log.py`
 
 **File:** `src/xsoar_cli/log.py` (line 44)
 
@@ -501,15 +474,12 @@ Tackle these in the following order:
 2. **Design inconsistencies** (2a-2e): Address `case clone` handling, resolve the circular
    import, fix the S3 exception handling, remove dead code.
 
-3. **Sweep: `from __future__ import annotations`** (3a): A single focused pass across all 13
-   source modules.
-
-4. **Sweep: Type hints and return annotations** (3b, 3e, 3f, 3j): Normalize `Optional` to
+3. **Sweep: Type hints and return annotations** (3a, 3d, 3e, 3i): Normalize `Optional` to
    `str | None`, add missing `-> None`, use `list[dict]` consistently.
 
-5. **Sweep: Docstrings and structural patterns** (3c, 3d, 3g, 3h, 3i, 3k, 3l, 3m):
+4. **Sweep: Docstrings and structural patterns** (3b, 3c, 3f, 3g, 3h, 3j, 3k, 3l):
    Normalize Click group declarations, `TYPE_CHECKING` placement, JSON output formatting,
    decorator ordering, add missing docstrings and loggers.
 
-6. **Test cleanup** (4a-4i): Extract shared helpers, normalize fixture usage, add missing
+5. **Test cleanup** (4a-4i): Extract shared helpers, normalize fixture usage, add missing
    annotations and docstrings.
