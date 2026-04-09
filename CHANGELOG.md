@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `config set-version-check` command to enable or disable the version update check on CLI startup. Accepts `--enable` or `--disable`.
 
+### Changed
+
+- `content get-detached --type` is now required. The `all` choice has been removed; specify `scripts` or `playbooks` explicitly.
+- `integration dump`, `rbac getroles`, `rbac getusers`, and `rbac getusergroups` no longer emit a trailing blank line after JSON output.
+- `config show` now uses `click.echo()` instead of `print()`, improving behavior when piping output to other tools.
+
+### Fixed
+
+- `content get-detached` no longer fails when invoked without `--type` due to a stale default value that referenced the removed `all` choice.
+- Content bundle download (`get_content_bundle`) now raises on HTTP errors instead of silently proceeding and failing with a confusing `tarfile` error.
+
 ## [2.1.1] - 2026-04-08
 
 ### Changed
