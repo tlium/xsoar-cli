@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.pass_context
-def pack(ctx: click.Context) -> None:
+def pack() -> None:
     """Various content pack related commands."""
     pass
 
