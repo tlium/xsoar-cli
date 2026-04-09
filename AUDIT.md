@@ -50,21 +50,7 @@ configurable so tests can use a temp directory without side-effects.
 
 ## 2. Design Inconsistencies
 
-### 2a. `case clone` uses manual connectivity handling
-
-**File:** `src/xsoar_cli/commands/case/commands.py`
-
-The `get` and `create` commands now use `@validate_xsoar_connectivity`, but `clone` still has
-manual connectivity handling because it validates two different environments (`source` and `dest`)
-rather than a single `--environment`. This is a legitimate special case, but the inline error
-handling pattern (importing `ConnectionErrorHandler` directly) differs from every other command.
-
-**Fix:** Consider a dedicated decorator or helper that validates connectivity for multiple
-environments, or accept this as a justified exception and document it.
-
----
-
-### 2b. `CORE_COMMANDS` creates a fragile circular import path
+### 2a. `CORE_COMMANDS` creates a fragile circular import path
 
 **Files:** `src/xsoar_cli/cli.py` (line 115), `src/xsoar_cli/commands/plugins/commands.py`
 (line 126)
@@ -79,7 +65,7 @@ files can import without circular dependencies.
 
 ---
 
-### 2c. Inconsistent error handling in artifact providers
+### 2b. Inconsistent error handling in artifact providers
 
 **Files:** `src/xsoar_cli/xsoar_client/artifact_providers/s3.py` (line 34-38),
 `src/xsoar_cli/xsoar_client/artifact_providers/azure.py` (line 40-43)
@@ -111,7 +97,7 @@ for 404.
 
 ---
 
-### 2d. Dead code in `PluginManager.discover_plugins()`
+### 2c. Dead code in `PluginManager.discover_plugins()`
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 43-45)
 
@@ -130,7 +116,7 @@ keep it as a legitimate check.
 
 ---
 
-### 2e. Redundant re-import in `PluginManager._load_module_from_file`
+### 2d. Redundant re-import in `PluginManager._load_module_from_file`
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 73-74)
 
@@ -166,48 +152,18 @@ def description(self) -> Optional[str]:
 
 ---
 
-### 3b. Click group help text declared inconsistently
+### 3b. Missing `-> None` return type annotations
 
-Two different patterns are used across the 10 command groups:
+**File:** `src/xsoar_cli/commands/plugins/commands.py`
 
-| Pattern | Modules |
-|---------|---------|
-| `help=` in decorator, body is `pass` | case, completions, config, graph, plugins |
-| Docstring on function | content, integration, manifest, pack, rbac |
-
-**Fix:** Pick one pattern and apply it across all groups. The `help=` in decorator with `pass`
-body is the most common.
-
----
-
-### 3c. `TYPE_CHECKING` block placement inconsistencies
-
-**Files:**
-- `src/xsoar_cli/commands/config/commands.py` (line 7-9): `TYPE_CHECKING` block placed before
-  the local imports. All other modules place it after.
-- `src/xsoar_cli/commands/case/commands.py` (line 26): `TYPE_CHECKING` block placed after a
-  function definition (`parse_string_to_dict`), far from the other imports.
-
-**Fix:** Place `TYPE_CHECKING` blocks consistently after all runtime imports, following PEP 8 /
-isort ordering.
-
----
-
-### 3d. Missing `-> None` return type annotations
-
-**Files:**
-- `src/xsoar_cli/commands/plugins/commands.py`: All 4 functions (`plugins`, `list_plugins`,
-  `info`, `validate`)
-- `src/xsoar_cli/configuration.py` (line 64, 108): `EnvironmentConfig.__init__` and
-  `XSOARConfig.__init__`
-
-All other modules consistently annotate `-> None` on void functions.
+All 4 functions (`plugins`, `list_plugins`, `info`, `validate`) are missing `-> None`.
+All other command modules consistently annotate `-> None` on void functions.
 
 **Fix:** Add `-> None` to all affected functions.
 
 ---
 
-### 3e. Bare `list` return types instead of `list[dict]`
+### 3c. Bare `list` return types instead of `list[dict]`
 
 **Files:**
 - `src/xsoar_cli/xsoar_client/integrations.py` (line 14): `get_instances() -> list`
@@ -220,25 +176,7 @@ Compare with `Packs` and `Content`, which use the more specific `list[dict]`.
 
 ---
 
-### 3f. Inconsistent JSON output formatting
-
-**Trailing newline:** `integration dump` and all `rbac` commands append `+ "\n"` to
-`json.dumps()` output. `click.echo()` already appends a newline, so this produces a double blank
-line. Other commands (`case get`, `content get_detached`, `content list`) do not append `"\n"`.
-
-**`sort_keys`:** `integration dump` and `rbac` commands use `sort_keys=True`. Other JSON output
-commands do not.
-
-**Files:**
-- `src/xsoar_cli/commands/integration/commands.py` (line 45)
-- `src/xsoar_cli/commands/rbac/commands.py` (line 32, 41, 50)
-
-**Fix:** Pick a consistent JSON output style (with or without `sort_keys`, without trailing
-newline) and apply it everywhere.
-
----
-
-### 3g. Inconsistent decorator ordering on `graph` commands
+### 3d. Inconsistent decorator ordering on `graph` commands
 
 **File:** `src/xsoar_cli/commands/graph/commands.py`
 
@@ -249,21 +187,7 @@ newline) and apply it everywhere.
 
 ---
 
-### 3h. Missing docstrings in artifact providers
-
-**File:** `src/xsoar_cli/xsoar_client/artifact_providers/azure.py`
-- `test_connection` (line 33)
-- `is_available` (line 37)
-- `download` (line 45)
-- `get_latest_version` (line 50)
-
-All S3 provider methods have docstrings. The Azure provider methods do not.
-
-**Fix:** Add docstrings to all affected methods.
-
----
-
-### 3i. Missing return type annotations on artifact provider lazy properties
+### 3e. Missing return type annotations on artifact provider lazy properties
 
 **Files:**
 - `src/xsoar_cli/xsoar_client/artifact_providers/s3.py` (line 20-22): `s3` property missing
@@ -277,7 +201,7 @@ Their sibling properties (`session`, `service`) have return types.
 
 ---
 
-### 3j. Inconsistent logging in domain classes
+### 3f. Inconsistent logging in domain classes
 
 **Files with a logger:** `content.py`, `packs.py`
 
@@ -291,7 +215,7 @@ debug logging.
 
 ---
 
-### 3k. Formal docstring style in plugin ABC
+### 3g. Formal docstring style in plugin ABC
 
 **File:** `src/xsoar_cli/plugins/__init__.py` (line 38-45)
 
@@ -319,7 +243,7 @@ def get(self, case_id: int) -> dict:
 
 ---
 
-### 3l. `assert` for type check in `log.py`
+### 3h. `assert` for type check in `log.py`
 
 **File:** `src/xsoar_cli/log.py` (line 44)
 
@@ -396,19 +320,7 @@ fixture from `tests/conftest.py`.
 
 ---
 
-### 4e. Missing `from __future__ import annotations` in test files
-
-**Files:**
-- `tests/unit/test_content_domain.py`
-- `tests/unit/test_content_handlers.py`
-- `tests/unit/test_error_handling.py`
-- `tests/unit/test_plugin_manager.py`
-
-**Fix:** Add `from __future__ import annotations` to all four files.
-
----
-
-### 4f. `test_plugin_manager.py` multiple deviations
+### 4e. `test_plugin_manager.py` multiple deviations
 
 **File:** `tests/unit/test_plugin_manager.py`
 
@@ -421,7 +333,7 @@ fixture from `tests/conftest.py`.
 
 ---
 
-### 4g. Module-level handler instances in `test_error_handling.py`
+### 4f. Module-level handler instances in `test_error_handling.py`
 
 **File:** `tests/unit/test_error_handling.py` (line 67-68)
 
@@ -439,7 +351,7 @@ methods or use fixtures.
 
 ---
 
-### 4h. `test_base.py` missing type hints and imports
+### 4g. `test_base.py` missing type hints and imports
 
 **File:** `tests/cli/test_base.py` (line 14)
 
@@ -452,7 +364,7 @@ docstring.
 
 ---
 
-### 4i. Missing class docstring
+### 4h. Missing class docstring
 
 **File:** `tests/cli/test_content.py` (line 168)
 
@@ -471,15 +383,14 @@ Tackle these in the following order:
 
 1. **Bugs** (1a): Address the `PluginManager` side-effect.
 
-2. **Design inconsistencies** (2a-2e): Address `case clone` handling, resolve the circular
-   import, fix the S3 exception handling, remove dead code.
+2. **Design inconsistencies** (2a-2d): Resolve the circular import, fix the S3 exception
+   handling, remove dead code.
 
-3. **Sweep: Type hints and return annotations** (3a, 3d, 3e, 3i): Normalize `Optional` to
+3. **Sweep: Type hints and return annotations** (3a, 3b, 3c, 3e): Normalize `Optional` to
    `str | None`, add missing `-> None`, use `list[dict]` consistently.
 
-4. **Sweep: Docstrings and structural patterns** (3b, 3c, 3f, 3g, 3h, 3j, 3k, 3l):
-   Normalize Click group declarations, `TYPE_CHECKING` placement, JSON output formatting,
-   decorator ordering, add missing docstrings and loggers.
+4. **Sweep: Docstrings and structural patterns** (3d, 3f, 3g, 3h):
+   Normalize decorator ordering, add missing docstrings and loggers.
 
-5. **Test cleanup** (4a-4i): Extract shared helpers, normalize fixture usage, add missing
+5. **Test cleanup** (4a-4h): Extract shared helpers, normalize fixture usage, add missing
    annotations and docstrings.
