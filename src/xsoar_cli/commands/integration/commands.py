@@ -41,7 +41,7 @@ def dump(ctx: click.Context, environment: str | None, name: str | None, all_inte
     if not integration_data:
         click.echo(f"Cannot find integration instance '{name}'")
         ctx.exit(1)
-    click.echo(json.dumps(integration_data, sort_keys=True, indent=4) + "\n")
+    click.echo(json.dumps(integration_data, sort_keys=True, indent=4))
 
 
 @click.command()
