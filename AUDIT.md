@@ -50,44 +50,24 @@ configurable so tests can use a temp directory without side-effects.
 
 ## 2. Design Inconsistencies
 
-### 2a. Validator decorator calling conventions differ
-
-**File:** `src/xsoar_cli/utilities/validators.py` (line 16, 43)
-
-`validate_xsoar_connectivity` is a factory (called with parentheses), while
-`validate_artifacts_provider` is a direct decorator (no parentheses). Both do the same kind of
-thing (validate a precondition before a command runs) but require different syntax to apply:
-
-```python
-@validate_artifacts_provider
-@validate_xsoar_connectivity
-```
-
-`validate_xsoar_connectivity` takes no parameters, so the factory pattern adds no value.
-
-**Fix:** Make both decorators use the same pattern (preferably the simpler direct decorator form).
-
----
-
-### 2b. `case` command group uses manual error handling instead of `@validate_xsoar_connectivity()`
+### 2a. `case clone` uses manual connectivity handling
 
 **File:** `src/xsoar_cli/commands/case/commands.py`
 
-Every other command group that connects to XSOAR uses the `@validate_xsoar_connectivity()`
-decorator. The `case` group (`get`, `clone`, `create`) handles errors manually, importing
-`ConnectionErrorHandler` and `HTTPErrorHandler` directly and catching exceptions inline. The
-`case clone` command has its own inline connectivity check loop (line 82-90), while `case get`
-catches `HTTPError` manually (line 51-54).
+The `get` and `create` commands now use `@validate_xsoar_connectivity`, but `clone` still has
+manual connectivity handling because it validates two different environments (`source` and `dest`)
+rather than a single `--environment`. This is a legitimate special case, but the inline error
+handling pattern (importing `ConnectionErrorHandler` directly) differs from every other command.
 
-**Fix:** Refactor to use `@validate_xsoar_connectivity()` for consistency with all other command
-groups.
+**Fix:** Consider a dedicated decorator or helper that validates connectivity for multiple
+environments, or accept this as a justified exception and document it.
 
 ---
 
-### 2c. `CORE_COMMANDS` creates a fragile circular import path
+### 2b. `CORE_COMMANDS` creates a fragile circular import path
 
 **Files:** `src/xsoar_cli/cli.py` (line 115), `src/xsoar_cli/commands/plugins/commands.py`
-(line 156)
+(line 126)
 
 `cli.py` exports `CORE_COMMANDS` at module level. `commands/plugins/commands.py` then imports it
 back with a deferred `from xsoar_cli.cli import CORE_COMMANDS`. This creates a circular dependency
@@ -99,7 +79,7 @@ files can import without circular dependencies.
 
 ---
 
-### 2d. Inconsistent error handling in artifact providers
+### 2c. Inconsistent error handling in artifact providers
 
 **Files:** `src/xsoar_cli/xsoar_client/artifact_providers/s3.py` (line 34-38),
 `src/xsoar_cli/xsoar_client/artifact_providers/azure.py` (line 40-43)
@@ -131,26 +111,7 @@ for 404.
 
 ---
 
-### 2e. Builtin `all` shadowed in `integration dump`
-
-**File:** `src/xsoar_cli/commands/integration/commands.py` (line 24, 29)
-
-The `--all` option uses `all` as the Python parameter name, shadowing the builtin. The option is
-also missing help text. Compare with `config validate`, which correctly renames the parameter to
-`all_environments`:
-
-```python
-@click.option("--all", is_flag=True, default=False)
-...
-def dump(ctx: click.Context, environment: str | None, name: str | None, all: bool) -> None:
-```
-
-**Fix:** Rename the parameter (e.g., `all_instances`) using Click's two-argument option syntax:
-`@click.option("--all", "all_instances", ...)`. Add help text.
-
----
-
-### 2f. Dead code in `PluginManager.discover_plugins()`
+### 2d. Dead code in `PluginManager.discover_plugins()`
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 43-45)
 
@@ -169,7 +130,7 @@ keep it as a legitimate check.
 
 ---
 
-### 2g. Redundant re-import in `PluginManager._load_module_from_file`
+### 2e. Redundant re-import in `PluginManager._load_module_from_file`
 
 **File:** `src/xsoar_cli/plugins/manager.py` (line 73-74)
 
@@ -537,9 +498,8 @@ Tackle these in the following order:
 
 1. **Bugs** (1a): Address the `PluginManager` side-effect.
 
-2. **Design inconsistencies** (2a-2g): Normalize validator decorators, bring `case` commands in
-   line with the error-handling pattern, resolve the circular import, fix the builtin shadowing,
-   remove dead code.
+2. **Design inconsistencies** (2a-2e): Address `case clone` handling, resolve the circular
+   import, fix the S3 exception handling, remove dead code.
 
 3. **Sweep: `from __future__ import annotations`** (3a): A single focused pass across all 13
    source modules.
