@@ -29,8 +29,7 @@ def content() -> None:
     "--type",
     "content_type",
     type=click.Choice(["scripts", "playbooks"], case_sensitive=False),
-    default="all",
-    show_default=True,
+    required=True,
     help="Type of content items to retrieve.",
 )
 @click.pass_context
