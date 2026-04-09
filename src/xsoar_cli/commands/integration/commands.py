@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.pass_context
-def integration(ctx: click.Context) -> None:
+def integration() -> None:
     """(BETA) Save/load integration configuration for an integration instance."""
+    pass
 
 
 @click.command()

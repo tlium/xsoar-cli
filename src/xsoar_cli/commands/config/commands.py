@@ -47,8 +47,9 @@ def get_config_file_template_contents() -> dict:
     }
 
 
-@click.group(help="Create, validate, and manage CLI configuration")
+@click.group()
 def config() -> None:
+    """Create, validate, and manage CLI configuration"""
     pass
 
 

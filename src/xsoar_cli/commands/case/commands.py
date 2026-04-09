@@ -26,8 +26,9 @@ if TYPE_CHECKING:
     from xsoar_cli.xsoar_client.client import Client
 
 
-@click.group(help="Create, retrieve, and clone cases")
+@click.group()
 def case() -> None:
+    """Create, retrieve, and clone cases"""
     pass
 
 

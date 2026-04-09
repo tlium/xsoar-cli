@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def content() -> None:
-    """Inspect and manage content items."""
+    """Inspect and manage content items"""
+    pass
 
 
 @click.command()

@@ -116,6 +116,7 @@ def _check_pack_availability(
 @click.group()
 def manifest() -> None:
     """Various commands to interact/update/deploy content packs defined in the xsoar_config.json manifest."""
+    pass
 
 
 MANIFEST_FILENAME = "xsoar_config.json"

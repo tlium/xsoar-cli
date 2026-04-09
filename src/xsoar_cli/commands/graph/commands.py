@@ -67,8 +67,9 @@ def _build_content_graph(
     return cg
 
 
-@click.group(help="(BETA) Create dependency graphs from one or more content packs")
+@click.group()
 def graph() -> None:
+    """(BETA) Create dependency graphs from one or more content packs"""
     pass
 
 
