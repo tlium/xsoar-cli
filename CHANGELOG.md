@@ -9,12 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `config set-version-check` command to enable or disable the version update check on CLI startup. Accepts `--enable` or `--disable`.
+- `plugins init` command to create the plugins directory and generate an example plugin.
 
 ### Changed
 
+- Plugins must explicitly import `XSOARPlugin` (`from xsoar_cli.plugins import XSOARPlugin`). The base class is no longer injected automatically. See the [plugin README](src/xsoar_cli/plugins/README.md) for details.
+- Plugin commands (`list`, `info`, `validate`) now report a clear error when the plugins directory has not been initialized.
+- Plugin registration failures no longer prevent remaining plugins from loading.
 - `content get-detached --type` is now required. The `all` choice has been removed; specify `scripts` or `playbooks` explicitly.
 - `integration dump`, `rbac getroles`, `rbac getusers`, and `rbac getusergroups` no longer emit a trailing blank line after JSON output.
 - `config show` now uses `click.echo()` instead of `print()`, improving behavior when piping output to other tools.
+
+### Removed
+
+- Automatic creation of the plugins directory on CLI startup.
 
 ### Fixed
 
