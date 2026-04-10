@@ -13,24 +13,45 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _EXAMPLE_PLUGIN = '''\
+# Example xsoar-cli plugin.
+#
+# Plugin files are Python modules placed in this directory. Each file is
+# discovered and loaded automatically when the CLI starts. To create your
+# own plugin, copy this file or replace it entirely.
+#
+# For more details see: xsoar-cli plugins --help
+
 import click
 
+# Every plugin must explicitly import the base class.
 from xsoar_cli.plugins import XSOARPlugin
 
 
+# Define a class that inherits from XSOARPlugin. The CLI will find it
+# automatically (you can name the class anything you like).
 class HelloPlugin(XSOARPlugin):
+
+    # Unique identifier for this plugin. Used as the key in "plugins list"
+    # and "plugins info <name>".
     @property
     def name(self) -> str:
         return "hello"
 
+    # Version string shown in "plugins list" and "plugins info".
     @property
     def version(self) -> str:
         return "1.0.0"
 
+    # Optional human-readable summary. Shown in "plugins info" and in
+    # verbose output of "plugins list". Return None (or omit entirely)
+    # if you do not need a description.
     @property
     def description(self) -> str:
         return "Example plugin. Modify or replace this file."
 
+    # Return a Click command (or group) to register on the CLI. The
+    # command name becomes the top-level subcommand users invoke, e.g.
+    # "xsoar-cli hello --name Alice".
     def get_command(self) -> click.Command:
         @click.command()
         @click.option("--name", default="World", help="Name to greet")
@@ -39,6 +60,13 @@ class HelloPlugin(XSOARPlugin):
             click.echo(f"Hello, {name}!")
 
         return hello
+
+    # There is also an optional initialize() method you can override if
+    # your plugin needs setup work (open files, check credentials, etc.).
+    # It is called once, right after the plugin is instantiated:
+    #
+    #     def initialize(self) -> None:
+    #         ...
 '''
 
 _NOT_INITIALIZED_MSG = 'Plugin directory not initialized. Run "xsoar-cli plugins init" to set up the plugins directory.'
