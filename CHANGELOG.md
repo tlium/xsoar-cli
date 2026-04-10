@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-04-10
+
 ### Added
 
 - `config set-version-check` command to enable or disable the version update check on CLI startup. Accepts `--enable` or `--disable`.
