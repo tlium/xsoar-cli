@@ -1,96 +1,84 @@
-"""
-Plugin Manager for XSOAR CLI
+"""Plugin manager: discovery, loading, and registration of CLI plugins."""
 
-This module handles the discovery, loading, and management of plugins
-for the xsoar-cli application from a local directory.
-"""
+from __future__ import annotations
 
 import importlib.util
 import logging
-import sys
 import types
 from pathlib import Path
-
-import click
+from typing import TYPE_CHECKING
 
 from . import PluginLoadError, PluginRegistrationError, XSOARPlugin
+
+if TYPE_CHECKING:
+    import click
 
 logger = logging.getLogger(__name__)
 
 
 class PluginManager:
-    """Manages the discovery, loading, and registration of XSOAR CLI plugins from the plugins directory."""
+    """Discovers, loads, and registers plugins from a local directory."""
+
+    DEFAULT_PLUGINS_DIR: Path = Path.home() / ".local" / "xsoar-cli" / "plugins"
 
     def __init__(self, plugins_dir: Path | None = None) -> None:
-        """Defaults to ~/.local/xsoar-cli/plugins if no directory is provided."""
-        if plugins_dir is None:
-            self.plugins_dir = Path.home() / ".local" / "xsoar-cli" / "plugins"
-        else:
-            self.plugins_dir = plugins_dir
-
+        """Defaults to ``DEFAULT_PLUGINS_DIR`` if no directory is provided."""
+        self.plugins_dir = plugins_dir if plugins_dir is not None else self.DEFAULT_PLUGINS_DIR
         self.loaded_plugins: dict[str, XSOARPlugin] = {}
         self.failed_plugins: dict[str, Exception] = {}
         self.command_conflicts: list[dict[str, str]] = []
 
-        # Ensure plugins directory exists
-        self.plugins_dir.mkdir(parents=True, exist_ok=True)
-
-        # Add plugins directory to Python path if not already there
-        plugins_dir_str = str(self.plugins_dir)
-        if plugins_dir_str not in sys.path:
-            sys.path.insert(0, plugins_dir_str)
+    @property
+    def plugins_dir_exists(self) -> bool:
+        """Return ``True`` if the plugins directory exists on disk."""
+        return self.plugins_dir.exists()
 
     def discover_plugins(self) -> list[str]:
-        """Scans the plugins directory for Python files and returns their module names."""
+        """Scan the plugins directory for Python files and return their module names."""
+        if not self.plugins_dir_exists:
+            logger.debug("Plugins directory does not exist: %s", self.plugins_dir)
+            return []
+
         plugin_names = []
-
-        if not self.plugins_dir.exists():
-            logger.info("Plugins directory does not exist: %s", self.plugins_dir)
-            return plugin_names
-
         for file_path in self.plugins_dir.glob("*.py"):
             if file_path.name.startswith("__"):
                 continue  # Skip __init__.py, __pycache__, etc.
+            plugin_names.append(file_path.stem)
 
-            module_name = file_path.stem
-            plugin_names.append(module_name)
-
-        logger.info("Discovered %d plugin file(s): %s", len(plugin_names), plugin_names)
+        logger.debug("Discovered %d plugin file(s): %s", len(plugin_names), plugin_names)
         return plugin_names
 
     def _load_module_from_file(self, module_name: str, file_path: Path) -> types.ModuleType:
-        """Loads a Python module from disk and injects XSOARPlugin into its namespace so plugins do not need to import it explicitly."""
+        """Load a Python module from a file path."""
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         if spec is None or spec.loader is None:
             raise PluginLoadError(f"Could not load module spec for {file_path}")
 
         module = importlib.util.module_from_spec(spec)
 
-        # Inject XSOARPlugin class into the module's namespace
-        # This allows plugins to use XSOARPlugin without complex imports
-        from . import XSOARPlugin
+        try:
+            spec.loader.exec_module(module)
+        except NameError as e:
+            if "XSOARPlugin" in str(e):
+                raise PluginLoadError(
+                    f"Plugin '{module_name}' uses XSOARPlugin without importing it. "
+                    "Add 'from xsoar_cli.plugins import XSOARPlugin' to your plugin file."
+                ) from e
+            raise
 
-        setattr(module, "XSOARPlugin", XSOARPlugin)
-
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
         return module
 
     def _find_plugin_classes(self, module: types.ModuleType) -> list[type[XSOARPlugin]]:
-        """Returns all XSOARPlugin subclasses found in the given module."""
+        """Return all XSOARPlugin subclasses found in the given module."""
         plugin_classes = []
-
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-
-            # Check if it's a class that inherits from XSOARPlugin
             if isinstance(attr, type) and issubclass(attr, XSOARPlugin) and attr is not XSOARPlugin:
                 plugin_classes.append(attr)
-
         return plugin_classes
 
     def load_plugin(self, plugin_name: str) -> XSOARPlugin | None:
-        """Loads and initializes a single plugin by module name. Raises PluginLoadError on failure."""
+        """Load and initialize a single plugin by module name."""
         if plugin_name in self.loaded_plugins:
             return self.loaded_plugins[plugin_name]
 
@@ -99,16 +87,11 @@ class PluginManager:
             if not file_path.exists():
                 raise PluginLoadError(f"Plugin file not found: {file_path}")
 
-            # Load the module
             module = self._load_module_from_file(plugin_name, file_path)
 
-            # Find plugin classes in the module
             plugin_classes = self._find_plugin_classes(module)
-
             if not plugin_classes:
-                raise PluginLoadError(
-                    f"No XSOARPlugin classes found in {plugin_name}.py",
-                )
+                raise PluginLoadError(f"No XSOARPlugin classes found in {plugin_name}.py")
 
             if len(plugin_classes) > 1:
                 logger.warning(
@@ -116,20 +99,15 @@ class PluginManager:
                     plugin_name,
                 )
 
-            # Instantiate the first plugin class found
-            plugin_class = plugin_classes[0]
-            plugin_instance = plugin_class()
+            plugin_instance = plugin_classes[0]()
 
-            # Initialize the plugin
             try:
                 plugin_instance.initialize()
             except Exception as e:
                 raise PluginLoadError(f"Plugin '{plugin_name}' initialization failed: {e}")
 
-            # Store the loaded plugin
             self.loaded_plugins[plugin_name] = plugin_instance
-            logger.info("Successfully loaded plugin: %s", plugin_name)
-
+            logger.debug("Successfully loaded plugin: %s", plugin_name)
             return plugin_instance
 
         except Exception as e:
@@ -138,7 +116,11 @@ class PluginManager:
             raise PluginLoadError(f"Failed to load plugin '{plugin_name}': {e}")
 
     def load_all_plugins(self, *, ignore_errors: bool = True) -> dict[str, XSOARPlugin]:
-        """Loads all discovered plugins. By default, a failed plugin is recorded and skipped so remaining plugins can still load. Pass ignore_errors=False to abort on the first failure."""
+        """Load all discovered plugins.
+
+        By default, a failed plugin is recorded and skipped so remaining plugins
+        can still load. Pass ``ignore_errors=False`` to abort on the first failure.
+        """
         discovered_plugins = self.discover_plugins()
 
         for plugin_name in discovered_plugins:
@@ -152,18 +134,24 @@ class PluginManager:
         return self.loaded_plugins.copy()
 
     def register_plugin_commands(self, cli_group: click.Group) -> None:
-        """Registers each loaded plugin's command with the given Click group. Commands that conflict with an existing command are skipped and recorded in command_conflicts."""
-        conflicts = []
+        """Register each loaded plugin's command with the given Click group.
 
-        for plugin_name, plugin in self.loaded_plugins.items():
+        Commands that conflict with an existing command are skipped and recorded
+        in ``command_conflicts``. Registration failures are logged and recorded
+        in ``failed_plugins`` so remaining plugins can still register.
+        """
+        import click as _click  # Lazy import for performance reasons
+
+        conflicts: list[dict[str, str]] = []
+
+        for plugin_name, plugin in list(self.loaded_plugins.items()):
             try:
                 command = plugin.get_command()
-                if not isinstance(command, (click.Command, click.Group)):
+                if not isinstance(command, (_click.Command, _click.Group)):
                     raise PluginRegistrationError(
                         f"Plugin '{plugin_name}' get_command() must return a Click Command or Group",
                     )
 
-                # Ensure the command name doesn't conflict with existing commands
                 if command.name in cli_group.commands:
                     conflict_info = {
                         "plugin_name": plugin_name,
@@ -179,18 +167,16 @@ class PluginManager:
                     continue
 
                 cli_group.add_command(command)
-                logger.info("Registered command '%s' from plugin '%s'", command.name, plugin_name)
+                logger.debug("Registered command '%s' from plugin '%s'", command.name, plugin_name)
 
             except Exception as e:
-                error_msg = f"Failed to register plugin '{plugin_name}': {e}"
-                logger.debug("Failed to register plugin '%s': %s", plugin_name, e)
-                raise PluginRegistrationError(error_msg)
+                self.failed_plugins[plugin_name] = e
+                logger.warning("Failed to register plugin '%s': %s", plugin_name, e)
 
-        # Store conflicts for later reporting
         self.command_conflicts = conflicts
 
     def get_plugin_info(self) -> dict[str, dict[str, str]]:
-        """Returns name, version, and description for each loaded plugin."""
+        """Return name, version, and description for each loaded plugin."""
         info = {}
         for plugin_name, plugin in self.loaded_plugins.items():
             info[plugin_name] = {
@@ -201,9 +187,9 @@ class PluginManager:
         return info
 
     def get_failed_plugins(self) -> dict[str, str]:
-        """Returns a mapping of plugin names to their load error messages."""
+        """Return a mapping of plugin names to their error messages."""
         return {name: str(error) for name, error in self.failed_plugins.items()}
 
     def get_command_conflicts(self) -> list[dict[str, str]]:
-        """Returns any command conflicts detected during the last call to register_plugin_commands."""
+        """Return command conflicts detected during the last registration."""
         return self.command_conflicts.copy()
