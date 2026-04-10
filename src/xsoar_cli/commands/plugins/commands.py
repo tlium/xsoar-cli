@@ -64,8 +64,8 @@ class HelloPlugin(XSOARPlugin):
     def initialize(self) -> None:
         """Optional setup hook. Called once, right after the plugin is instantiated.
 
-        Override this method if your plugin needs setup work (open files,
-        check credentials, etc.). Safe to remove if not needed.
+        In this method you might want to add setup work like opening files, checking
+        credentials, etc. It's safe to remove this method if you don't need it.
         """
         pass
 '''
