@@ -1,7 +1,5 @@
 """Plugin management commands for XSOAR CLI."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING
 
@@ -87,11 +85,12 @@ def _get_plugin_manager():  # noqa: ANN202
 @click.group()
 def plugins() -> None:
     """Manage XSOAR CLI plugins."""
+    pass
 
 
-@click.command(help="Initialize the plugins directory with an example plugin")
+@click.command()
 def init() -> None:
-    """Create the plugins directory and write an example plugin."""
+    """Initialize the plugins directory and write an example plugin."""
     from xsoar_cli.plugins.manager import PluginManager  # Lazy import for performance reasons
 
     plugins_dir: Path = PluginManager.DEFAULT_PLUGINS_DIR
@@ -111,7 +110,7 @@ def init() -> None:
     click.echo(f"Wrote example plugin: {example_file}")
 
 
-@click.command(help="List all available and loaded plugins")
+@click.command()
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed information")
 def list_plugins(verbose: bool) -> None:
     """List all plugins in the plugins directory."""
@@ -161,7 +160,7 @@ def list_plugins(verbose: bool) -> None:
             click.echo("    Solution: Rename the command in your plugin or use a command group")
 
 
-@click.command(help="Show information about a specific plugin")
+@click.command()
 @click.argument("plugin_name", type=str)
 @click.pass_context
 def info(ctx: click.Context, plugin_name: str) -> None:
@@ -194,14 +193,14 @@ def info(ctx: click.Context, plugin_name: str) -> None:
         command = plugin.get_command()
         click.echo(f"  Command: {command.name}")
         if hasattr(command, "commands"):
-            subcommands = list(command.commands.keys())  # ty: ignore[unresolved-attribute]
+            subcommands = list(command.commands.keys())
             if subcommands:
                 click.echo(f"  Subcommands: {', '.join(subcommands)}")
     except Exception as e:
         click.echo(f"  Command: Error loading command ({e})")
 
 
-@click.command(help="Validate all plugins")
+@click.command()
 @click.pass_context
 def validate(ctx: click.Context) -> None:
     """Validate all plugins in the plugins directory."""
