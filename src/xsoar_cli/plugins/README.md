@@ -1,5 +1,7 @@
 # Plugin Development
 
+> **Security warning:** Plugins are arbitrary Python code that runs with the same permissions as xsoar-cli. A malicious or poorly written plugin can read credentials, modify your XSOAR environment, or compromise your system. Never run a plugin you have not read and understood. This applies to plugins shared by colleagues and third parties alike.
+
 Plugins are Python files placed in `~/.local/xsoar-cli/plugins/` that are automatically discovered and loaded at CLI startup.
 
 ## Quick Start
