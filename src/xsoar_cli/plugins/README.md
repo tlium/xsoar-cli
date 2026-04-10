@@ -10,30 +10,7 @@ Plugins are Python files placed in `~/.local/xsoar-cli/plugins/` that are automa
    ```
    This creates `~/.local/xsoar-cli/plugins/` and writes an example `hello.py` plugin.
 
-2. Create a plugin file (`~/.local/xsoar-cli/plugins/hello_plugin.py`):
-   ```python
-   import click
-
-   from xsoar_cli.plugins import XSOARPlugin
-
-   class HelloPlugin(XSOARPlugin):
-       @property
-       def name(self) -> str:
-           return "hello"
-
-       @property
-       def version(self) -> str:
-           return "1.0.0"
-
-       def get_command(self) -> click.Command:
-           @click.command(help="Say hello")
-           @click.option("--name", default="World", help="Name to greet")
-           def hello(name: str):
-               click.echo(f"Hello, {name}!")
-           return hello
-   ```
-
-3. Use your plugin:
+2. Use your plugin:
    ```
    xsoar-cli hello --name "Alice"
    ```
