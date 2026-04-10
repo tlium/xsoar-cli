@@ -22,11 +22,6 @@ if TYPE_CHECKING:
     from click.testing import Result
 
 
-# ---------------------------------------------------------------------------
-# CLI invocation helper
-# ---------------------------------------------------------------------------
-
-
 class InvokeHelper:
     """Thin wrapper around ``CliRunner.invoke`` bound to the root CLI group.
 
@@ -54,11 +49,6 @@ def invoke() -> InvokeHelper:
             assert result.exit_code == 0
     """
     return InvokeHelper()
-
-
-# ---------------------------------------------------------------------------
-# Composite mock fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -135,11 +125,6 @@ def mock_content_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
         yield ns
 
 
-# ---------------------------------------------------------------------------
-# Plugin mock fixtures
-# ---------------------------------------------------------------------------
-
-
 @pytest.fixture
 def mock_plugin_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
     """Mock environment for ``plugins`` CLI subcommands.
@@ -184,11 +169,6 @@ def mock_plugin_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noq
             command_conflicts=mock_manager.command_conflicts,
         )
         yield ns
-
-
-# ---------------------------------------------------------------------------
-# Case-specific mock fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
