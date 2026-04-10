@@ -83,13 +83,29 @@ def _load_plugins() -> tuple[list[str], PluginManager]:
     """Captures core command names, then loads and registers plugins. Returns both."""
     core_commands = list(cli.commands.keys())
     manager = PluginManager()
-    try:
-        manager.load_all_plugins(ignore_errors=True)
-        for plugin_name, error in manager.get_failed_plugins().items():
-            click.echo(f"Warning: plugin '{plugin_name}' failed to load: {error}", err=True)
-        manager.register_plugin_commands(cli)
-    except Exception as e:
-        click.echo(f"Warning: failed to register plugin commands: {e}", err=True)
+
+    if not manager.plugins_dir_exists:
+        logging.getLogger(__name__).debug("Plugins directory not found, skipping plugin loading")
+        return core_commands, manager
+
+    manager.load_all_plugins(ignore_errors=True)
+
+    # Report load failures on stderr. These warnings run at module level before
+    # logging is configured, so logger.warning would be invisible. Plugin load
+    # failures are important enough to surface unconditionally.
+    load_failures = set(manager.get_failed_plugins().keys())
+    for plugin_name, error in manager.get_failed_plugins().items():
+        click.echo(f"Warning: plugin '{plugin_name}' failed to load: {error}", err=True)
+
+    manager.register_plugin_commands(cli)
+
+    # Registration failures are recorded in failed_plugins by the manager
+    # (skip-and-record pattern). Report only the new ones added during registration.
+    for plugin_name, error in manager.get_failed_plugins().items():
+        if plugin_name in load_failures:
+            continue  # Already reported above
+        click.echo(f"Warning: plugin '{plugin_name}' failed to register: {error}", err=True)
+
     return core_commands, manager
 
 
