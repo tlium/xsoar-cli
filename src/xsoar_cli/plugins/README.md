@@ -4,40 +4,24 @@ Plugins are Python files placed in `~/.local/xsoar-cli/plugins/` that are automa
 
 ## Quick Start
 
-1. Create the plugins directory:
+1. Initialize the plugins directory:
    ```
-   mkdir -p ~/.local/xsoar-cli/plugins
+   xsoar-cli plugins init
    ```
+   This creates `~/.local/xsoar-cli/plugins/` and writes an example `hello.py` plugin.
 
-2. Create a plugin file (`~/.local/xsoar-cli/plugins/hello_plugin.py`):
-   ```python
-   import click
-
-   class HelloPlugin(XSOARPlugin):
-       @property
-       def name(self) -> str:
-           return "hello"
-
-       @property
-       def version(self) -> str:
-           return "1.0.0"
-
-       def get_command(self) -> click.Command:
-           @click.command(help="Say hello")
-           @click.option("--name", default="World", help="Name to greet")
-           def hello(name: str):
-               click.echo(f"Hello, {name}!")
-           return hello
-   ```
-
-3. Use your plugin:
+2. Use your plugin:
    ```
    xsoar-cli hello --name "Alice"
    ```
 
 ## Plugin Structure
 
-A plugin must be a Python class that inherits from `XSOARPlugin`. The `XSOARPlugin` base class is automatically available in plugin files without any imports.
+A plugin must be a Python class that inherits from `XSOARPlugin` and imports it explicitly:
+
+```python
+from xsoar_cli.plugins import XSOARPlugin
+```
 
 **Required methods:**
 - `name` - Unique identifier for your plugin
@@ -50,4 +34,10 @@ A plugin must be a Python class that inherits from `XSOARPlugin`. The `XSOARPlug
 
 ## Command Conflicts
 
-Plugin commands cannot use the same names as core CLI commands (`case`, `config`, `graph`, `integration`, `manifest`, `pack`, `playbook`, `plugins`, `rbac`). If a conflict is detected, the plugin command is skipped. Use a different command name or wrap your commands in a Click group.
+Plugin commands cannot use the same names as core CLI commands (`case`, `completions`, `config`, `content`, `graph`, `integration`, `manifest`, `pack`, `plugins`, `rbac`). If a conflict is detected, the plugin command is skipped. Use a different command name or wrap your commands in a Click group.
+
+## Limitations
+
+- Each plugin must be a single self-contained `.py` file.
+- Imports between plugin files in the plugins directory are not supported.
+- Plugin file names must not collide with Python standard library module names or installed packages (e.g., do not name a plugin `json.py` or `logging.py`).

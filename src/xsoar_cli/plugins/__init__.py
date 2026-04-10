@@ -1,23 +1,14 @@
-"""
-XSOAR CLI Plugin System
+"""Plugin infrastructure for extending the CLI with custom commands."""
 
-This module provides the infrastructure for creating and loading plugins
-for the xsoar-cli application. Plugins can extend the CLI with custom
-commands and functionality.
-"""
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import click
 
 
 class XSOARPlugin(ABC):
-    """
-    Abstract base class for XSOAR CLI plugins.
-
-    All plugins should inherit from this class and implement the required methods.
-    """
+    """Base class for CLI plugins."""
 
     @property
     @abstractmethod
@@ -30,33 +21,28 @@ class XSOARPlugin(ABC):
         """Return the plugin version."""
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         """Return an optional description of the plugin."""
         return None
 
     @abstractmethod
     def get_command(self) -> click.Command:
-        """
-        Return the Click command or command group that this plugin provides.
-
-        Returns:
-            click.Command: The command to be registered with the CLI
-        """
+        """Return the Click command or group that this plugin provides."""
 
     def initialize(self) -> None:
-        """
-        Initialize the plugin. Called once when the plugin is loaded.
+        """Initialize the plugin. Called once when the plugin is loaded.
+
         Override this method if your plugin needs initialization.
         """
 
 
 class PluginError(Exception):
-    """Exception raised when there's an error with plugin loading or execution."""
+    """Base exception for plugin errors."""
 
 
 class PluginLoadError(PluginError):
-    """Exception raised when a plugin fails to load."""
+    """Raised when a plugin fails to load."""
 
 
 class PluginRegistrationError(PluginError):
-    """Exception raised when a plugin fails to register."""
+    """Raised when a plugin fails to register its command."""

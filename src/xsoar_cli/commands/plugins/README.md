@@ -2,6 +2,19 @@
 
 Manage plugins loaded into the CLI.
 
+## Init
+
+Initialize the plugins directory and generate an example plugin.
+
+**Syntax:** `xsoar-cli plugins init`
+
+Creates `~/.local/xsoar-cli/plugins/` (if it does not exist) and writes an example `hello.py` plugin. If the example file already exists, prompts for confirmation before overwriting.
+
+**Examples:**
+```
+xsoar-cli plugins init
+```
+
 ## List
 
 List all available and loaded plugins.
@@ -41,5 +54,3 @@ Validate all plugins in the plugins directory. Checks that each plugin can load 
 ```
 xsoar-cli plugins validate
 ```
-
-
