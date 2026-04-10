@@ -6,8 +6,9 @@ convenience helpers that reduce boilerplate in CLI test modules.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -130,6 +131,57 @@ def mock_content_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
             attach=mock_attach,
             download_playbook=mock_dl_pb,
             download_layout=mock_dl_layout,
+        )
+        yield ns
+
+
+# ---------------------------------------------------------------------------
+# Plugin mock fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def mock_plugin_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
+    """Mock environment for ``plugins`` CLI subcommands.
+
+    Patches the module-level ``plugin_manager`` in ``cli.py`` so that plugin
+    commands (which obtain the manager via ``_get_plugin_manager()``) see a
+    controllable mock instead of the real instance.
+
+    Yields a ``SimpleNamespace`` with attributes:
+
+    * ``config`` -- the config file mock (from ``mock_config_file``)
+    * ``manager`` -- the ``MagicMock`` standing in for ``PluginManager``
+    * ``loaded_plugins`` -- shortcut dict for ``manager.loaded_plugins``
+    * ``failed_plugins`` -- shortcut dict for ``manager.failed_plugins``
+    * ``command_conflicts`` -- shortcut list for ``manager.command_conflicts``
+
+    Example::
+
+        def test_list_empty(invoke, mock_plugin_env):
+            mock_plugin_env.manager.plugins_dir_exists = True
+            result = invoke(["plugins", "list"])
+            assert "No plugins found" in result.output
+    """
+    import types as _types
+
+    mock_manager = MagicMock()
+    mock_manager.plugins_dir = Path("/test/plugins")
+    mock_manager.plugins_dir_exists = True
+    mock_manager.loaded_plugins = {}
+    mock_manager.failed_plugins = {}
+    mock_manager.command_conflicts = []
+    mock_manager.get_plugin_info.return_value = {}
+    mock_manager.get_failed_plugins.return_value = {}
+    mock_manager.get_command_conflicts.return_value = []
+
+    with patch.object(cli, "plugin_manager", mock_manager):
+        ns = _types.SimpleNamespace(
+            config=mock_config_file,
+            manager=mock_manager,
+            loaded_plugins=mock_manager.loaded_plugins,
+            failed_plugins=mock_manager.failed_plugins,
+            command_conflicts=mock_manager.command_conflicts,
         )
         yield ns
 
