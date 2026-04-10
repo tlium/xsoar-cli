@@ -44,40 +44,16 @@ For other platforms and installation options, see the [uv installation docs](htt
 
 ### 3. Set Up Development Environment
 
-**Recommended: uv**
-
-You may find that you will need to make modifications in [xsoar-client](https://github.com/tlium/xsoar-client) and/or [xsoar-dependency-graph](https://github.com/tlium/xsoar-dependency-graph) in order
-to fix bugs or add new features to `xsoar-cli`. If you need to work on `xsoar-client` or `xsoar-dependency-graph`, install them in editable mode from your local Git clones:
-
-```bash
-uv pip install -e /path/to/your/xsoar-client
-uv pip install -e /path/to/your/xsoar-dependency-graph
-```
-
 ```bash
 # Install dependencies and xsoar-cli in editable mode
 uv sync
 uv pip install -e .
 ```
-**Alternative: pip/venv**
+
+You may need to make modifications in [xsoar-dependency-graph](https://github.com/tlium/xsoar-dependency-graph) to fix bugs or add new features to `xsoar-cli`. If so, install it in editable mode from your local Git clone:
 
 ```bash
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install development dependencies
-pip install -r requirements_dev.txt
-
-# Install xsoar-cli in editable mode
-pip install -e .
-```
-
-If you need to work on the supporting libraries, install them in editable mode as well:
-
-```bash
-pip install -e /path/to/your/xsoar-client
-pip install -e /path/to/your/xsoar-dependency-graph
+uv pip install -e /path/to/your/xsoar-dependency-graph
 ```
 
 ## Development Workflow
@@ -115,16 +91,15 @@ pip install -e /path/to/your/xsoar-dependency-graph
 
 #### Lazy imports
 
-Heavy third-party packages like `xsoar_client`, `xsoar_dependency_graph` and `demisto_client` pull in large dependency trees (boto3, azure-storage-blob, matplotlib, networkx, etc.) that are expensive to load. To keep everyday invocations like `--help` and `--version` fast, these imports are placed inside the functions that need them rather than at the top of the file. Each lazy import is marked with the comment `# Lazy import for performance reasons`.
+Heavy third-party packages like `xsoar_dependency_graph` and `demisto_client` pull in large dependency trees (boto3, azure-storage-blob, matplotlib, networkx, etc.) that are expensive to load. To keep everyday invocations like `--help` and `--version` fast, these imports are placed inside the functions that need them rather than at the top of the file. Each lazy import is marked with the comment `# Lazy import for performance reasons`.
 
-Type hints for the deferred types still appear in function signatures. To avoid quoting them as strings, modules that use this pattern include `from __future__ import annotations` and a `TYPE_CHECKING` block at the top:
+Type hints for the deferred types still appear in function signatures. To keep them clean, use a `TYPE_CHECKING` block at the top of the module:
 
 ```python
-from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from xsoar_client.xsoar_client import Client
+    from xsoar_cli.xsoar_client.client import Client
 ```
 
 See `configuration.py` for a complete example.
