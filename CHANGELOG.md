@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Plugins must explicitly import `XSOARPlugin` (`from xsoar_cli.plugins import XSOARPlugin`). The base class is no longer injected automatically. See the [plugin README](src/xsoar_cli/plugins/README.md) for details.
+- **Breaking:** Plugins must explicitly import `XSOARPlugin` (`from xsoar_cli.plugins import XSOARPlugin`). The base class is no longer injected automatically. See the [plugin README](src/xsoar_cli/plugins/README.md) for details.
 - Plugin commands (`list`, `info`, `validate`) now report a clear error when the plugins directory has not been initialized.
 - Plugin registration failures no longer prevent remaining plugins from loading.
 - `content get-detached --type` is now required. The `all` choice has been removed; specify `scripts` or `playbooks` explicitly.
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
-- Automatic creation of the plugins directory on CLI startup.
+- **Breaking:** Automatic creation of the plugins directory on CLI startup. Run `xsoar-cli plugins init` to create it explicitly.
 
 ### Fixed
 
