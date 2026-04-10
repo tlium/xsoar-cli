@@ -61,12 +61,13 @@ class HelloPlugin(XSOARPlugin):
 
         return hello
 
-    # You can also override the optional initialize() method on your plugin
-    # class if it needs setup work (open files, check credentials, etc.).
-    # It is called once, right after the plugin is instantiated:
-    #
-    #     def initialize(self) -> None:
-    #         ...
+    def initialize(self) -> None:
+        """Optional setup hook. Called once, right after the plugin is instantiated.
+
+        Override this method if your plugin needs setup work (open files,
+        check credentials, etc.). Safe to remove if not needed.
+        """
+        pass
 '''
 
 _NOT_INITIALIZED_MSG = 'Plugin directory not initialized. Run "xsoar-cli plugins init" to set up the plugins directory.'
