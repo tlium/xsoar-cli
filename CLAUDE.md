@@ -206,9 +206,11 @@ The user's live configuration at `~/.config/xsoar-cli/config.json` contains API 
 
 ## Changelog
 
+**Every PR that changes user-facing behavior MUST include a `CHANGELOG.md` update. Do not treat this as optional or as a follow-up step. The changelog entry is part of the implementation, not separate from it.**
+
 - The project maintains a `CHANGELOG.md` in the repository root.
 - The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-- All user-facing changes must be documented in `CHANGELOG.md`. This includes:
+- Changes that require a changelog entry:
   - Adding, removing, or renaming commands, options, or arguments (`Added` / `Removed`)
   - Changes to default behavior or output format (`Changed`)
   - Bug fixes (`Fixed`)
