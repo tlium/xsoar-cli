@@ -163,6 +163,7 @@ def _configure_logging(config_data: dict | None) -> LoggingSetup:
 # "Exit:" entries for pytest invocations.
 _register_commands()
 CORE_COMMANDS, plugin_manager = _load_plugins()
+cli.core_commands = set(CORE_COMMANDS)
 
 # Initialized in main(). None when the module is imported without calling main(),
 # which is the case during test runs.
