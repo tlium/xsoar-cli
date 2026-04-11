@@ -29,12 +29,14 @@ List available content items. Enumerates commands, playbooks and scripts availab
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
 - `--type [scripts|playbooks|commands|all]` - Type of content items to list (default: all)
+- `--detail-level [short|extended|full]` - Amount of detail in the output (default: short)
 
 **Examples:**
 ```
 xsoar-cli content list
 xsoar-cli content list --environment prod
 xsoar-cli content list --type commands
+xsoar-cli content list --type commands --detail-level extended
 xsoar-cli content list --type playbooks --environment dev
 ```
 
