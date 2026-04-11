@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.content import filter_content
+from xsoar_cli.utilities.content import DETAIL_LEVELS, filter_content
 from xsoar_cli.utilities.download_content_handlers import HANDLERS, resolve_output_path
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
@@ -55,19 +55,25 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     show_default=True,
     help="Type of content items to list.",
 )
-@click.option("--detail", is_flag=True, default=False, help="Include argument-level detail in filtered output.")
-@click.option("--verbose", is_flag=True, default=False, help="Output the full unfiltered response.")
+@click.option(
+    "--detail-level",
+    type=click.Choice(DETAIL_LEVELS, case_sensitive=False),
+    default="short",
+    show_default=True,
+    help="Amount of detail to include in the output.",
+)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity
-def list_content(ctx: click.Context, environment: str | None, content_type: str, detail: bool, verbose: bool) -> None:
+def list_content(ctx: click.Context, environment: str | None, content_type: str, detail_level: str) -> None:
     """
-    List detached content items. The purpose of this function is to list out available commands,
-    playbooks and scripts, primarily to facilitate better AI generated playbooks"""
+    List available content items. Enumerates commands, playbooks and scripts
+    available on the server, primarily to facilitate better AI generated
+    playbooks."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     json_blob = xsoar_client.content.list(content_type)
-    if verbose:
+    if detail_level == "full":
         click.echo(json.dumps(json_blob, indent=4))
         ctx.exit(0)
 
@@ -75,7 +81,7 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
     if isinstance(json_blob, list):
         json_blob = {content_type: json_blob}
 
-    filtered = filter_content(json_blob, detail=detail)
+    filtered = filter_content(json_blob, detail_level=detail_level)
     click.echo(json.dumps(filtered, indent=4))
 
 
