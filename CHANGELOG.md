@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Breaking:** `content list` now uses a single `--detail-level` option (choices: `short`, `extended`, `full`, default: `short`) instead of the separate `--details` and `--verbose` flags.
+- Plugin commands are now listed under a separate `Plugins:` section in `--help` output instead of being mixed with core commands.
 
 ### Removed
 
