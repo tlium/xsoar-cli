@@ -315,7 +315,7 @@ class TestFilterCommands:
 class TestFilterContent:
     def test_scripts_summary(self) -> None:
         raw = {"scripts": _SCRIPTS}
-        result = filter_content(raw, detail=False)
+        result = filter_content(raw, detail_level="short")
         assert "scripts" in result
         assert len(result["scripts"]) == 3
         assert result["scripts"][0] == {
@@ -325,13 +325,13 @@ class TestFilterContent:
 
     def test_scripts_detail(self) -> None:
         raw = {"scripts": _SCRIPTS}
-        result = filter_content(raw, detail=True)
+        result = filter_content(raw, detail_level="extended")
         assert "scripts" in result
         assert "arguments" in result["scripts"][0]
 
     def test_playbooks_summary(self) -> None:
         raw = {"playbooks": _PLAYBOOKS}
-        result = filter_content(raw, detail=False)
+        result = filter_content(raw, detail_level="short")
         assert "playbooks" in result
         assert result["playbooks"][0] == {
             "id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
@@ -340,20 +340,20 @@ class TestFilterContent:
 
     def test_playbooks_detail(self) -> None:
         raw = {"playbooks": _PLAYBOOKS}
-        result = filter_content(raw, detail=True)
+        result = filter_content(raw, detail_level="extended")
         assert "playbooks" in result
         assert "inputs" in result["playbooks"][0]
         assert "outputs" in result["playbooks"][0]
 
     def test_commands_summary(self) -> None:
         raw = {"commands": _COMMAND_INSTANCES}
-        result = filter_content(raw, detail=False)
+        result = filter_content(raw, detail_level="short")
         assert "commands" in result
         assert len(result["commands"]) == 2
 
     def test_commands_detail(self) -> None:
         raw = {"commands": _COMMAND_INSTANCES}
-        result = filter_content(raw, detail=True)
+        result = filter_content(raw, detail_level="extended")
         assert "commands" in result
         assert "arguments" in result["commands"][0]["commands"][0]
 
@@ -363,7 +363,7 @@ class TestFilterContent:
             "playbooks": _PLAYBOOKS,
             "commands": _COMMAND_INSTANCES,
         }
-        result = filter_content(raw, detail=False)
+        result = filter_content(raw, detail_level="short")
         assert set(result.keys()) == {"scripts", "playbooks", "commands"}
 
     def test_empty_dict(self) -> None:
