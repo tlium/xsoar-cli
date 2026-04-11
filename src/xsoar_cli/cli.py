@@ -30,11 +30,45 @@ from .utilities.version_check import check_for_update
 
 
 class XSOARCliGroup(click.Group):
-    """Custom Click group that surfaces plugin load failures when a command is not found.
+    """Custom Click group with separate help sections for core and plugin commands.
 
-    Without this, a failed plugin silently disappears and the user gets a generic
-    "No such command" error with no indication that a plugin was involved.
+    Also surfaces plugin load failures when a command is not found, so the user
+    does not get a generic "No such command" error with no indication that a
+    plugin was involved.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.core_commands: set[str] = set()
+
+    def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
+        """Format help output with core commands and plugin commands in separate sections."""
+        core_rows = []
+        plugin_rows = []
+
+        for subcommand in self.list_commands(ctx):
+            cmd = self.get_command(ctx, subcommand)
+            if cmd is None or cmd.hidden:
+                continue
+            target = core_rows if subcommand in self.core_commands else plugin_rows
+            target.append((subcommand, cmd))
+
+        if not core_rows and not plugin_rows:
+            return
+
+        all_names = core_rows + plugin_rows
+        limit = formatter.width - 6 - max(len(name) for name, _ in all_names)
+
+        def make_rows(commands):
+            return [(name, cmd.get_short_help_str(limit)) for name, cmd in commands]
+
+        if core_rows:
+            with formatter.section("Commands"):
+                formatter.write_dl(make_rows(core_rows))
+
+        if plugin_rows:
+            with formatter.section("Plugins"):
+                formatter.write_dl(make_rows(plugin_rows))
 
     def resolve_command(self, ctx: click.Context, args: list) -> tuple:
         try:
@@ -129,6 +163,7 @@ def _configure_logging(config_data: dict | None) -> LoggingSetup:
 # "Exit:" entries for pytest invocations.
 _register_commands()
 CORE_COMMANDS, plugin_manager = _load_plugins()
+cli.core_commands = set(CORE_COMMANDS)
 
 # Initialized in main(). None when the module is imported without calling main(),
 # which is the case during test runs.
