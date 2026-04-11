@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `content list` now uses a single `--detail-level` option (choices: `short`, `extended`, `full`, default: `short`) instead of the separate `--details` and `--verbose` flags.
+
+### Removed
+
+- `content list --details` flag. Use `--detail-level extended` instead.
+- `content list --verbose` flag. Use `--detail-level full` instead.
+
 ## [2.2.0] - 2026-04-10
 
 ### Added

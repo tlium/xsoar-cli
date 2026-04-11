@@ -5,13 +5,15 @@ than downstream consumers (especially LLM-based tooling) need. The functions
 in this module strip each content type down to the fields that matter while
 keeping the output structure extensible.
 
-Two levels of filtering are available:
+Three detail levels are available:
 
-- **Summary** (default): compact id/name representation per item. Designed for
+- **short** (default): compact id/name representation per item. Designed for
   discovery, where an LLM scans the full list to identify relevant items.
-- **Detail** (``--detail``): includes inputs, outputs, and arguments reduced
-  to the fields that matter. Intended for retrieving actionable detail on a
-  smaller set of items.
+- **extended**: includes inputs, outputs, and arguments reduced to the fields
+  that matter. Intended for retrieving actionable detail on a smaller set of
+  items.
+- **full**: the raw, unfiltered API response. Handled by the CLI command
+  before calling into this module.
 """
 
 from __future__ import annotations
@@ -57,9 +59,6 @@ def filter_scripts(scripts: list[dict]) -> list[dict]:
     return filtered
 
 
-# -- Playbooks ---------------------------------------------------------------
-
-
 def summarize_playbooks(playbooks: list[dict]) -> list[dict]:
     """Return an id + name summary for each playbook.
 
@@ -101,9 +100,6 @@ def filter_playbooks(playbooks: list[dict]) -> list[dict]:
         )
 
     return filtered
-
-
-# -- Commands ----------------------------------------------------------------
 
 
 def _group_commands_by_brand(instances: list[dict]) -> list[dict]:
@@ -174,35 +170,39 @@ def filter_commands(instances: list[dict]) -> list[dict]:
     return filtered
 
 
-# -- Dispatch ----------------------------------------------------------------
+DETAIL_LEVELS = ("short", "extended", "full")
 
 
-def filter_content(raw: dict, *, detail: bool = False) -> dict:
+def filter_content(raw: dict, *, detail_level: str = "short") -> dict:
     """Dispatch filtering for each content type present in *raw*.
 
     ``raw`` is the dict returned by ``xsoar_client.content.list()`` and may
     contain any combination of ``scripts``, ``playbooks``, and ``commands``
     keys depending on the requested type.
 
-    When *detail* is ``True``, the output includes argument/input/output-level
-    information. When ``False`` (the default), only identifying fields are kept.
+    *detail_level* controls how much information is kept:
+
+    - ``"short"``: compact id/name summary only.
+    - ``"extended"``: includes arguments, inputs, and outputs.
+    - ``"full"``: not handled here (the caller should output the raw response
+      directly).
     """
     result: dict = {}
 
     if "scripts" in raw:
-        if detail:
+        if detail_level == "extended":
             result["scripts"] = filter_scripts(raw["scripts"])
         else:
             result["scripts"] = summarize_scripts(raw["scripts"])
 
     if "playbooks" in raw:
-        if detail:
+        if detail_level == "extended":
             result["playbooks"] = filter_playbooks(raw["playbooks"])
         else:
             result["playbooks"] = summarize_playbooks(raw["playbooks"])
 
     if "commands" in raw:
-        if detail:
+        if detail_level == "extended":
             result["commands"] = filter_commands(raw["commands"])
         else:
             result["commands"] = summarize_commands(raw["commands"])
