@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `content download` now correctly resolves playbooks whose ID differs from their name when the name contains spaces. Previously, the name search query was not quoted, causing it to return no results. In practice this affected custom playbooks created in the XSOAR UI, which use a UUID as their ID.
+
 ### Changed
 
 - **Breaking:** `content list` now uses a single `--detail-level` option (choices: `short`, `extended`, `full`, default: `short`) instead of the separate `--details` and `--verbose` flags.
