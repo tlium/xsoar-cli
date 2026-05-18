@@ -303,6 +303,14 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
             if not packs_to_check:
                 click.echo("- no diff from installed versions found in manifest.")
             else:
+                click.echo()
+                for pack in packs_to_check:
+                    installed = installed_by_id.get(pack["id"])
+                    if not installed:
+                        click.echo(f"  + {pack['id']} {pack['version']} (new)")
+                    else:
+                        click.echo(f"  ~ {pack['id']} {installed['currentVersion']} -> {pack['version']}")
+                click.echo(f"  Validating {key} reachability ", nl=False)
                 _check_pack_availability(
                     xsoar_client,
                     packs_to_check,
