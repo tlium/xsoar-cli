@@ -81,7 +81,7 @@ class Content:
         can differ from the display name (e.g., UUIDs for custom playbooks).
         """
         endpoint = "/playbook/search"
-        payload = {"query": f"name:{name}"}
+        payload = {"query": f'name:"{name}"'}
         response = self.client.make_request(endpoint=endpoint, method="POST", json=payload)
         response.raise_for_status()
         playbooks = response.json().get("playbooks") or []
