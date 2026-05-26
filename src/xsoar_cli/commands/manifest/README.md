@@ -23,11 +23,13 @@ xsoar-cli manifest generate --environment prod
 
 Validate manifest JSON syntax and verify all specified content packs are available. Tests connectivity to pack sources and checks local pack metadata for development packs.
 
+By default, all packs in the manifest are validated. Use `--only-changed` to limit validation to packs whose version differs from what is currently installed on the server. This is useful in CI pipelines where only a few packs change per PR.
+
 **Syntax:** `xsoar-cli manifest validate [OPTIONS] MANIFEST_PATH`
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
-- `--mode [full|diff]` - Validate the full manifest, or only the definitions that diff with installed versions (default: diff)
+- `--only-changed` - Only validate packs that differ from what is currently installed on the server
 
 **Arguments:**
 - `MANIFEST_PATH` - Path to the manifest file to validate
@@ -35,6 +37,7 @@ Validate manifest JSON syntax and verify all specified content packs are availab
 **Examples:**
 ```
 xsoar-cli manifest validate ./xsoar_config.json
+xsoar-cli manifest validate --only-changed ./xsoar_config.json
 xsoar-cli manifest validate --environment staging ./xsoar_config.json
 ```
 
