@@ -248,23 +248,33 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
 @click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option(
-    "--mode",
-    type=click.Choice(["full", "diff"]),
-    default="diff",
-    help="Validate the full manifest, or only the definitions that diff with installed versions",
+    "--only-changed",
+    is_flag=True,
+    default=False,
+    help="Only validate packs that differ from what is currently installed on the server.",
 )
 @click.argument("manifest", type=click.Path(exists=True))
 @click.pass_context
 @load_config
 @validate_artifacts_provider
 @validate_xsoar_connectivity
-def validate(ctx: click.Context, environment: str | None, mode: str, manifest: str) -> None:
+def validate(ctx: click.Context, environment: str | None, only_changed: bool, manifest: str) -> None:
     """Validate manifest JSON and content pack availability.
+
+    By default, validates all packs defined in the manifest. Use --only-changed
+    to limit validation to packs whose version differs from what is currently
+    installed on the server (useful for faster CI runs).
 
     Custom pack availability is implementation dependent."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    logger.info("Validating manifest '%s' in '%s' mode (environment: '%s')", manifest, mode, environment or config.default_environment)
+    active_env = environment or config.default_environment
+    logger.info(
+        "Validating manifest '%s' (only_changed=%s, environment: '%s')",
+        manifest,
+        only_changed,
+        active_env,
+    )
 
     manifest_data = load_manifest(manifest)
     click.echo("Manifest is valid JSON")
@@ -277,43 +287,34 @@ def validate(ctx: click.Context, environment: str | None, mode: str, manifest: s
         click.echo('Valid keys are "id", "version", "_comment"')
         ctx.exit(1)
 
-    if mode == "full":
-        for key in MANIFEST_KEYS:
-            custom = key == "custom_packs"
-            click.echo(f"Checking {key} availability ", nl=False)
-            _check_pack_availability(
-                xsoar_client,
-                manifest_data[key],
-                custom=custom,
-                manifest_path=manifest,
-            )
-        logger.info("Full validation passed for manifest '%s'", manifest)
-        click.echo("Manifest is valid JSON and all packs are reachable")
-    elif mode == "diff":
+    if only_changed:
         installed_packs = xsoar_client.packs.get_installed()
         installed_by_id = {pack["id"]: pack for pack in installed_packs}
-        for key in MANIFEST_KEYS:
-            custom = key == "custom_packs"
+
+    for key in MANIFEST_KEYS:
+        custom = key == "custom_packs"
+        if only_changed:
             packs_to_check = []
             for pack in manifest_data[key]:
                 installed = installed_by_id.get(pack["id"])
                 if not installed or installed["currentVersion"] != pack["version"]:
                     packs_to_check.append(pack)
-            click.echo(f"Checking {key} availability ", nl=False)
             if not packs_to_check:
-                click.echo("- no diff from installed versions found in manifest.")
-            else:
-                _check_pack_availability(
-                    xsoar_client,
-                    packs_to_check,
-                    custom=custom,
-                    manifest_path=manifest,
-                )
-        logger.info("Diff validation passed for manifest '%s'", manifest)
-        click.echo("Manifest is valid JSON and all packs are reachable.")
-    else:
-        msg = "Invalid value for --mode detected. This should never happen"
-        raise RuntimeError(msg)
+                click.echo(f"Checking {key} availability - no changes found.")
+                continue
+        else:
+            packs_to_check = manifest_data[key]
+
+        click.echo(f"Checking {key} availability ", nl=False)
+        _check_pack_availability(
+            xsoar_client,
+            packs_to_check,
+            custom=custom,
+            manifest_path=manifest,
+        )
+
+    logger.info("Validation passed for manifest '%s'", manifest)
+    click.echo("Manifest is valid JSON and all packs are reachable.")
 
 
 @click.command()
