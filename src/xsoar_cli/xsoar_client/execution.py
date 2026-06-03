@@ -11,6 +11,34 @@ logger = logging.getLogger(__name__)
 # XSOAR investigation type identifier for playgrounds.
 PLAYGROUND_INVESTIGATION_TYPE = 9
 
+# Valid execution modes for execute_command.
+EXECUTION_MODES = ("sync", "async")
+
+
+def _format_arg_value(value: str) -> str:
+    """Format a single argument value for a War Room command string.
+
+    Values containing whitespace are wrapped in double quotes for friendliness,
+    so the caller does not have to quote them. Embedded double quotes are
+    escaped as \\". Values without whitespace are passed through verbatim.
+    """
+    if any(char.isspace() for char in value):
+        escaped = value.replace('"', '\\"')
+        return f'"{escaped}"'
+    return value
+
+
+def build_command_string(name: str, args: dict[str, str]) -> str:
+    """Build a War Room command string of the form '!name key=value ...'.
+
+    The leading '!' is added if not already present. Argument values that
+    contain whitespace are automatically quoted.
+    """
+    command = name if name.startswith("!") else f"!{name}"
+    parts = [command]
+    parts.extend(f"{key}={_format_arg_value(value)}" for key, value in args.items())
+    return " ".join(parts)
+
 
 class Execution:
     def __init__(self, client: Client) -> None:
@@ -90,7 +118,7 @@ class Execution:
         logger.debug("Resolved user playground, id=%s", playground_id)
         return playground_id
 
-    def execute_command(self, name: str, args: dict[str, str], investigation_id: str) -> dict:
+    def execute_command(self, name: str, args: dict[str, str], investigation_id: str, *, mode: str = "sync") -> dict:
         """Executes an automation script or integration command.
 
         There is no user-facing distinction between scripts and integration
@@ -99,8 +127,36 @@ class Execution:
         args holds the key=value arguments for the script or command.
         investigation_id is the target investigation, either a case ID or the
         user's playground.
+
+        mode selects the XSOAR execution endpoint:
+
+        * "sync" submits the command and blocks until it completes, returning
+          the resulting War Room entries. Wrapped as {"entries": [...]}.
+        * "async" submits the command and returns immediately with the created
+          entry. Wrapped as {"entry": {...}}.
+
+        Raises ValueError for an unknown mode. The demisto-py ApiException
+        propagates unchanged when the API call itself fails.
         """
-        raise NotImplementedError
+        if mode not in EXECUTION_MODES:
+            msg = f"Invalid execution mode '{mode}'. Must be one of {EXECUTION_MODES}."
+            raise ValueError(msg)
+
+        # Lazy import for performance reasons
+        from demisto_client.demisto_api import UpdateEntry
+
+        command_string = build_command_string(name, args)
+        logger.debug("Executing command (mode=%s) in investigation '%s': %s", mode, investigation_id, command_string)
+        update_entry = UpdateEntry(investigation_id=investigation_id, data=command_string)
+
+        if mode == "sync":
+            entries = self.client.demisto_py_instance.investigation_add_entries_sync(update_entry=update_entry)
+            logger.debug("Sync execution returned %d entry/entries", len(entries or []))
+            return {"entries": [entry.to_dict() for entry in (entries or [])]}
+
+        entry = self.client.demisto_py_instance.investigation_add_entry_handler(update_entry=update_entry)
+        logger.debug("Async execution submitted, entry id=%s", getattr(entry, "id", None))
+        return {"entry": entry.to_dict()}
 
     def execute_playbook(self, name: str, investigation_id: str) -> dict:
         """Executes a playbook against the given investigation.

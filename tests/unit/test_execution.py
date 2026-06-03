@@ -1,8 +1,8 @@
 """Unit tests for the Execution domain class (``xsoar_cli.xsoar_client.execution``).
 
-``resolve_playground_id`` is implemented and tested against mocked demisto-py
-responses. ``execute_command`` and ``execute_playbook`` are still placeholders
-that raise ``NotImplementedError``; those tests pin that contract.
+``resolve_playground_id`` and ``execute_command`` are implemented and tested
+against mocked demisto-py responses. ``execute_playbook`` is still a placeholder
+that raises ``NotImplementedError``; that test pins the contract.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from xsoar_cli.xsoar_client.execution import Execution
+from xsoar_cli.xsoar_client.execution import Execution, build_command_string
 
 
 def _search_result(*, total: int, ids: list[str], creating_user_ids: list[str] | None = None) -> SimpleNamespace:
@@ -79,11 +79,71 @@ class TestResolvePlaygroundId:
             execution.resolve_playground_id()
 
 
+class TestBuildCommandString:
+    def test_no_args(self) -> None:
+        assert build_command_string("MyScript", {}) == "!MyScript"
+
+    def test_leading_bang_preserved(self) -> None:
+        assert build_command_string("!whois", {}) == "!whois"
+
+    def test_simple_args(self) -> None:
+        assert build_command_string("MyScript", {"a": "1", "b": "2"}) == "!MyScript a=1 b=2"
+
+    def test_whitespace_value_quoted(self) -> None:
+        assert build_command_string("MyScript", {"q": "hello world"}) == '!MyScript q="hello world"'
+
+    def test_embedded_quote_escaped(self) -> None:
+        assert build_command_string("MyScript", {"q": 'a "b" c'}) == '!MyScript q="a \\"b\\" c"'
+
+    def test_value_without_whitespace_not_quoted(self) -> None:
+        assert build_command_string("MyScript", {"url": "https://example.com"}) == "!MyScript url=https://example.com"
+
+
 class TestExecuteCommand:
-    def test_raises_not_implemented(self, mock_client: MagicMock) -> None:
+    def test_sync_returns_wrapped_entries(self, mock_client: MagicMock) -> None:
+        entry_a = SimpleNamespace(to_dict=lambda: {"id": "1@x", "contents": "a"})
+        entry_b = SimpleNamespace(to_dict=lambda: {"id": "2@x", "contents": "b"})
+        mock_client.demisto_py_instance.investigation_add_entries_sync.return_value = [entry_a, entry_b]
+
         execution = Execution(mock_client)
-        with pytest.raises(NotImplementedError):
-            execution.execute_command("MyScript", {"arg1": "val1"}, "playground-id")
+        result = execution.execute_command("MyScript", {"a": "1"}, "playground-id", mode="sync")
+
+        assert result == {"entries": [{"id": "1@x", "contents": "a"}, {"id": "2@x", "contents": "b"}]}
+        update_entry = mock_client.demisto_py_instance.investigation_add_entries_sync.call_args.kwargs["update_entry"]
+        assert update_entry.investigation_id == "playground-id"
+        assert update_entry.data == "!MyScript a=1"
+
+    def test_sync_is_default_mode(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.investigation_add_entries_sync.return_value = []
+
+        execution = Execution(mock_client)
+        execution.execute_command("MyScript", {}, "playground-id")
+
+        mock_client.demisto_py_instance.investigation_add_entries_sync.assert_called_once()
+        mock_client.demisto_py_instance.investigation_add_entry_handler.assert_not_called()
+
+    def test_sync_handles_none_result(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.investigation_add_entries_sync.return_value = None
+
+        execution = Execution(mock_client)
+        result = execution.execute_command("MyScript", {}, "playground-id", mode="sync")
+
+        assert result == {"entries": []}
+
+    def test_async_returns_wrapped_entry(self, mock_client: MagicMock) -> None:
+        entry = SimpleNamespace(id="1@x", to_dict=lambda: {"id": "1@x"})
+        mock_client.demisto_py_instance.investigation_add_entry_handler.return_value = entry
+
+        execution = Execution(mock_client)
+        result = execution.execute_command("MyScript", {}, "playground-id", mode="async")
+
+        assert result == {"entry": {"id": "1@x"}}
+        mock_client.demisto_py_instance.investigation_add_entries_sync.assert_not_called()
+
+    def test_invalid_mode_raises_value_error(self, mock_client: MagicMock) -> None:
+        execution = Execution(mock_client)
+        with pytest.raises(ValueError, match="Invalid execution mode"):
+            execution.execute_command("MyScript", {}, "playground-id", mode="bogus")
 
 
 class TestExecutePlaybook:
