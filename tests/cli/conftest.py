@@ -196,7 +196,7 @@ def mock_execute_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
         patch("xsoar_cli.xsoar_client.execution.Execution.execute_playbook") as mock_pb,
     ):
         mock_playground.return_value = "playground-id"
-        mock_cmd.return_value = {"result": "ok"}
+        mock_cmd.return_value = {"entries": [{"id": "1@x", "contents": "command output"}]}
         mock_pb.return_value = {"result": "ok"}
         ns = _types.SimpleNamespace(
             config=mock_config_file,
