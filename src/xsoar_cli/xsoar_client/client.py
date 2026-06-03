@@ -10,6 +10,7 @@ from .artifact_providers.base import BaseArtifactProvider
 from .cases import Cases
 from .constants import HTTP_CALL_TIMEOUT, XSOAR_OLD_VERSION
 from .content import Content
+from .execution import Execution
 from .integrations import Integrations
 from .packs import Packs
 from .rbac import Rbac
@@ -54,6 +55,7 @@ class Client:
         self.content = Content(self)
         self.integrations = Integrations(self)
         self.rbac = Rbac(self)
+        self.execution = Execution(self)
 
     def make_request(
         self,
