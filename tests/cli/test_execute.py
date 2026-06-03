@@ -87,6 +87,44 @@ class TestExecuteCommand:
         assert result.exit_code == 2
 
 
+class TestPlaygroundResolutionErrors:
+    """Error handling when resolving the playground investigation ID.
+
+    Covers the two distinct failure modes surfaced by ``resolve_investigation_id``:
+    an API-level failure (ApiException) versus a logical failure where the calls
+    succeed but no single playground is found (RuntimeError). Each must exit
+    non-zero with its own message. Exercised via ``execute command``; the same
+    handling is shared by ``execute playbook``.
+    """
+
+    def test_api_exception_exits_with_api_message(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        from demisto_client.demisto_api.rest import ApiException
+
+        mock_execute_env.resolve_playground_id.side_effect = ApiException(status=500, reason="boom")
+        result = invoke(["execute", "command", "MyScript"])
+        assert result.exit_code == 1
+        assert "failed to query XSOAR for the playground investigation" in result.output
+        mock_execute_env.execute_command.assert_not_called()
+
+    def test_runtime_error_exits_with_specific_message(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        mock_execute_env.resolve_playground_id.side_effect = RuntimeError("No playground investigation found in the environment")
+        result = invoke(["execute", "command", "MyScript"])
+        assert result.exit_code == 1
+        assert "No playground investigation found" in result.output
+        mock_execute_env.execute_command.assert_not_called()
+
+    def test_api_exception_does_not_apply_when_case_id_given(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        from demisto_client.demisto_api.rest import ApiException
+
+        # With an explicit case ID the playground is never resolved, so a
+        # configured side effect must not be triggered.
+        mock_execute_env.resolve_playground_id.side_effect = ApiException(status=500, reason="boom")
+        result = invoke(["execute", "command", "MyScript", "--case-id", "12345"])
+        assert result.exit_code == 0
+        mock_execute_env.resolve_playground_id.assert_not_called()
+        mock_execute_env.execute_command.assert_called_once_with("MyScript", {}, "12345")
+
+
 class TestExecutePlaybook:
     """Tests for ``execute playbook``."""
 

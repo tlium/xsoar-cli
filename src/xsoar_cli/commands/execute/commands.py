@@ -30,15 +30,41 @@ def parse_arg_tokens(tokens: tuple[str, ...]) -> dict[str, str]:
     return args
 
 
-def resolve_investigation_id(xsoar_client: "Client", case_id: int | None) -> str:
+def resolve_investigation_id(ctx: click.Context, xsoar_client: "Client", case_id: int | None) -> str:
     """Return the target investigation ID.
 
     Uses the supplied case ID when present, otherwise resolves the user's
     playground investigation ID.
+
+    Distinguishes two failure modes when resolving the playground:
+
+    * ApiException means the XSOAR API call itself failed (connectivity, auth,
+      server error). The user is pointed at the environment.
+    * RuntimeError means the calls succeeded but no single playground could be
+      identified. The specific reason is surfaced to the user.
+
+    Both cases print a message and exit with a non-zero status.
     """
+    # Lazy import for performance reasons
+    from demisto_client.demisto_api.rest import ApiException
+
     if case_id is not None:
+        logger.debug("Using supplied case ID %d as investigation ID", case_id)
         return str(case_id)
-    return xsoar_client.execution.resolve_playground_id()
+
+    logger.debug("No case ID supplied, resolving user's playground investigation ID")
+    try:
+        investigation_id = xsoar_client.execution.resolve_playground_id()
+    except ApiException as ex:
+        logger.info("Playground lookup failed with API error: %s", ex)
+        click.echo(f"Error: failed to query XSOAR for the playground investigation: {ex}")
+        ctx.exit(1)
+    except RuntimeError as ex:
+        logger.info("Could not resolve playground investigation: %s", ex)
+        click.echo(f"Error: {ex}")
+        ctx.exit(1)
+    logger.debug("Resolved playground investigation ID: %s", investigation_id)
+    return investigation_id
 
 
 def render_output(result: dict, output_level: str) -> str:
@@ -102,7 +128,7 @@ def command(  # noqa: PLR0913
 
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    investigation_id = resolve_investigation_id(xsoar_client, case_id)
+    investigation_id = resolve_investigation_id(ctx, xsoar_client, case_id)
     logger.info("Executing command '%s' against investigation '%s'", name, investigation_id)
     result = xsoar_client.execution.execute_command(name, parsed_args, investigation_id)
     click.echo(render_output(result, output_level))
@@ -138,7 +164,7 @@ def playbook(ctx: click.Context, environment: str | None, case_id: int | None, o
     """
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    investigation_id = resolve_investigation_id(xsoar_client, case_id)
+    investigation_id = resolve_investigation_id(ctx, xsoar_client, case_id)
     logger.info("Executing playbook '%s' against investigation '%s'", name, investigation_id)
     result = xsoar_client.execution.execute_playbook(name, investigation_id)
     click.echo(render_output(result, output_level))
