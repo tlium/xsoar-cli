@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `execute command NAME [ARGS]...` runs an automation script or integration command against XSOAR, in the user's playground by default or a specific case with `--case-id`. See the [execute README](src/xsoar_cli/commands/execute/README.md) for details.
+- `execute playbook NAME` starts a playbook in the user's playground, or a specific case with `--case-id`. See the [execute README](src/xsoar_cli/commands/execute/README.md) for details.
+
 ### Fixed
 
 - `content download` now correctly resolves playbooks whose ID differs from their name when the name contains spaces. Previously, the name search query was not quoted, causing it to return no results. In practice this affected custom playbooks created in the XSOAR UI, which use a UUID as their ID.

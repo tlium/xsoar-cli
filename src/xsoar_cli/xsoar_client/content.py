@@ -74,11 +74,11 @@ class Content:
         response = self.client.make_request(endpoint=endpoint, method="POST")
         response.raise_for_status()
 
-    def _resolve_playbook_id(self, name: str) -> str | None:
-        """Searches for a playbook by name and returns its ID.
+    def _find_playbook(self, name: str) -> dict | None:
+        """Searches for a playbook by name and returns the matching record.
 
-        Needed because XSOAR uses the playbook ID in download URLs, and the ID
-        can differ from the display name (e.g., UUIDs for custom playbooks).
+        The match is case-insensitive against the playbook's display name.
+        Returns the playbook dict (with at least "id" and "name") or None.
         """
         endpoint = "/playbook/search"
         payload = {"query": f'name:"{name}"'}
@@ -87,10 +87,36 @@ class Content:
         playbooks = response.json().get("playbooks") or []
         for playbook in playbooks:
             if playbook.get("name", "").lower() == name.lower():
-                playbook_id = playbook["id"]
-                logger.debug("Resolved playbook name '%s' to ID '%s'", name, playbook_id)
-                return playbook_id
+                return playbook
         return None
+
+    def resolve_playbook_id(self, name: str) -> str | None:
+        """Searches for a playbook by name and returns its ID.
+
+        Needed because XSOAR uses the playbook ID in download URLs, and the ID
+        can differ from the display name (e.g., UUIDs for custom playbooks).
+        """
+        playbook = self._find_playbook(name)
+        if playbook is None:
+            return None
+        playbook_id = playbook["id"]
+        logger.debug("Resolved playbook name '%s' to ID '%s'", name, playbook_id)
+        return playbook_id
+
+    def resolve_playbook_name(self, name: str) -> str | None:
+        """Searches for a playbook by name and returns its canonical name.
+
+        Used where XSOAR matches a playbook by its display name (e.g. the
+        setPlaybook command). Returns the exact name as stored in XSOAR, so a
+        differently-cased input still resolves to the recognized name. Returns
+        None when no playbook matches.
+        """
+        playbook = self._find_playbook(name)
+        if playbook is None:
+            return None
+        canonical_name = playbook.get("name", "")
+        logger.debug("Resolved playbook '%s' to canonical name '%s'", name, canonical_name)
+        return canonical_name
 
     def download_playbook(self, name: str) -> bytes:
         """Downloads a playbook by name. Returns raw YAML bytes.
@@ -108,7 +134,7 @@ class Content:
             name,
             response.status_code,
         )
-        playbook_id = self._resolve_playbook_id(name)
+        playbook_id = self.resolve_playbook_id(name)
         if playbook_id is None:
             msg = f"Playbook '{name}' not found"
             raise ValueError(msg)

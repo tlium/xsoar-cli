@@ -172,6 +172,43 @@ def mock_plugin_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noq
 
 
 @pytest.fixture
+def mock_execute_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
+    """Mock environment for ``execute`` commands.
+
+    Patches connectivity and the ``Execution`` domain methods with default
+    success behaviour. The mocks are exposed on the yielded namespace so tests
+    can override return values or side effects as needed.
+
+    Yields a ``SimpleNamespace`` with attributes:
+
+    * ``config`` -- the config file mock
+    * ``connectivity`` -- the ``Client.test_connectivity`` mock
+    * ``resolve_playground_id`` -- the ``Execution.resolve_playground_id`` mock
+    * ``execute_command`` -- the ``Execution.execute_command`` mock
+    * ``execute_playbook`` -- the ``Execution.execute_playbook`` mock
+    """
+    import types as _types
+
+    with (
+        patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True) as mock_conn,
+        patch("xsoar_cli.xsoar_client.execution.Execution.resolve_playground_id") as mock_playground,
+        patch("xsoar_cli.xsoar_client.execution.Execution.execute_command") as mock_cmd,
+        patch("xsoar_cli.xsoar_client.execution.Execution.execute_playbook") as mock_pb,
+    ):
+        mock_playground.return_value = "playground-id"
+        mock_cmd.return_value = {"entries": [{"id": "1@x", "contents": "command output"}]}
+        mock_pb.return_value = {"result": "ok"}
+        ns = _types.SimpleNamespace(
+            config=mock_config_file,
+            connectivity=mock_conn,
+            resolve_playground_id=mock_playground,
+            execute_command=mock_cmd,
+            execute_playbook=mock_pb,
+        )
+        yield ns
+
+
+@pytest.fixture
 def mock_case_env(mock_config_file, make_case_response, make_case_create_response) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
     """Mock environment for ``case`` commands.
 

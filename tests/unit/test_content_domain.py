@@ -73,7 +73,7 @@ class TestDownloadPlaybook:
 
 
 class TestResolvePlaybookId:
-    """Tests for the Content._resolve_playbook_id method."""
+    """Tests for the Content.resolve_playbook_id method."""
 
     def test_resolves_matching_name(self) -> None:
         mock_client = MagicMock()
@@ -88,7 +88,7 @@ class TestResolvePlaybookId:
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
-        result = content._resolve_playbook_id("My Playbook")
+        result = content.resolve_playbook_id("My Playbook")
         assert result == "abc-123"
 
     def test_case_insensitive_match(self) -> None:
@@ -101,7 +101,7 @@ class TestResolvePlaybookId:
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
-        result = content._resolve_playbook_id("my playbook")
+        result = content.resolve_playbook_id("my playbook")
         assert result == "abc-123"
 
     def test_no_match_returns_none(self) -> None:
@@ -114,7 +114,7 @@ class TestResolvePlaybookId:
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
-        result = content._resolve_playbook_id("Nonexistent")
+        result = content.resolve_playbook_id("Nonexistent")
         assert result is None
 
     def test_empty_playbooks_list(self) -> None:
@@ -125,7 +125,38 @@ class TestResolvePlaybookId:
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
-        result = content._resolve_playbook_id("Anything")
+        result = content.resolve_playbook_id("Anything")
+        assert result is None
+
+
+class TestResolvePlaybookName:
+    """Tests for the Content.resolve_playbook_name method."""
+
+    def test_returns_canonical_name(self) -> None:
+        # A differently-cased input resolves to the exact name XSOAR stores.
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "playbooks": [{"id": "abc-123", "name": "My Playbook"}],
+        }
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        result = content.resolve_playbook_name("my playbook")
+        assert result == "My Playbook"
+
+    def test_no_match_returns_none(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "playbooks": [{"id": "abc-123", "name": "Other Playbook"}],
+        }
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        result = content.resolve_playbook_name("Nonexistent")
         assert result is None
 
 

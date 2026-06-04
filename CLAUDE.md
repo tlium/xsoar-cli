@@ -28,7 +28,7 @@ for confirmation before executing any terminal commands as they may have consequ
 - **Build System**: Hatchling (`pyproject.toml`)
 - **Package Manager**: uv (`uv.lock`)
 - **Linting**: Ruff
-- **Formatting**: Black
+- **Formatting**: Ruff formatter (>99.9% Black-compatible)
 - **Testing**: pytest, pytest-cov
 - **CI**: GitHub Actions (Python 3.10-3.14)
 
@@ -142,10 +142,10 @@ uv run pytest tests/cli/
 uv run pytest tests/unit/
 
 # Format code
-black src/ tests/
+uv run ruff format src/ tests/
 
 # Lint
-ruff check src/ tests/
+uv run ruff check src/ tests/
 
 # Run the CLI
 uv run xsoar-cli --help
