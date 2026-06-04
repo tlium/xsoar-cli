@@ -31,9 +31,9 @@ Arguments are supplied as space-separated `key=value` pairs. Values containing w
 
 **Output:**
 
-On success, prints a completion line with the entry count and a direct War Room link to each resulting entry. The entry contents are not printed; follow the link to view them in XSOAR. If a command produces an error entry, the error contents are printed and the command exits non-zero.
+On success, prints a completion line with the entry count, then for each resulting entry a short `Entry <id>:` header followed by two links: a War Room link (to view the entry in context) and an artifact viewer link (which offers a direct download of the entry content in XSOAR). The entry contents are not printed. If a command produces an error entry, the error contents are printed alongside its links and the command exits non-zero.
 
-In sync mode, the command submits the request and then polls for the resulting War Room entries. If no results appear within `--timeout` seconds, the command is reported as still running, a link to the submitted entry is printed, and the exit code stays zero. A failed submission surfaces immediately as an error with a non-zero exit code.
+In sync mode, the command submits the request and then polls for the resulting War Room entries. If no results appear within `--timeout` seconds, the command is reported as still running with a War Room link to the submitted entry, and the exit code stays zero. A failed submission surfaces immediately as an error with a non-zero exit code.
 
 **Examples:**
 ```

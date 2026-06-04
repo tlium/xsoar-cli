@@ -69,15 +69,32 @@ def resolve_investigation_id(ctx: click.Context, xsoar_client: "Client", case_id
     return investigation_id
 
 
-def build_warroom_url(server_url: str, warroom_segment: str, entry_id: str) -> str:
-    """Build a direct link to a War Room entry.
+def build_entry_url(server_url: str, view: str, segment: str, entry_id: str) -> str:
+    """Build a direct link to an entry in a given XSOAR view.
 
-    The URL shape is <server_url>/#/WarRoom/<segment>/<entry_id>, where segment
-    is the literal "playground" for playground executions or the case ID for a
-    case. The server URL's trailing slash, if any, is stripped.
+    The URL shape is <server_url>/#/<view>/<segment>/<entry_id>, where view is
+    "WarRoom" or "artifactViewer" and segment is the literal "playground" for
+    playground executions or the case ID for a case. The server URL's trailing
+    slash, if any, is stripped.
     """
     base = server_url.rstrip("/")
-    return f"{base}/#/WarRoom/{warroom_segment}/{entry_id}"
+    return f"{base}/#/{view}/{segment}/{entry_id}"
+
+
+def _result_entry_lines(entry_id: str, server_url: str, segment: str) -> list[str]:
+    """Build the grouped output lines for a single result entry.
+
+    Each result entry is shown with a short header and two links: the War Room
+    view for context and the artifact viewer for downloading the entry content.
+    The short entry number (the part before "@") is used in the header for
+    readability; the full id is preserved in the URLs.
+    """
+    short_id = entry_id.split("@", 1)[0]
+    return [
+        f"Entry {short_id}:",
+        f"  War Room entry: {build_entry_url(server_url, 'WarRoom', segment, entry_id)}",
+        f"  Artifact viewer: {build_entry_url(server_url, 'artifactViewer', segment, entry_id)}",
+    ]
 
 
 def render_command_output(
@@ -93,12 +110,13 @@ def render_command_output(
 
     Reports only what is known:
 
-    * sync success: that the command completed, the entry count, and a War Room
-      link per returned entry.
-    * sync error: the contents of each error entry and a link to it.
+    * sync success: that the command completed, the entry count, and War Room
+      and artifact viewer links per returned entry.
+    * sync error: the contents of each error entry and links to it.
     * sync timeout: that no results arrived in time and the command may still
-      be running, with a link to the submitted entry.
-    * async: that the command was submitted, with the created entry ID and link.
+      be running, with a War Room link to the submitted entry.
+    * async: that the command was submitted, with the created entry ID and a
+      War Room link.
     """
     if "entries" in result:
         if result.get("timed_out"):
@@ -108,7 +126,11 @@ def render_command_output(
 
 
 def _render_sync_summary(entries: list[dict], name: str, server_url: str, warroom_segment: str) -> tuple[str, bool]:
-    """Render the summary for a synchronous (blocking) command execution."""
+    """Render the summary for a synchronous (blocking) command execution.
+
+    Each result entry is shown grouped with its War Room and artifact viewer
+    links, separated by a blank line for readability.
+    """
     error_entries = [entry for entry in entries if entry.get("type") == ERROR_ENTRY_TYPE]
 
     if error_entries:
@@ -118,12 +140,14 @@ def _render_sync_summary(entries: list[dict], name: str, server_url: str, warroo
         error_plural = "error" if error_count == 1 else "errors"
         lines = [f"Command {name} completed with errors ({total} {total_plural}, {error_count} {error_plural})."]
         for entry in error_entries:
+            entry_id = entry.get("id", "")
+            if not entry_id:
+                continue
+            lines.append("")
             contents = entry.get("contents")
             if contents:
                 lines.append(str(contents))
-            entry_id = entry.get("id", "")
-            if entry_id:
-                lines.append(f"War Room entry: {build_warroom_url(server_url, warroom_segment, entry_id)}")
+            lines.extend(_result_entry_lines(entry_id, server_url, warroom_segment))
         return "\n".join(lines), True
 
     count = len(entries)
@@ -131,8 +155,10 @@ def _render_sync_summary(entries: list[dict], name: str, server_url: str, warroo
     lines = [f"Command {name} completed ({count} {plural})."]
     for entry in entries:
         entry_id = entry.get("id", "")
-        if entry_id:
-            lines.append(f"War Room entry: {build_warroom_url(server_url, warroom_segment, entry_id)}")
+        if not entry_id:
+            continue
+        lines.append("")
+        lines.extend(_result_entry_lines(entry_id, server_url, warroom_segment))
     return "\n".join(lines), False
 
 
@@ -146,7 +172,7 @@ def _render_timeout_summary(result: dict, server_url: str, warroom_segment: str)
     entry_id = result.get("entry_id", "")
     lines = ["No command results within timeout. It may still be running."]
     if entry_id:
-        lines.append(f"War Room entry: {build_warroom_url(server_url, warroom_segment, entry_id)}")
+        lines.append(f"War Room entry: {build_entry_url(server_url, 'WarRoom', warroom_segment, entry_id)}")
     return "\n".join(lines)
 
 
@@ -155,7 +181,7 @@ def _render_async_summary(entry: dict, name: str, server_url: str, warroom_segme
     entry_id = entry.get("id", "")
     lines = [f"Command {name} submitted. Entry ID: {entry_id}"]
     if entry_id:
-        lines.append(f"War Room entry: {build_warroom_url(server_url, warroom_segment, entry_id)}")
+        lines.append(f"War Room entry: {build_entry_url(server_url, 'WarRoom', warroom_segment, entry_id)}")
     return "\n".join(lines)
 
 

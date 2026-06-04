@@ -135,7 +135,9 @@ class TestExecuteCommand:
         result = invoke(["execute", "command", "MyScript"])
         assert result.exit_code == 0
         assert "Command MyScript completed (1 entry)." in result.output
+        assert "Entry 1:" in result.output
         assert "https://xsoar.example.com/#/WarRoom/playground/1@x" in result.output
+        assert "https://xsoar.example.com/#/artifactViewer/playground/1@x" in result.output
         # Success summary reports completion and links only, not entry contents.
         assert "command output" not in result.output
 
@@ -143,6 +145,7 @@ class TestExecuteCommand:
         result = invoke(["execute", "command", "MyScript", "--case-id", "12345"])
         assert result.exit_code == 0
         assert "https://xsoar.example.com/#/WarRoom/12345/1@x" in result.output
+        assert "https://xsoar.example.com/#/artifactViewer/12345/1@x" in result.output
 
     def test_summary_entry_count_pluralized(self, invoke: InvokeHelper, mock_execute_env) -> None:
         mock_execute_env.execute_command.return_value = {
@@ -154,8 +157,12 @@ class TestExecuteCommand:
         result = invoke(["execute", "command", "MyScript"])
         assert result.exit_code == 0
         assert "Command MyScript completed (2 entries)." in result.output
+        assert "Entry 1:" in result.output
+        assert "Entry 2:" in result.output
         assert "https://xsoar.example.com/#/WarRoom/playground/1@x" in result.output
         assert "https://xsoar.example.com/#/WarRoom/playground/2@x" in result.output
+        assert "https://xsoar.example.com/#/artifactViewer/playground/1@x" in result.output
+        assert "https://xsoar.example.com/#/artifactViewer/playground/2@x" in result.output
 
     def test_summary_zero_entries(self, invoke: InvokeHelper, mock_execute_env) -> None:
         mock_execute_env.execute_command.return_value = {"entries": []}
@@ -169,7 +176,9 @@ class TestExecuteCommand:
         assert result.exit_code == 1
         assert "Command MyScript completed with errors (1 entry, 1 error)." in result.output
         assert "something broke" in result.output
+        assert "Entry 9:" in result.output
         assert "https://xsoar.example.com/#/WarRoom/playground/9@x" in result.output
+        assert "https://xsoar.example.com/#/artifactViewer/playground/9@x" in result.output
 
     def test_summary_partial_success_shows_only_errors(self, invoke: InvokeHelper, mock_execute_env) -> None:
         # A result entry followed by an error entry. The result link is
@@ -185,10 +194,13 @@ class TestExecuteCommand:
         assert result.exit_code == 1
         assert "Command MyScript completed with errors (2 entries, 1 error)." in result.output
         assert "boom" in result.output
+        assert "Entry 2:" in result.output
         assert "https://xsoar.example.com/#/WarRoom/playground/2@x" in result.output
-        # The successful result entry's contents and link are not shown.
+        assert "https://xsoar.example.com/#/artifactViewer/playground/2@x" in result.output
+        # The successful result entry's contents and links are not shown.
         assert "First result" not in result.output
         assert "1@x" not in result.output
+        assert "Entry 1:" not in result.output
 
     def test_api_exception_during_execution(self, invoke: InvokeHelper, mock_execute_env) -> None:
         from demisto_client.demisto_api.rest import ApiException
