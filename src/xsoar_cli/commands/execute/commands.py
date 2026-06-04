@@ -245,16 +245,19 @@ def command(  # noqa: PLR0913
     # The War Room URL uses the literal "playground" segment for playground
     # executions, and the case ID when running against a specific case.
     warroom_segment = str(case_id) if case_id is not None else "playground"
+    # The leading "!" is optional on input; strip it for display so user-facing
+    # messages read the same whether or not the user included it.
+    display_name = name[1:] if name.startswith("!") else name
     logger.info("Executing command '%s' (mode=%s) against investigation '%s'", name, mode, investigation_id)
     if mode == "sync":
-        click.echo(f"Executing {name}, waiting up to {timeout}s for results...", err=True)
+        click.echo(f"Executing {display_name}, waiting up to {timeout}s for results...", err=True)
     try:
         result = xsoar_client.execution.execute_command(name, parsed_args, investigation_id, mode=mode, timeout=timeout)
     except ApiException as ex:
         logger.info("Command execution failed with API error: %s", ex)
         click.echo(f"Error: command execution failed: {ex}")
         ctx.exit(1)
-    output, had_error = render_command_output(result, name, xsoar_client.server_url, warroom_segment)
+    output, had_error = render_command_output(result, display_name, xsoar_client.server_url, warroom_segment)
     click.echo(output)
     if had_error:
         ctx.exit(1)

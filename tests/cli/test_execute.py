@@ -105,6 +105,17 @@ class TestExecuteCommand:
         assert result.exit_code == 0
         assert "Executing MyScript, waiting up to 30s for results..." in result.output
 
+    def test_leading_bang_stripped_from_displayed_name(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        # The leading "!" is optional on input and is normalized away in all
+        # user-facing output, while the raw name is still passed to the client.
+        result = invoke(["execute", "command", "!MyScript"])
+        assert result.exit_code == 0
+        assert "Executing MyScript, waiting up to 30s for results..." in result.output
+        assert "Command MyScript completed" in result.output
+        assert "!MyScript" not in result.output
+        args, _ = mock_execute_env.execute_command.call_args
+        assert args[0] == "!MyScript"
+
     def test_timeout_reports_still_running_exits_zero(self, invoke: InvokeHelper, mock_execute_env) -> None:
         mock_execute_env.execute_command.return_value = {
             "entries": [],
