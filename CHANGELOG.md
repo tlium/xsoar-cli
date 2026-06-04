@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `execute` command group for running automation scripts and integration commands against XSOAR. `execute command NAME [ARGS]...` runs a script or integration command (there is no difference in how the two are invoked) against the user's playground, or against a specific case with `--case-id`. Arguments are supplied as `key=value` pairs; values containing whitespace are quoted automatically. Use `--mode sync` (default) to wait for and report the resulting War Room entries, or `--mode async` to submit and return immediately. In sync mode, `--timeout` (default: 30) bounds how long to wait for results before reporting that the command is still running. Each result entry is reported with a War Room link and an artifact viewer link. (`execute playbook` is scaffolded but not yet implemented.)
+
 ### Fixed
 
 - `content download` now correctly resolves playbooks whose ID differs from their name when the name contains spaces. Previously, the name search query was not quoted, causing it to return no results. In practice this affected custom playbooks created in the XSOAR UI, which use a UUID as their ID.
