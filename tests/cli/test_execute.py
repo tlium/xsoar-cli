@@ -54,18 +54,18 @@ class TestExecuteCommand:
         result = invoke(["execute", "command", "MyScript", "arg1=val1"])
         assert result.exit_code == 0
         mock_execute_env.resolve_playground_id.assert_called_once()
-        mock_execute_env.execute_command.assert_called_once_with("MyScript", {"arg1": "val1"}, "playground-id", mode="sync")
+        mock_execute_env.execute_command.assert_called_once_with("MyScript", {"arg1": "val1"}, "playground-id", mode="sync", timeout=30)
 
     def test_success_with_case_id(self, invoke: InvokeHelper, mock_execute_env) -> None:
         result = invoke(["execute", "command", "MyScript", "--case-id", "12345"])
         assert result.exit_code == 0
         mock_execute_env.resolve_playground_id.assert_not_called()
-        mock_execute_env.execute_command.assert_called_once_with("MyScript", {}, "12345", mode="sync")
+        mock_execute_env.execute_command.assert_called_once_with("MyScript", {}, "12345", mode="sync", timeout=30)
 
     def test_multiple_args(self, invoke: InvokeHelper, mock_execute_env) -> None:
         result = invoke(["execute", "command", "MyScript", "a=1", "b=2"])
         assert result.exit_code == 0
-        mock_execute_env.execute_command.assert_called_once_with("MyScript", {"a": "1", "b": "2"}, "playground-id", mode="sync")
+        mock_execute_env.execute_command.assert_called_once_with("MyScript", {"a": "1", "b": "2"}, "playground-id", mode="sync", timeout=30)
 
     def test_malformed_arg_exits_nonzero(self, invoke: InvokeHelper, mock_execute_env) -> None:
         result = invoke(["execute", "command", "MyScript", "notapair"])
@@ -89,6 +89,32 @@ class TestExecuteCommand:
         _, kwargs = mock_execute_env.execute_command.call_args
         assert kwargs["mode"] == "async"
         assert "Entry ID: 7@x" in result.output
+
+    def test_timeout_passed_through(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        invoke(["execute", "command", "MyScript", "--timeout", "60"])
+        _, kwargs = mock_execute_env.execute_command.call_args
+        assert kwargs["timeout"] == 60
+
+    def test_default_timeout_is_30(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        invoke(["execute", "command", "MyScript"])
+        _, kwargs = mock_execute_env.execute_command.call_args
+        assert kwargs["timeout"] == 30
+
+    def test_sync_prints_progress_to_stderr(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        result = invoke(["execute", "command", "MyScript"])
+        assert result.exit_code == 0
+        assert "Executing MyScript, waiting up to 30s for results..." in result.output
+
+    def test_timeout_reports_still_running_exits_zero(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        mock_execute_env.execute_command.return_value = {
+            "entries": [],
+            "timed_out": True,
+            "entry_id": "15@x",
+        }
+        result = invoke(["execute", "command", "MyScript"])
+        assert result.exit_code == 0
+        assert "No command results within timeout. It may still be running." in result.output
+        assert "https://xsoar.example.com/#/WarRoom/playground/15@x" in result.output
 
     def test_invalid_mode_exits_usage_error(self, invoke: InvokeHelper, mock_execute_env) -> None:
         result = invoke(["execute", "command", "MyScript", "--mode", "bogus"])
@@ -153,23 +179,6 @@ class TestExecuteCommand:
         assert "First result" not in result.output
         assert "1@x" not in result.output
 
-    def test_output_level_raw_dumps_json(self, invoke: InvokeHelper, mock_execute_env) -> None:
-        result = invoke(["execute", "command", "MyScript", "--output-level", "raw"])
-        assert result.exit_code == 0
-        assert "entries" in result.output
-        assert "WarRoom" not in result.output
-
-    def test_output_level_raw_error_entry_still_exits_zero(self, invoke: InvokeHelper, mock_execute_env) -> None:
-        # raw output does not interpret entries, so an error entry does not flip
-        # the exit code; the caller is expected to inspect the JSON.
-        mock_execute_env.execute_command.return_value = {"entries": [{"id": "9@x", "type": 4}]}
-        result = invoke(["execute", "command", "MyScript", "--output-level", "raw"])
-        assert result.exit_code == 0
-
-    def test_invalid_output_level_exits_usage_error(self, invoke: InvokeHelper, mock_execute_env) -> None:
-        result = invoke(["execute", "command", "MyScript", "--output-level", "bogus"])
-        assert result.exit_code == 2
-
     def test_api_exception_during_execution(self, invoke: InvokeHelper, mock_execute_env) -> None:
         from demisto_client.demisto_api.rest import ApiException
 
@@ -214,7 +223,7 @@ class TestPlaygroundResolutionErrors:
         result = invoke(["execute", "command", "MyScript", "--case-id", "12345"])
         assert result.exit_code == 0
         mock_execute_env.resolve_playground_id.assert_not_called()
-        mock_execute_env.execute_command.assert_called_once_with("MyScript", {}, "12345", mode="sync")
+        mock_execute_env.execute_command.assert_called_once_with("MyScript", {}, "12345", mode="sync", timeout=30)
 
 
 class TestExecutePlaybook:

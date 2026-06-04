@@ -6,14 +6,12 @@ import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
-from xsoar_cli.xsoar_client.execution import EXECUTION_MODES
+from xsoar_cli.xsoar_client.execution import DEFAULT_SYNC_TIMEOUT, EXECUTION_MODES
 
 if TYPE_CHECKING:
     from xsoar_cli.xsoar_client.client import Client
 
 logger = logging.getLogger(__name__)
-
-OUTPUT_LEVELS = ["summary", "raw"]
 
 # XSOAR entry type identifying an error entry in command output.
 ERROR_ENTRY_TYPE = 4
@@ -84,7 +82,6 @@ def build_warroom_url(server_url: str, warroom_segment: str, entry_id: str) -> s
 
 def render_command_output(
     result: dict,
-    output_level: str,
     name: str,
     server_url: str,
     warroom_segment: str,
@@ -94,20 +91,18 @@ def render_command_output(
     Returns a (text, had_error) tuple. had_error is True when the command
     returned one or more error entries, so the caller can exit non-zero.
 
-    raw dumps the full result as JSON (had_error is always False; the caller is
-    expected to inspect the JSON itself).
-
-    summary reports only what is known:
+    Reports only what is known:
 
     * sync success: that the command completed, the entry count, and a War Room
       link per returned entry.
     * sync error: the contents of each error entry and a link to it.
+    * sync timeout: that no results arrived in time and the command may still
+      be running, with a link to the submitted entry.
     * async: that the command was submitted, with the created entry ID and link.
     """
-    if output_level == "raw":
-        return json.dumps(result, indent=4), False
-
     if "entries" in result:
+        if result.get("timed_out"):
+            return _render_timeout_summary(result, server_url, warroom_segment), False
         return _render_sync_summary(result["entries"], name, server_url, warroom_segment)
     return _render_async_summary(result.get("entry", {}), name, server_url, warroom_segment), False
 
@@ -141,6 +136,20 @@ def _render_sync_summary(entries: list[dict], name: str, server_url: str, warroo
     return "\n".join(lines), False
 
 
+def _render_timeout_summary(result: dict, server_url: str, warroom_segment: str) -> str:
+    """Render the summary when a sync command produced no results before timeout.
+
+    A timeout is treated as success with a warning: the command was submitted
+    successfully (a submit failure surfaces fast as an API error), so it is
+    almost certainly still running. The link points at the submitted entry.
+    """
+    entry_id = result.get("entry_id", "")
+    lines = ["No command results within timeout. It may still be running."]
+    if entry_id:
+        lines.append(f"War Room entry: {build_warroom_url(server_url, warroom_segment, entry_id)}")
+    return "\n".join(lines)
+
+
 def _render_async_summary(entry: dict, name: str, server_url: str, warroom_segment: str) -> str:
     """Render the summary for an asynchronous command submission."""
     entry_id = entry.get("id", "")
@@ -148,14 +157,6 @@ def _render_async_summary(entry: dict, name: str, server_url: str, warroom_segme
     if entry_id:
         lines.append(f"War Room entry: {build_warroom_url(server_url, warroom_segment, entry_id)}")
     return "\n".join(lines)
-
-
-def render_output(result: dict, output_level: str) -> str:
-    """Render an execution result according to the chosen output level."""
-    if output_level == "raw":
-        return json.dumps(result, indent=4)
-    # summary is a placeholder until the playbook execution layer is implemented.
-    return json.dumps(result, indent=4)
 
 
 @click.group()
@@ -175,11 +176,11 @@ def execute() -> None:
     help="Execute synchronously (wait for and return results) or asynchronously (submit and return the entry).",
 )
 @click.option(
-    "--output-level",
-    type=click.Choice(OUTPUT_LEVELS, case_sensitive=False),
-    default="summary",
+    "--timeout",
+    type=int,
+    default=DEFAULT_SYNC_TIMEOUT,
     show_default=True,
-    help="Amount of detail to include in the output.",
+    help="Seconds to wait for results in sync mode before reporting the command is still running.",
 )
 @click.argument("name", type=str)
 @click.argument("args", nargs=-1, type=str)
@@ -191,7 +192,7 @@ def command(  # noqa: PLR0913
     environment: str | None,
     case_id: int | None,
     mode: str,
-    output_level: str,
+    timeout: int,
     name: str,
     args: tuple[str, ...],
 ) -> None:
@@ -214,6 +215,10 @@ def command(  # noqa: PLR0913
     --mode sync waits for the command to finish and returns the resulting War
     Room entries. --mode async submits the command and returns immediately with
     the created entry.
+
+    In sync mode, --timeout bounds how long to wait for results. If the command
+    has not produced results by then, it is reported as still running and a War
+    Room link is printed; this is not treated as an error.
 
     Usage examples:
 
@@ -241,13 +246,15 @@ def command(  # noqa: PLR0913
     # executions, and the case ID when running against a specific case.
     warroom_segment = str(case_id) if case_id is not None else "playground"
     logger.info("Executing command '%s' (mode=%s) against investigation '%s'", name, mode, investigation_id)
+    if mode == "sync":
+        click.echo(f"Executing {name}, waiting up to {timeout}s for results...", err=True)
     try:
-        result = xsoar_client.execution.execute_command(name, parsed_args, investigation_id, mode=mode)
+        result = xsoar_client.execution.execute_command(name, parsed_args, investigation_id, mode=mode, timeout=timeout)
     except ApiException as ex:
         logger.info("Command execution failed with API error: %s", ex)
         click.echo(f"Error: command execution failed: {ex}")
         ctx.exit(1)
-    output, had_error = render_command_output(result, output_level, name, xsoar_client.server_url, warroom_segment)
+    output, had_error = render_command_output(result, name, xsoar_client.server_url, warroom_segment)
     click.echo(output)
     if had_error:
         ctx.exit(1)
@@ -256,18 +263,11 @@ def command(  # noqa: PLR0913
 @click.command()
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.option("--case-id", type=int, default=None, help="Case ID to execute against. Defaults to the user's playground.")
-@click.option(
-    "--output-level",
-    type=click.Choice(OUTPUT_LEVELS, case_sensitive=False),
-    default="summary",
-    show_default=True,
-    help="Amount of detail to include in the output.",
-)
 @click.argument("name", type=str)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity
-def playbook(ctx: click.Context, environment: str | None, case_id: int | None, output_level: str, name: str) -> None:
+def playbook(ctx: click.Context, environment: str | None, case_id: int | None, name: str) -> None:
     """Execute a playbook.
 
     NAME is the playbook to run.
@@ -286,7 +286,7 @@ def playbook(ctx: click.Context, environment: str | None, case_id: int | None, o
     investigation_id = resolve_investigation_id(ctx, xsoar_client, case_id)
     logger.info("Executing playbook '%s' against investigation '%s'", name, investigation_id)
     result = xsoar_client.execution.execute_playbook(name, investigation_id)
-    click.echo(render_output(result, output_level))
+    click.echo(json.dumps(result, indent=4))
 
 
 execute.add_command(command)

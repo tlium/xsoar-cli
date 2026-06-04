@@ -23,15 +23,17 @@ Arguments are supplied as space-separated `key=value` pairs. Values containing w
 - `--environment TEXT` - Target environment (default: uses default environment from config)
 - `--case-id INTEGER` - Case ID to execute against (default: the user's playground)
 - `--mode [sync|async]` - Wait for results (`sync`) or submit and return the created entry (`async`) (default: "sync")
-- `--output-level [summary|raw]` - Amount of detail to include in the output (default: "summary")
+- `--timeout INTEGER` - Seconds to wait for results in sync mode before reporting the command is still running (default: 30)
 
 **Arguments:**
 - `NAME` - The script or integration command to run
 - `ARGS` - Zero or more `key=value` argument pairs
 
 **Output:**
-- `summary` (default) prints the readable contents of each returned War Room entry, with a direct link to each entry.
-- `raw` prints the full result as JSON, suitable for scripting and piping.
+
+On success, prints a completion line with the entry count and a direct War Room link to each resulting entry. The entry contents are not printed; follow the link to view them in XSOAR. If a command produces an error entry, the error contents are printed and the command exits non-zero.
+
+In sync mode, the command submits the request and then polls for the resulting War Room entries. If no results appear within `--timeout` seconds, the command is reported as still running, a link to the submitted entry is printed, and the exit code stays zero. A failed submission surfaces immediately as an error with a non-zero exit code.
 
 **Examples:**
 ```
@@ -39,7 +41,7 @@ xsoar-cli execute command MyScript arg1=val1 arg2=val2
 xsoar-cli execute command whois query=example.com --case-id 12345
 xsoar-cli execute command splunk-search query='index=zscaler | head 1'
 xsoar-cli execute command MyScript arg1=val1 --mode async
-xsoar-cli execute command MyScript arg1=val1 --output-level raw
+xsoar-cli execute command LongRunningScript --timeout 60
 ```
 
 ## Playbook
@@ -51,7 +53,6 @@ Execute a playbook.
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
 - `--case-id INTEGER` - Case ID to execute against (default: the user's playground)
-- `--output-level [summary|raw]` - Amount of detail to include in the output (default: "summary")
 
 **Arguments:**
 - `NAME` - The playbook to run
