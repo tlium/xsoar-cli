@@ -228,8 +228,33 @@ class Execution:
         return [entry for entry in all_entries if entry.get("parentId") == parent_id]
 
     def execute_playbook(self, name: str, investigation_id: str) -> dict:
-        """Executes a playbook against the given investigation.
+        """Starts a playbook in the given investigation.
 
         investigation_id is either a case ID or the user's playground.
+
+        The playbook name is validated and resolved to its canonical name
+        first, so a differently-cased input still works and a nonexistent
+        playbook is rejected before submitting. The setPlaybook War Room
+        command is then submitted to the investigation to start the playbook.
+        setPlaybook matches a playbook by its display name, not its ID. This is
+        fire-and-forget: it returns the submitted entry without waiting for the
+        playbook to run.
+
+        Raises ValueError when the playbook name cannot be resolved. The
+        demisto-py ApiException propagates unchanged when the submit call fails.
         """
-        raise NotImplementedError
+        # Lazy import for performance reasons
+        from demisto_client.demisto_api import UpdateEntry
+
+        canonical_name = self.client.content.resolve_playbook_name(name)
+        if canonical_name is None:
+            msg = f"Playbook '{name}' not found"
+            raise ValueError(msg)
+        logger.debug("Resolved playbook '%s' to canonical name '%s'", name, canonical_name)
+
+        command_string = build_command_string("setPlaybook", {"name": canonical_name})
+        logger.debug("Starting playbook in investigation '%s': %s", investigation_id, command_string)
+        update_entry = UpdateEntry(investigation_id=investigation_id, data=command_string)
+        submitted = self.client.demisto_py_instance.investigation_add_entry_handler(update_entry=update_entry)
+        logger.debug("setPlaybook submitted, entry id=%s", getattr(submitted, "id", None))
+        return {"entry": submitted.to_dict()}

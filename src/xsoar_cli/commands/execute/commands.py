@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import TYPE_CHECKING
 
@@ -297,12 +296,15 @@ def command(  # noqa: PLR0913
 @load_config
 @validate_xsoar_connectivity
 def playbook(ctx: click.Context, environment: str | None, case_id: int | None, name: str) -> None:
-    """Execute a playbook.
+    """Start a playbook.
 
     NAME is the playbook to run.
 
-    By default execution happens in the user's playground. Pass --case-id to run
-    against a specific case instead.
+    By default the playbook is started in the user's playground. Pass --case-id
+    to start it in a specific case instead.
+
+    This is fire-and-forget: the playbook is started and the command returns
+    without waiting for it to finish.
 
     Usage examples:
 
@@ -310,12 +312,25 @@ def playbook(ctx: click.Context, environment: str | None, case_id: int | None, n
 
     xsoar-cli execute playbook "My Playbook" --case-id 12345
     """
+    # Lazy import for performance reasons
+    from demisto_client.demisto_api.rest import ApiException
+
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     investigation_id = resolve_investigation_id(ctx, xsoar_client, case_id)
-    logger.info("Executing playbook '%s' against investigation '%s'", name, investigation_id)
-    result = xsoar_client.execution.execute_playbook(name, investigation_id)
-    click.echo(json.dumps(result, indent=4))
+    target = f"case {case_id}" if case_id is not None else "playground"
+    logger.info("Starting playbook '%s' in %s (investigation '%s')", name, target, investigation_id)
+    try:
+        xsoar_client.execution.execute_playbook(name, investigation_id)
+    except ValueError as ex:
+        logger.info("Could not start playbook: %s", ex)
+        click.echo(f"Error: {ex}", err=True)
+        ctx.exit(1)
+    except ApiException as ex:
+        logger.info("Playbook start failed with API error: %s", ex)
+        click.echo(f"Error: failed to start playbook: {ex}", err=True)
+        ctx.exit(1)
+    click.echo(f"Started playbook {name} in {target}")
 
 
 execute.add_command(command)

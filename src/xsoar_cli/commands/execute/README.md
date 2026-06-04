@@ -4,9 +4,6 @@ Execute scripts, integration commands, and playbooks against an XSOAR investigat
 
 By default, execution happens in the user's playground. Pass `--case-id` to run against a specific case instead.
 
-> Note: `execute playbook` is not yet implemented. The command and options are in
-> place, but the underlying API call currently raises `NotImplementedError`.
-
 ## Command
 
 Execute an automation script or integration command. There is no difference in how scripts and integration commands are invoked.
@@ -46,16 +43,22 @@ xsoar-cli execute command LongRunningScript --timeout 60
 
 ## Playbook
 
-Execute a playbook.
+Start a playbook in the playground or a specific case. The playbook name is resolved to its ID before starting, so the display name works even for custom playbooks whose ID is a UUID.
+
+This is fire-and-forget: the playbook is started via the `setPlaybook` command and the CLI returns without waiting for the playbook to finish. Follow up in the XSOAR War Room to see its progress.
 
 **Syntax:** `xsoar-cli execute playbook [OPTIONS] NAME`
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
-- `--case-id INTEGER` - Case ID to execute against (default: the user's playground)
+- `--case-id INTEGER` - Case ID to start the playbook in (default: the user's playground)
 
 **Arguments:**
-- `NAME` - The playbook to run
+- `NAME` - The playbook to start
+
+**Output:**
+
+Prints `Started playbook <name> in playground` or `Started playbook <name> in case <id>`. If the playbook name cannot be found, the command exits non-zero with an error.
 
 **Examples:**
 ```

@@ -199,7 +199,27 @@ class TestExecuteCommand:
 
 
 class TestExecutePlaybook:
-    def test_raises_not_implemented(self, mock_client: MagicMock) -> None:
+    def test_resolves_name_and_submits_setplaybook(self, mock_client: MagicMock) -> None:
+        # The user's input casing differs from the canonical name stored in
+        # XSOAR; setPlaybook must receive the canonical name.
+        mock_client.content.resolve_playbook_name.return_value = "My Playbook"
+        submitted = SimpleNamespace(id="20@x", to_dict=lambda: {"id": "20@x"})
+        mock_client.demisto_py_instance.investigation_add_entry_handler.return_value = submitted
+
         execution = Execution(mock_client)
-        with pytest.raises(NotImplementedError):
-            execution.execute_playbook("My Playbook", "playground-id")
+        result = execution.execute_playbook("my playbook", "playground-id")
+
+        assert result == {"entry": {"id": "20@x"}}
+        mock_client.content.resolve_playbook_name.assert_called_once_with("my playbook")
+        # The canonical name, not the user's input, is passed to setPlaybook.
+        update_entry = mock_client.demisto_py_instance.investigation_add_entry_handler.call_args.kwargs["update_entry"]
+        assert update_entry.investigation_id == "playground-id"
+        assert update_entry.data == '!setPlaybook name="My Playbook"'
+
+    def test_unresolvable_name_raises_value_error(self, mock_client: MagicMock) -> None:
+        mock_client.content.resolve_playbook_name.return_value = None
+
+        execution = Execution(mock_client)
+        with pytest.raises(ValueError, match="Playbook 'Nonexistent' not found"):
+            execution.execute_playbook("Nonexistent", "playground-id")
+        mock_client.demisto_py_instance.investigation_add_entry_handler.assert_not_called()

@@ -257,13 +257,31 @@ class TestExecutePlaybook:
         assert result.exit_code == 0
         mock_execute_env.resolve_playground_id.assert_called_once()
         mock_execute_env.execute_playbook.assert_called_once_with("My Playbook", "playground-id")
+        assert "Started playbook My Playbook in playground" in result.output
 
     def test_success_with_case_id(self, invoke: InvokeHelper, mock_execute_env) -> None:
         result = invoke(["execute", "playbook", "My Playbook", "--case-id", "12345"])
         assert result.exit_code == 0
         mock_execute_env.resolve_playground_id.assert_not_called()
         mock_execute_env.execute_playbook.assert_called_once_with("My Playbook", "12345")
+        assert "Started playbook My Playbook in case 12345" in result.output
 
     def test_missing_name_exits_usage_error(self, invoke: InvokeHelper, mock_execute_env) -> None:
         result = invoke(["execute", "playbook"])
         assert result.exit_code == 2
+
+    def test_unresolvable_playbook_exits_nonzero(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        mock_execute_env.execute_playbook.side_effect = ValueError("Playbook 'Nope' not found")
+        result = invoke(["execute", "playbook", "Nope"])
+        assert result.exit_code == 1
+        assert "Playbook 'Nope' not found" in result.output
+        assert "Started playbook" not in result.output
+
+    def test_api_exception_exits_nonzero(self, invoke: InvokeHelper, mock_execute_env) -> None:
+        from demisto_client.demisto_api.rest import ApiException
+
+        mock_execute_env.execute_playbook.side_effect = ApiException(status=500, reason="boom")
+        result = invoke(["execute", "playbook", "My Playbook"])
+        assert result.exit_code == 1
+        assert "failed to start playbook" in result.output
+        assert "Started playbook" not in result.output
