@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -13,6 +14,19 @@ PLAYGROUND_INVESTIGATION_TYPE = 9
 
 # Valid execution modes for execute_command.
 EXECUTION_MODES = ("sync", "async")
+
+# Default wall-clock limit (seconds) for polling a sync command's results before
+# giving up and reporting that execution is still in progress.
+DEFAULT_SYNC_TIMEOUT = 30
+
+# Interval (seconds) between polls of the investigation for a sync command's
+# result entries.
+SYNC_POLL_INTERVAL = 2
+
+# Page size requested when fetching investigation entries during polling. The
+# playground accumulates history over time, so this is set high to ensure a
+# freshly created result entry is included in the response.
+INVESTIGATION_PAGE_SIZE = 1000
 
 
 def _format_arg_value(value: str) -> str:
@@ -118,7 +132,15 @@ class Execution:
         logger.debug("Resolved user playground, id=%s", playground_id)
         return playground_id
 
-    def execute_command(self, name: str, args: dict[str, str], investigation_id: str, *, mode: str = "sync") -> dict:
+    def execute_command(
+        self,
+        name: str,
+        args: dict[str, str],
+        investigation_id: str,
+        *,
+        mode: str = "sync",
+        timeout: int = DEFAULT_SYNC_TIMEOUT,
+    ) -> dict:
         """Executes an automation script or integration command.
 
         There is no user-facing distinction between scripts and integration
@@ -128,10 +150,16 @@ class Execution:
         investigation_id is the target investigation, either a case ID or the
         user's playground.
 
-        mode selects the XSOAR execution endpoint:
+        mode selects how results are handled:
 
-        * "sync" submits the command and blocks until it completes, returning
-          the resulting War Room entries. Wrapped as {"entries": [...]}.
+        * "sync" submits the command and then polls the investigation for the
+          resulting War Room entries until they appear or timeout (seconds)
+          elapses. XSOAR commits a command's War Room entries atomically when
+          the command finishes, so the first poll where result entries appear
+          means execution has completed. Returns {"entries": [...]} with only
+          the entries produced by this command. On timeout, returns
+          {"entries": [], "timed_out": True, "entry_id": <submitted id>} so the
+          caller can report that execution is still in progress.
         * "async" submits the command and returns immediately with the created
           entry. Wrapped as {"entry": {...}}.
 
@@ -149,14 +177,55 @@ class Execution:
         logger.debug("Executing command (mode=%s) in investigation '%s': %s", mode, investigation_id, command_string)
         update_entry = UpdateEntry(investigation_id=investigation_id, data=command_string)
 
-        if mode == "sync":
-            entries = self.client.demisto_py_instance.investigation_add_entries_sync(update_entry=update_entry)
-            logger.debug("Sync execution returned %d entry/entries", len(entries or []))
-            return {"entries": [entry.to_dict() for entry in (entries or [])]}
+        # Both modes submit asynchronously. The submitted entry's id is the
+        # parent of the result entries that the command produces.
+        submitted = self.client.demisto_py_instance.investigation_add_entry_handler(update_entry=update_entry)
+        submitted_id = submitted.id
+        logger.debug("Command submitted, entry id=%s", submitted_id)
 
-        entry = self.client.demisto_py_instance.investigation_add_entry_handler(update_entry=update_entry)
-        logger.debug("Async execution submitted, entry id=%s", getattr(entry, "id", None))
-        return {"entry": entry.to_dict()}
+        if mode == "async":
+            return {"entry": submitted.to_dict()}
+
+        entries = self._poll_for_result_entries(investigation_id, submitted_id, timeout)
+        if entries is None:
+            logger.debug("No result entries after %ds, execution still in progress", timeout)
+            return {"entries": [], "timed_out": True, "entry_id": submitted_id}
+        logger.debug("Sync execution produced %d result entry/entries", len(entries))
+        return {"entries": entries}
+
+    def _poll_for_result_entries(self, investigation_id: str, parent_id: str, timeout: int) -> list[dict] | None:
+        """Poll the investigation for entries produced by a submitted command.
+
+        Repeatedly fetches the investigation's entries and returns those whose
+        parentId matches the submitted command's entry id. Returns the result
+        entries as soon as any appear, since XSOAR commits a command's entries
+        atomically on completion. Returns None when timeout (seconds) elapses
+        without any result entries appearing.
+        """
+        deadline = time.monotonic() + timeout
+        while True:
+            entries = self._fetch_child_entries(investigation_id, parent_id)
+            if entries:
+                return entries
+            if time.monotonic() >= deadline:
+                return None
+            time.sleep(SYNC_POLL_INTERVAL)
+
+    def _fetch_child_entries(self, investigation_id: str, parent_id: str) -> list[dict]:
+        """Fetch the investigation's entries whose parentId matches parent_id.
+
+        POST /investigation/<id> returns the full War Room history, so the
+        entries are filtered down to those produced by the submitted command.
+        """
+        data, _, _ = self.client.demisto_py_instance.generic_request(
+            path=f"/investigation/{investigation_id}",
+            method="POST",
+            body={"pageSize": INVESTIGATION_PAGE_SIZE},
+            content_type="application/json",
+            response_type=object,
+        )
+        all_entries = data.get("entries") or []
+        return [entry for entry in all_entries if entry.get("parentId") == parent_id]
 
     def execute_playbook(self, name: str, investigation_id: str) -> dict:
         """Executes a playbook against the given investigation.

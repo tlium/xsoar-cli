@@ -8,7 +8,7 @@ that raises ``NotImplementedError``; that test pins the contract.
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -100,35 +100,86 @@ class TestBuildCommandString:
 
 
 class TestExecuteCommand:
-    def test_sync_returns_wrapped_entries(self, mock_client: MagicMock) -> None:
-        entry_a = SimpleNamespace(to_dict=lambda: {"id": "1@x", "contents": "a"})
-        entry_b = SimpleNamespace(to_dict=lambda: {"id": "2@x", "contents": "b"})
-        mock_client.demisto_py_instance.investigation_add_entries_sync.return_value = [entry_a, entry_b]
+    @staticmethod
+    def _investigation_response(entries: list[dict]) -> tuple[dict, int, None]:
+        """Build a generic_request response for POST /investigation/<id>."""
+        return ({"entries": entries}, 200, None)
+
+    def test_sync_returns_only_child_entries(self, mock_client: MagicMock) -> None:
+        # The submitted command's entry is the parent of the result entries.
+        submitted = SimpleNamespace(id="10@x", to_dict=lambda: {"id": "10@x"})
+        mock_client.demisto_py_instance.investigation_add_entry_handler.return_value = submitted
+        # POST /investigation returns the full history; only entries whose
+        # parentId matches the submitted id belong to this command.
+        mock_client.demisto_py_instance.generic_request.return_value = self._investigation_response(
+            [
+                {"id": "1@x", "parentId": "", "contents": "unrelated"},
+                {"id": "11@x", "parentId": "10@x", "contents": "first"},
+                {"id": "12@x", "parentId": "10@x", "contents": "second"},
+            ],
+        )
 
         execution = Execution(mock_client)
         result = execution.execute_command("MyScript", {"a": "1"}, "playground-id", mode="sync")
 
-        assert result == {"entries": [{"id": "1@x", "contents": "a"}, {"id": "2@x", "contents": "b"}]}
-        update_entry = mock_client.demisto_py_instance.investigation_add_entries_sync.call_args.kwargs["update_entry"]
+        assert result == {
+            "entries": [
+                {"id": "11@x", "parentId": "10@x", "contents": "first"},
+                {"id": "12@x", "parentId": "10@x", "contents": "second"},
+            ],
+        }
+        update_entry = mock_client.demisto_py_instance.investigation_add_entry_handler.call_args.kwargs["update_entry"]
         assert update_entry.investigation_id == "playground-id"
         assert update_entry.data == "!MyScript a=1"
 
     def test_sync_is_default_mode(self, mock_client: MagicMock) -> None:
-        mock_client.demisto_py_instance.investigation_add_entries_sync.return_value = []
+        submitted = SimpleNamespace(id="10@x", to_dict=lambda: {"id": "10@x"})
+        mock_client.demisto_py_instance.investigation_add_entry_handler.return_value = submitted
+        mock_client.demisto_py_instance.generic_request.return_value = self._investigation_response(
+            [{"id": "11@x", "parentId": "10@x", "contents": "result"}],
+        )
 
         execution = Execution(mock_client)
-        execution.execute_command("MyScript", {}, "playground-id")
+        result = execution.execute_command("MyScript", {}, "playground-id")
 
-        mock_client.demisto_py_instance.investigation_add_entries_sync.assert_called_once()
-        mock_client.demisto_py_instance.investigation_add_entry_handler.assert_not_called()
+        assert "entries" in result
+        mock_client.demisto_py_instance.generic_request.assert_called_once()
 
-    def test_sync_handles_none_result(self, mock_client: MagicMock) -> None:
-        mock_client.demisto_py_instance.investigation_add_entries_sync.return_value = None
+    def test_sync_polls_until_entries_appear(self, mock_client: MagicMock) -> None:
+        submitted = SimpleNamespace(id="10@x", to_dict=lambda: {"id": "10@x"})
+        mock_client.demisto_py_instance.investigation_add_entry_handler.return_value = submitted
+        # First two polls show no result entries, the third shows the result.
+        mock_client.demisto_py_instance.generic_request.side_effect = [
+            self._investigation_response([{"id": "1@x", "parentId": ""}]),
+            self._investigation_response([{"id": "1@x", "parentId": ""}]),
+            self._investigation_response([{"id": "11@x", "parentId": "10@x", "contents": "done"}]),
+        ]
 
         execution = Execution(mock_client)
-        result = execution.execute_command("MyScript", {}, "playground-id", mode="sync")
+        with patch("xsoar_cli.xsoar_client.execution.time.sleep") as mock_sleep:
+            result = execution.execute_command("MyScript", {}, "playground-id", mode="sync", timeout=30)
 
-        assert result == {"entries": []}
+        assert result == {"entries": [{"id": "11@x", "parentId": "10@x", "contents": "done"}]}
+        assert mock_client.demisto_py_instance.generic_request.call_count == 3
+        assert mock_sleep.call_count == 2
+
+    def test_sync_times_out_without_entries(self, mock_client: MagicMock) -> None:
+        submitted = SimpleNamespace(id="10@x", to_dict=lambda: {"id": "10@x"})
+        mock_client.demisto_py_instance.investigation_add_entry_handler.return_value = submitted
+        # No result entries ever appear for the submitted command.
+        mock_client.demisto_py_instance.generic_request.return_value = self._investigation_response(
+            [{"id": "1@x", "parentId": ""}],
+        )
+        # monotonic returns 0 on the first read (deadline = timeout), then a
+        # value past the deadline so the loop gives up after one poll.
+        with (
+            patch("xsoar_cli.xsoar_client.execution.time.sleep"),
+            patch("xsoar_cli.xsoar_client.execution.time.monotonic", side_effect=[0, 31]),
+        ):
+            execution = Execution(mock_client)
+            result = execution.execute_command("MyScript", {}, "playground-id", mode="sync", timeout=30)
+
+        assert result == {"entries": [], "timed_out": True, "entry_id": "10@x"}
 
     def test_async_returns_wrapped_entry(self, mock_client: MagicMock) -> None:
         entry = SimpleNamespace(id="1@x", to_dict=lambda: {"id": "1@x"})
@@ -138,7 +189,8 @@ class TestExecuteCommand:
         result = execution.execute_command("MyScript", {}, "playground-id", mode="async")
 
         assert result == {"entry": {"id": "1@x"}}
-        mock_client.demisto_py_instance.investigation_add_entries_sync.assert_not_called()
+        # async submits but never polls for results.
+        mock_client.demisto_py_instance.generic_request.assert_not_called()
 
     def test_invalid_mode_raises_value_error(self, mock_client: MagicMock) -> None:
         execution = Execution(mock_client)
