@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-06-04
+
 ### Added
 
 - `execute command NAME [ARGS]...` runs an automation script or integration command against XSOAR, in the user's playground by default or a specific case with `--case-id`. See the [execute README](src/xsoar_cli/commands/execute/README.md) for details.
