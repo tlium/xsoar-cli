@@ -12,13 +12,14 @@ The output is a human-readable summary: a count followed by one line per item in
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
-- `--type [scripts|playbooks]` - Type of content items to retrieve (required)
+- `--type [scripts|playbooks|all]` - Type of content items to retrieve (required)
 
 **Examples:**
 ```
 xsoar-cli content get-detached --type scripts
+xsoar-cli content get-detached --type playbooks
+xsoar-cli content get-detached --type all
 xsoar-cli content get-detached --type scripts --environment prod
-xsoar-cli content get-detached --type playbooks --environment dev
 ```
 
 ## List

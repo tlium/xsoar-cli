@@ -8,7 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `content get-detached` now prints a human-readable summary instead of raw JSON. Output is a count followed by one line per item in the form `<name> (ID: <id>)`, or `No detached <type> found` when there are none. Applies to both `--type scripts` and `--type playbooks`.
+- `content get-detached` now prints a human-readable summary instead of raw JSON. Output is a count followed by one line per item in the form `<name> (ID: <id>)`, or `No detached <type> found` when there are none.
+
+### Added
+
+- `content get-detached --type all` queries both scripts and playbooks and displays results for each type.
 
 ### Fixed
 

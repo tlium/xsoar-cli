@@ -266,3 +266,22 @@ class TestContentGetDetached:
         assert "Found 2 detached playbooks:" in result.output
         assert "  Playbook One (ID: pb1)" in result.output
         assert "  Playbook Two (ID: pb2)" in result.output
+
+    def test_all_shows_both_types(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.side_effect = [
+            [{"id": "s1", "name": "Script One"}],
+            [{"id": "pb1", "name": "Playbook One"}, {"id": "pb2", "name": "Playbook Two"}],
+        ]
+        result = invoke(["content", "get-detached", "--type", "all"])
+        assert result.exit_code == 0
+        assert "Found 1 detached scripts:" in result.output
+        assert "  Script One (ID: s1)" in result.output
+        assert "Found 2 detached playbooks:" in result.output
+        assert "  Playbook One (ID: pb1)" in result.output
+
+    def test_all_both_empty(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.side_effect = [[], []]
+        result = invoke(["content", "get-detached", "--type", "all"])
+        assert result.exit_code == 0
+        assert "No detached scripts found" in result.output
+        assert "No detached playbooks found" in result.output
