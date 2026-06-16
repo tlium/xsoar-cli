@@ -39,9 +39,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     """List detached content items."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    response = xsoar_client.content.get_detached(content_type)
-    data = json.loads(response)
-    items = data.get(content_type, [])
+    items = xsoar_client.content.get_detached(content_type)
     click.echo(format_detached_summary(items, content_type))
 
 
