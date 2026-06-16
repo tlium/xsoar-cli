@@ -6,7 +6,7 @@ Inspect and manage content items on your XSOAR server.
 
 List detached content items. Detached items are content items that have been modified on the server and are no longer in sync with the installed content pack.
 
-For `--type scripts`, the output is a human-readable summary: a count followed by one line per item in the form `<name> (ID: <id>)`. When no detached scripts are found, the output is `No detached scripts found`. Other types still output JSON formatted with 4-space indentation.
+The output is a human-readable summary: a count followed by one line per item in the form `<name> (ID: <id>)`. When no detached items are found, the output is `No detached <type> found` (for example `No detached scripts found`). This applies to both `--type scripts` and `--type playbooks`.
 
 **Syntax:** `xsoar-cli content get-detached [OPTIONS]`
 
