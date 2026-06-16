@@ -4,19 +4,20 @@ Inspect and manage content items on your XSOAR server.
 
 ## Get Detached
 
-List detached content items. Detached items are content items that are not associated with any installed content pack. Output is JSON formatted with 4-space indentation.
+List detached content items. Detached items are content items that have been modified on the server and are no longer in sync with the installed content pack.
+
+For `--type scripts`, the output is a human-readable summary: a count followed by one line per item in the form `<name> (ID: <id>)`. When no detached scripts are found, the output is `No detached scripts found`. Other types still output JSON formatted with 4-space indentation.
 
 **Syntax:** `xsoar-cli content get-detached [OPTIONS]`
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
-- `--type [scripts|playbooks|all]` - Type of content items to retrieve (default: all)
+- `--type [scripts|playbooks]` - Type of content items to retrieve (required)
 
 **Examples:**
 ```
-xsoar-cli content get-detached
-xsoar-cli content get-detached --environment prod
 xsoar-cli content get-detached --type scripts
+xsoar-cli content get-detached --type scripts --environment prod
 xsoar-cli content get-detached --type playbooks --environment dev
 ```
 

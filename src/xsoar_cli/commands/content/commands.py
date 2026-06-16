@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.content import DETAIL_LEVELS, filter_content
+from xsoar_cli.utilities.content import DETAIL_LEVELS, filter_content, format_detached_summary
 from xsoar_cli.utilities.download_content_handlers import HANDLERS, resolve_output_path
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
@@ -41,7 +41,8 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     xsoar_client: Client = config.get_client(environment)
     response = xsoar_client.content.get_detached(content_type)
     data = json.loads(response)
-    click.echo(json.dumps(data, indent=4))
+    items = data.get(content_type, [])
+    click.echo(format_detached_summary(items, content_type))
 
 
 # We name the command in the decorator here to avoid shadowing the builtin list.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -228,3 +229,27 @@ class TestContentDownloadMissingType:
         result = invoke(["content", "download", "SomeName"])
         assert result.exit_code != 0
         assert "Missing option '--type'" in result.output
+
+
+class TestContentGetDetachedScripts:
+    """Tests for ``content get-detached --type scripts``."""
+
+    def test_no_detached_scripts(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.return_value = json.dumps({"scripts": []}).encode()
+        result = invoke(["content", "get-detached", "--type", "scripts"])
+        assert result.exit_code == 0
+        assert result.output.strip() == "No detached scripts found"
+
+    def test_detached_scripts_listed(self, invoke: InvokeHelper, mock_content_env) -> None:
+        scripts = {
+            "scripts": [
+                {"id": "id1", "name": "Script One"},
+                {"id": "id2", "name": "Script Two"},
+            ]
+        }
+        mock_content_env.get_detached.return_value = json.dumps(scripts).encode()
+        result = invoke(["content", "get-detached", "--type", "scripts"])
+        assert result.exit_code == 0
+        assert "Found 2 detached scripts:" in result.output
+        assert "  Script One (ID: id1)" in result.output
+        assert "  Script Two (ID: id2)" in result.output

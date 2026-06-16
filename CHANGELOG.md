@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `content get-detached --type scripts` now prints a human-readable summary instead of raw JSON. Output is a count followed by one line per item in the form `<name> (ID: <id>)`, or `No detached scripts found` when there are none.
+
 ## [2.3.0] - 2026-06-04
 
 ### Added
