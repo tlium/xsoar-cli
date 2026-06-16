@@ -10,7 +10,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import click
-import pytest
 from click.testing import CliRunner
 
 from xsoar_cli.utilities.validators import (
@@ -111,7 +110,7 @@ class TestValidateXsoarConnectivity:
 
         runner = CliRunner()
         with patch("xsoar_cli.utilities.validators.get_xsoar_config", return_value=config):
-            result = runner.invoke(dummy, ["--environment", "prod"], obj=config)
+            runner.invoke(dummy, ["--environment", "prod"], obj=config)
 
         config.get_environment.assert_called_with("prod")
 
@@ -126,7 +125,7 @@ class TestValidateXsoarConnectivity:
 
         runner = CliRunner()
         with patch("xsoar_cli.utilities.validators.get_xsoar_config", return_value=config):
-            result = runner.invoke(dummy, [], obj=config)
+            runner.invoke(dummy, [], obj=config)
 
         config.get_environment.assert_called_with("dev")
 
@@ -198,7 +197,7 @@ class TestValidateArtifactsProvider:
 
         runner = CliRunner()
         with patch("xsoar_cli.utilities.validators.get_xsoar_config", return_value=config):
-            result = runner.invoke(dummy, ["--environment", "staging"], obj=config)
+            runner.invoke(dummy, ["--environment", "staging"], obj=config)
 
         config.get_environment.assert_called_with("staging")
 

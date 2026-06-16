@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -17,7 +17,7 @@ from xsoar_cli import cli
 
 if TYPE_CHECKING:
     import types
-    from collections.abc import Callable, Iterator
+    from collections.abc import Iterator
 
     from click.testing import Result
 
