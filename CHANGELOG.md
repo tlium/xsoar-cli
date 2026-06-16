@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `content get-detached` now prints a human-readable summary instead of raw JSON. Output is a count followed by one line per item in the form `<name> (ID: <id>)`, or `No detached <type> found` when there are none.
+
+### Added
+
+- `content get-detached --type all` queries both scripts and playbooks and displays results for each type.
+
+### Fixed
+
+- `content get-detached` now returns only the content items that are actually detached. The previous query returned all system items, so the command reported every system script (or playbook) as detached instead of just the detached ones. Results are now filtered on each item's `detached` field.
+
 ## [2.3.0] - 2026-06-04
 
 ### Added

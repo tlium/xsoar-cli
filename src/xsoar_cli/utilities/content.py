@@ -170,6 +170,29 @@ def filter_commands(instances: list[dict]) -> list[dict]:
     return filtered
 
 
+# -- Detached content --------------------------------------------------------
+
+
+def format_detached_summary(items: list[dict], content_type: str) -> str:
+    """Format a human-readable summary of detached content items.
+
+    *items* is the list of content records returned for a single content type
+    (for example the ``scripts`` list from the detached automation search).
+    *content_type* is the plural label used in the output (for example
+    ``"scripts"``).
+
+    When *items* is empty, returns ``"No detached <content_type> found"``.
+    Otherwise returns a header line with the count followed by one indented
+    line per item in the form ``<name> (ID: <id>)``.
+    """
+    if not items:
+        return f"No detached {content_type} found"
+
+    lines = [f"Found {len(items)} detached {content_type}:"]
+    lines.extend(f"  {item.get('name', '')} (ID: {item.get('id', '')})" for item in items)
+    return "\n".join(lines)
+
+
 DETAIL_LEVELS = ("short", "extended", "full")
 
 

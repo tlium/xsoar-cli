@@ -13,6 +13,7 @@ from xsoar_cli.utilities.content import (
     filter_content,
     filter_playbooks,
     filter_scripts,
+    format_detached_summary,
     summarize_commands,
     summarize_playbooks,
     summarize_scripts,
@@ -372,3 +373,32 @@ class TestFilterContent:
     def test_unknown_keys_ignored(self) -> None:
         raw = {"unknown": [{"id": "1"}]}
         assert filter_content(raw) == {}
+
+
+class TestFormatDetachedSummary:
+    """Tests for ``format_detached_summary``."""
+
+    def test_empty_returns_not_found_message(self) -> None:
+        assert format_detached_summary([], "scripts") == "No detached scripts found"
+
+    def test_single_item(self) -> None:
+        items = [{"id": "SetAndHandleEmpty", "name": "SetAndHandleEmpty"}]
+        result = format_detached_summary(items, "scripts")
+        assert result == "Found 1 detached scripts:\n  SetAndHandleEmpty (ID: SetAndHandleEmpty)"
+
+    def test_multiple_items(self) -> None:
+        items = [
+            {"id": "id1", "name": "Script One"},
+            {"id": "id2", "name": "Script Two"},
+        ]
+        result = format_detached_summary(items, "scripts")
+        expected = "Found 2 detached scripts:\n  Script One (ID: id1)\n  Script Two (ID: id2)"
+        assert result == expected
+
+    def test_missing_fields_default_to_empty(self) -> None:
+        items = [{}]
+        result = format_detached_summary(items, "scripts")
+        assert result == "Found 1 detached scripts:\n   (ID: )"
+
+    def test_content_type_label_used(self) -> None:
+        assert format_detached_summary([], "playbooks") == "No detached playbooks found"

@@ -87,7 +87,8 @@ def mock_content_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
     """Mock environment for ``content download`` commands.
 
     Patches connectivity, ``Content`` download methods, ``subprocess.run``
-    (for demisto-sdk format), and ``Content.attach_item``.
+    (for demisto-sdk format), ``Content.attach_item``, and
+    ``Content.get_detached``.
 
     Yields a ``SimpleNamespace`` with attributes:
 
@@ -97,6 +98,7 @@ def mock_content_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
     * ``attach`` -- the ``Content.attach_item`` mock
     * ``download_playbook`` -- the ``Content.download_playbook`` mock
     * ``download_layout`` -- the ``Content.download_layout`` mock
+    * ``get_detached`` -- the ``Content.get_detached`` mock
 
     Example::
 
@@ -113,6 +115,7 @@ def mock_content_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
         patch("xsoar_cli.xsoar_client.content.Content.attach_item") as mock_attach,
         patch("xsoar_cli.xsoar_client.content.Content.download_playbook") as mock_dl_pb,
         patch("xsoar_cli.xsoar_client.content.Content.download_layout") as mock_dl_layout,
+        patch("xsoar_cli.xsoar_client.content.Content.get_detached") as mock_get_detached,
     ):
         ns = _types.SimpleNamespace(
             config=mock_config_file,
@@ -121,6 +124,7 @@ def mock_content_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
             attach=mock_attach,
             download_playbook=mock_dl_pb,
             download_layout=mock_dl_layout,
+            get_detached=mock_get_detached,
         )
         yield ns
 

@@ -293,6 +293,7 @@ class TestGetDetached:
         mock_client = MagicMock()
         response = MagicMock()
         response.raise_for_status.return_value = None
+        response.json.return_value = {"scripts": []}
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
@@ -308,6 +309,7 @@ class TestGetDetached:
         mock_client = MagicMock()
         response = MagicMock()
         response.raise_for_status.return_value = None
+        response.json.return_value = {"playbooks": []}
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
@@ -323,12 +325,53 @@ class TestGetDetached:
         mock_client = MagicMock()
         response = MagicMock()
         response.raise_for_status.return_value = None
+        response.json.return_value = {"scripts": []}
         mock_client.make_request.return_value = response
 
         content = Content(mock_client)
         content.get_detached("scripts")
 
         response.raise_for_status.assert_called_once()
+
+    def test_filters_to_detached_items_only(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "scripts": [
+                {"id": "a", "name": "A", "detached": True},
+                {"id": "b", "name": "B", "detached": False},
+                {"id": "c", "name": "C"},
+                {"id": "d", "name": "D", "detached": "false"},
+                {"id": "e", "name": "E", "detached": None},
+            ]
+        }
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        result = content.get_detached("scripts")
+
+        assert [item["id"] for item in result] == ["a"]
+
+    def test_returns_empty_list_when_none_detached(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"scripts": [{"id": "a", "name": "A", "detached": False}]}
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        assert content.get_detached("scripts") == []
+
+    def test_missing_type_key_returns_empty_list(self) -> None:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {}
+        mock_client.make_request.return_value = response
+
+        content = Content(mock_client)
+        assert content.get_detached("scripts") == []
 
     def test_invalid_content_type_raises(self) -> None:
         mock_client = MagicMock()

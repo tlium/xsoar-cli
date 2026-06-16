@@ -5,7 +5,6 @@ import tarfile
 from io import BytesIO, StringIO
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from .client import Client
 
@@ -34,9 +33,16 @@ class Content:
                     loaded_files[file_name] = file_data
         return loaded_files
 
-    def get_detached(self, content_type: str | None) -> bytes:
-        """Returns detached content. Currently supports script, playbooks, layouts.
-        Where content_type must be either "playbooks" or "scripts".
+    def get_detached(self, content_type: str | None) -> list[dict]:
+        """Returns detached content items of the given type.
+
+        *content_type* must be either "scripts" or "playbooks".
+
+        The search query ("system:T") returns all system (detachable) items,
+        not just the detached ones, so the results are filtered client-side on
+        the per-item "detached" field. An item is considered detached when the
+        field is truthy and not the string "false". This mirrors how
+        demisto-sdk identifies detached items (see ItemReattacher.reattach).
         """
         payload = {"query": "system:T"}
         if content_type == "scripts":
@@ -47,7 +53,15 @@ class Content:
             raise ValueError(f"Invalid value {content_type=}")
         response = self.client.make_request(endpoint=endpoint, method="POST", json=payload)
         response.raise_for_status()
-        return response.content
+
+        items = response.json().get(content_type) or []
+        detached_items: list[dict] = []
+        for item in items:
+            detached = item.get("detached", "")
+            if not detached or detached == "false":
+                continue
+            detached_items.append(item)
+        return detached_items
 
     def attach_item(self, item_type: str, item_id: str) -> None:
         """Attaches a content item to the server-managed version."""

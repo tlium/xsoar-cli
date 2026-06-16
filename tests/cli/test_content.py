@@ -228,3 +228,60 @@ class TestContentDownloadMissingType:
         result = invoke(["content", "download", "SomeName"])
         assert result.exit_code != 0
         assert "Missing option '--type'" in result.output
+
+
+class TestContentGetDetached:
+    """Tests for ``content get-detached``."""
+
+    def test_no_detached_scripts(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.return_value = []
+        result = invoke(["content", "get-detached", "--type", "scripts"])
+        assert result.exit_code == 0
+        assert result.output.strip() == "No detached scripts found"
+
+    def test_detached_scripts_listed(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.return_value = [
+            {"id": "id1", "name": "Script One"},
+            {"id": "id2", "name": "Script Two"},
+        ]
+        result = invoke(["content", "get-detached", "--type", "scripts"])
+        assert result.exit_code == 0
+        assert "Found 2 detached scripts:" in result.output
+        assert "  Script One (ID: id1)" in result.output
+        assert "  Script Two (ID: id2)" in result.output
+
+    def test_no_detached_playbooks(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.return_value = []
+        result = invoke(["content", "get-detached", "--type", "playbooks"])
+        assert result.exit_code == 0
+        assert result.output.strip() == "No detached playbooks found"
+
+    def test_detached_playbooks_listed(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.return_value = [
+            {"id": "pb1", "name": "Playbook One"},
+            {"id": "pb2", "name": "Playbook Two"},
+        ]
+        result = invoke(["content", "get-detached", "--type", "playbooks"])
+        assert result.exit_code == 0
+        assert "Found 2 detached playbooks:" in result.output
+        assert "  Playbook One (ID: pb1)" in result.output
+        assert "  Playbook Two (ID: pb2)" in result.output
+
+    def test_all_shows_both_types(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.side_effect = [
+            [{"id": "s1", "name": "Script One"}],
+            [{"id": "pb1", "name": "Playbook One"}, {"id": "pb2", "name": "Playbook Two"}],
+        ]
+        result = invoke(["content", "get-detached", "--type", "all"])
+        assert result.exit_code == 0
+        assert "Found 1 detached scripts:" in result.output
+        assert "  Script One (ID: s1)" in result.output
+        assert "Found 2 detached playbooks:" in result.output
+        assert "  Playbook One (ID: pb1)" in result.output
+
+    def test_all_both_empty(self, invoke: InvokeHelper, mock_content_env) -> None:
+        mock_content_env.get_detached.side_effect = [[], []]
+        result = invoke(["content", "get-detached", "--type", "all"])
+        assert result.exit_code == 0
+        assert "No detached scripts found" in result.output
+        assert "No detached playbooks found" in result.output

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.content import DETAIL_LEVELS, filter_content
+from xsoar_cli.utilities.content import DETAIL_LEVELS, filter_content, format_detached_summary
 from xsoar_cli.utilities.download_content_handlers import HANDLERS, resolve_output_path
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
@@ -28,7 +28,7 @@ def content() -> None:
 @click.option(
     "--type",
     "content_type",
-    type=click.Choice(["scripts", "playbooks"], case_sensitive=False),
+    type=click.Choice(["scripts", "playbooks", "all"], case_sensitive=False),
     required=True,
     help="Type of content items to retrieve.",
 )
@@ -39,9 +39,13 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     """List detached content items."""
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
-    response = xsoar_client.content.get_detached(content_type)
-    data = json.loads(response)
-    click.echo(json.dumps(data, indent=4))
+
+    types = ["scripts", "playbooks"] if content_type == "all" else [content_type]
+    sections = []
+    for t in types:
+        items = xsoar_client.content.get_detached(t)
+        sections.append(format_detached_summary(items, t))
+    click.echo("\n\n".join(sections))
 
 
 # We name the command in the decorator here to avoid shadowing the builtin list.
