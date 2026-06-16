@@ -68,6 +68,10 @@ exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.ruff]
+line-length = 140
+extend-exclude = ["tests/mock_content"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",

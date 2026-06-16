@@ -5,7 +5,6 @@ import tarfile
 from io import BytesIO, StringIO
 from typing import TYPE_CHECKING
 
-from requests.models import Response
 
 if TYPE_CHECKING:
     from .client import Client

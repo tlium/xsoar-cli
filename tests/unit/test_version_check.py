@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from packaging.version import Version
 
 from xsoar_cli.utilities.version_check import (

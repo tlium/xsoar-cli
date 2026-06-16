@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-from requests.exceptions import HTTPError
 
 if TYPE_CHECKING:
     from tests.cli.conftest import InvokeHelper

@@ -8,7 +8,7 @@ touching the real config file.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import click
 from click.testing import CliRunner
@@ -73,8 +73,6 @@ class TestReadConfigFile:
         assert result is None
 
     def test_returns_parsed_json_when_file_exists(self) -> None:
-        import json
-
         with (
             patch("xsoar_cli.utilities.config_file.get_config_file_path") as mock_path,
             patch("pathlib.Path.is_file", return_value=True),

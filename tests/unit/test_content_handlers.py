@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import pytest
 
 from xsoar_cli.utilities.download_content_handlers import (
     HANDLERS,
