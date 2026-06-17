@@ -6,13 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
-
-- `content get-detached` now prints a human-readable summary instead of raw JSON. Output is a count followed by one line per item in the form `<name> (ID: <id>)`, or `No detached <type> found` when there are none.
-
 ### Added
 
 - `content get-detached --type all` queries both scripts and playbooks and displays results for each type.
+- `content list --output-format` option (choices: `table`, `json`, `plain`, default: `table`). `table` is human-readable aligned columns, `json` is machine-readable, and `plain` is tab-separated values suitable for piping to tools like `grep`.
+
+### Changed
+
+- `content get-detached` now prints a human-readable summary instead of raw JSON. Output is a count followed by one line per item in the form `<name> (ID: <id>)`, or `No detached <type> found` when there are none.
+- **Breaking:** `content list` now defaults to a human-readable table instead of JSON. Use `--output-format json` for machine-readable output.
+- `content list` playbook output now shows the playbook ID and description (read from the `comment` field) instead of the name and ID.
+- `content list` command output now shows the command name and description and no longer includes the integration brand. The summary-level JSON structure for commands is now a list of `{name, description}` objects instead of plain command-name strings.
+
+### Removed
+
+- **Breaking:** `content list --detail-level` option, along with its `short`, `extended`, and `full` levels. `content list` now always produces a curated summary. Per-item detail (arguments, inputs, outputs) will be available through the forthcoming `content describe` command.
 
 ### Fixed
 

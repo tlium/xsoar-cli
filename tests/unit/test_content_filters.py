@@ -56,6 +56,7 @@ _PLAYBOOKS = [
     {
         "id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
         "name": "Phishing Investigation - Generic v2",
+        "comment": "Investigate phishing emails using multiple integrations.",
         "inputs": [
             {"key": "EmailFrom", "value": {}, "description": "The sender email address"},
             {"key": "EmailSubject", "value": {}, "description": "The email subject line"},
@@ -71,6 +72,7 @@ _PLAYBOOKS = [
     {
         "id": "Malware_Investigation",
         "name": "Malware Investigation",
+        "comment": "",
         "inputs": [],
         "outputs": None,
         "tasks": {},
@@ -80,6 +82,7 @@ _PLAYBOOKS = [
     {
         "id": "aabbccdd-1122-3344-5566-778899aabbcc",
         "name": "Access Investigation - Generic",
+        "comment": "Investigate access-related incidents.",
         "inputs": None,
         "outputs": [],
         "tasks": {},
@@ -194,9 +197,9 @@ class TestSummarizePlaybooks:
     def test_typical_input(self) -> None:
         result = summarize_playbooks(_PLAYBOOKS)
         assert result == [
-            {"id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6", "name": "Phishing Investigation - Generic v2"},
-            {"id": "Malware_Investigation", "name": "Malware Investigation"},
-            {"id": "aabbccdd-1122-3344-5566-778899aabbcc", "name": "Access Investigation - Generic"},
+            {"id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6", "comment": "Investigate phishing emails using multiple integrations."},
+            {"id": "Malware_Investigation", "comment": ""},
+            {"id": "aabbccdd-1122-3344-5566-778899aabbcc", "comment": "Investigate access-related incidents."},
         ]
 
     def test_empty_list(self) -> None:
@@ -204,7 +207,7 @@ class TestSummarizePlaybooks:
 
     def test_missing_fields_use_defaults(self) -> None:
         result = summarize_playbooks([{}])
-        assert result == [{"id": "", "name": ""}]
+        assert result == [{"id": "", "comment": ""}]
 
 
 class TestFilterPlaybooks:
@@ -214,7 +217,7 @@ class TestFilterPlaybooks:
 
         first = result[0]
         assert first["id"] == "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6"
-        assert first["name"] == "Phishing Investigation - Generic v2"
+        assert first["comment"] == "Investigate phishing emails using multiple integrations."
         assert len(first["inputs"]) == 2
         assert first["inputs"][0] == {"key": "EmailFrom", "description": "The sender email address"}
         assert len(first["outputs"]) == 2
@@ -269,8 +272,18 @@ class TestSummarizeCommands:
     def test_typical_input(self) -> None:
         result = summarize_commands(_COMMAND_INSTANCES)
         assert len(result) == 2
-        assert result[0] == {"brand": "EWS v2", "commands": ["ews-search-mailbox"]}
-        assert result[1] == {"brand": "VirusTotal", "commands": ["vt-file-scan"]}
+        assert result[0] == {
+            "brand": "EWS v2",
+            "commands": [
+                {"name": "ews-search-mailbox", "description": "Search for items in a mailbox."},
+            ],
+        }
+        assert result[1] == {
+            "brand": "VirusTotal",
+            "commands": [
+                {"name": "vt-file-scan", "description": "Scan a file with VirusTotal."},
+            ],
+        }
 
     def test_empty_list(self) -> None:
         assert summarize_commands([]) == []
@@ -316,7 +329,7 @@ class TestFilterCommands:
 class TestFilterContent:
     def test_scripts_summary(self) -> None:
         raw = {"scripts": _SCRIPTS}
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert "scripts" in result
         assert len(result["scripts"]) == 3
         assert result["scripts"][0] == {
@@ -324,39 +337,20 @@ class TestFilterContent:
             "comment": "Set a value in context under the key you entered.",
         }
 
-    def test_scripts_detail(self) -> None:
-        raw = {"scripts": _SCRIPTS}
-        result = filter_content(raw, detail_level="extended")
-        assert "scripts" in result
-        assert "arguments" in result["scripts"][0]
-
     def test_playbooks_summary(self) -> None:
         raw = {"playbooks": _PLAYBOOKS}
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert "playbooks" in result
         assert result["playbooks"][0] == {
             "id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
-            "name": "Phishing Investigation - Generic v2",
+            "comment": "Investigate phishing emails using multiple integrations.",
         }
-
-    def test_playbooks_detail(self) -> None:
-        raw = {"playbooks": _PLAYBOOKS}
-        result = filter_content(raw, detail_level="extended")
-        assert "playbooks" in result
-        assert "inputs" in result["playbooks"][0]
-        assert "outputs" in result["playbooks"][0]
 
     def test_commands_summary(self) -> None:
         raw = {"commands": _COMMAND_INSTANCES}
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert "commands" in result
         assert len(result["commands"]) == 2
-
-    def test_commands_detail(self) -> None:
-        raw = {"commands": _COMMAND_INSTANCES}
-        result = filter_content(raw, detail_level="extended")
-        assert "commands" in result
-        assert "arguments" in result["commands"][0]["commands"][0]
 
     def test_all_types_combined(self) -> None:
         raw = {
@@ -364,7 +358,7 @@ class TestFilterContent:
             "playbooks": _PLAYBOOKS,
             "commands": _COMMAND_INSTANCES,
         }
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert set(result.keys()) == {"scripts", "playbooks", "commands"}
 
     def test_empty_dict(self) -> None:

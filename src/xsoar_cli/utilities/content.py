@@ -5,15 +5,13 @@ than downstream consumers (especially LLM-based tooling) need. The functions
 in this module strip each content type down to the fields that matter while
 keeping the output structure extensible.
 
-Three detail levels are available:
+``content list`` uses the ``summarize_*`` functions to produce a compact
+id/comment summary per item, designed for discovery where a consumer scans
+the list to identify relevant items.
 
-- **short** (default): compact id/name representation per item. Designed for
-  discovery, where an LLM scans the full list to identify relevant items.
-- **extended**: includes inputs, outputs, and arguments reduced to the fields
-  that matter. Intended for retrieving actionable detail on a smaller set of
-  items.
-- **full**: the raw, unfiltered API response. Handled by the CLI command
-  before calling into this module.
+The ``filter_*`` functions reduce each item to its actionable detail
+(arguments, inputs, outputs). They are reserved for the ``content describe``
+command, which presents a single item in depth.
 """
 
 from __future__ import annotations
@@ -60,15 +58,16 @@ def filter_scripts(scripts: list[dict]) -> list[dict]:
 
 
 def summarize_playbooks(playbooks: list[dict]) -> list[dict]:
-    """Return an id + name summary for each playbook.
+    """Return an id + comment summary for each playbook.
 
-    Playbook IDs are UUIDs, so the human-readable ``name`` field is included
-    to make the summary useful for discovery.
+    The ``comment`` field holds the playbook description and matches the
+    field name used by scripts, keeping the structure consistent across
+    content types.
     """
     return [
         {
             "id": playbook.get("id", ""),
-            "name": playbook.get("name", ""),
+            "comment": playbook.get("comment", ""),
         }
         for playbook in playbooks
     ]
@@ -77,7 +76,7 @@ def summarize_playbooks(playbooks: list[dict]) -> list[dict]:
 def filter_playbooks(playbooks: list[dict]) -> list[dict]:
     """Return a detailed (but still filtered) representation of each playbook.
 
-    Keeps ``id``, ``name``, ``inputs`` (reduced to ``key`` and
+    Keeps ``id``, ``comment``, ``inputs`` (reduced to ``key`` and
     ``description``), and ``outputs`` (reduced to ``contextPath``,
     ``description``, ``type``). The ``tasks`` blob is excluded because it
     dominates the response size and is not useful for deciding whether to
@@ -93,7 +92,7 @@ def filter_playbooks(playbooks: list[dict]) -> list[dict]:
         filtered.append(
             {
                 "id": playbook.get("id", ""),
-                "name": playbook.get("name", ""),
+                "comment": playbook.get("comment", ""),
                 "inputs": [{key: inp.get(key) for key in input_keys} for inp in inputs],
                 "outputs": [{key: out.get(key) for key in output_keys} for out in outputs],
             }
@@ -120,15 +119,24 @@ def _group_commands_by_brand(instances: list[dict]) -> list[dict]:
 
 
 def summarize_commands(instances: list[dict]) -> list[dict]:
-    """Return a brand + command name summary for each integration.
+    """Return a brand + command summary for each integration.
 
-    Deduplicates by brand and reduces each command to just its name.
+    Deduplicates by brand and reduces each command to ``name`` and
+    ``description``. Returning objects (rather than plain name strings)
+    keeps the structure consistent with ``filter_commands`` so formatters
+    do not need to handle both shapes.
     """
     grouped = _group_commands_by_brand(instances)
     return [
         {
             "brand": instance.get("brand", ""),
-            "commands": [cmd.get("name", "") for cmd in instance.get("commands") or []],
+            "commands": [
+                {
+                    "name": cmd.get("name", ""),
+                    "description": cmd.get("description", ""),
+                }
+                for cmd in instance.get("commands") or []
+            ],
         }
         for instance in grouped
     ]
@@ -193,41 +201,22 @@ def format_detached_summary(items: list[dict], content_type: str) -> str:
     return "\n".join(lines)
 
 
-DETAIL_LEVELS = ("short", "extended", "full")
-
-
-def filter_content(raw: dict, *, detail_level: str = "short") -> dict:
-    """Dispatch filtering for each content type present in *raw*.
+def filter_content(raw: dict) -> dict:
+    """Produce a compact id/comment summary for each content type in *raw*.
 
     ``raw`` is the dict returned by ``xsoar_client.content.list()`` and may
     contain any combination of ``scripts``, ``playbooks``, and ``commands``
     keys depending on the requested type.
-
-    *detail_level* controls how much information is kept:
-
-    - ``"short"``: compact id/name summary only.
-    - ``"extended"``: includes arguments, inputs, and outputs.
-    - ``"full"``: not handled here (the caller should output the raw response
-      directly).
     """
     result: dict = {}
 
     if "scripts" in raw:
-        if detail_level == "extended":
-            result["scripts"] = filter_scripts(raw["scripts"])
-        else:
-            result["scripts"] = summarize_scripts(raw["scripts"])
+        result["scripts"] = summarize_scripts(raw["scripts"])
 
     if "playbooks" in raw:
-        if detail_level == "extended":
-            result["playbooks"] = filter_playbooks(raw["playbooks"])
-        else:
-            result["playbooks"] = summarize_playbooks(raw["playbooks"])
+        result["playbooks"] = summarize_playbooks(raw["playbooks"])
 
     if "commands" in raw:
-        if detail_level == "extended":
-            result["commands"] = filter_commands(raw["commands"])
-        else:
-            result["commands"] = summarize_commands(raw["commands"])
+        result["commands"] = summarize_commands(raw["commands"])
 
     return result

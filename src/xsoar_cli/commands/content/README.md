@@ -24,21 +24,24 @@ xsoar-cli content get-detached --type scripts --environment prod
 
 ## List
 
-List available content items. Enumerates commands, playbooks and scripts available on the server. Output is JSON formatted with 4-space indentation.
+List available content items. Enumerates commands, playbooks and scripts available on the server. Designed for discovery: a quick, scannable overview of what content exists, primarily to help humans and AI agents identify relevant items before working with them.
+
+By default the output is a human-readable table. Use `--output-format json` for machine-readable output, or `--output-format plain` for tab-separated values that are easy to pipe to tools like `grep`.
 
 **Syntax:** `xsoar-cli content list [OPTIONS]`
 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
 - `--type [scripts|playbooks|commands|all]` - Type of content items to list (default: all)
-- `--detail-level [short|extended|full]` - Amount of detail in the output (default: short)
+- `--output-format [table|json|plain]` - Output format (default: table)
 
 **Examples:**
 ```
 xsoar-cli content list
 xsoar-cli content list --environment prod
 xsoar-cli content list --type commands
-xsoar-cli content list --type commands --detail-level extended
+xsoar-cli content list --type commands --output-format json
+xsoar-cli content list --type scripts --output-format plain
 xsoar-cli content list --type playbooks --environment dev
 ```
 
