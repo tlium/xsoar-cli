@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-06-17
+
 ### Added
 
 - `content get-detached --type all` queries both scripts and playbooks and displays results for each type.
