@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `content get-detached --type all` queries both scripts and playbooks and displays results for each type.
 - `content list --output-format` option (choices: `table`, `json`, `plain`, default: `table`). `table` is human-readable aligned columns, `json` is machine-readable, and `plain` is tab-separated values suitable for piping to tools like `grep`.
+- `content list --search TERM` option. Filters the listed items with a case-insensitive substring match against each item's id, name, and description. Content types and integration brands with no matching items are omitted, and a `No content matching '<term>' found.` message is shown when nothing matches.
 
 ### Changed
 

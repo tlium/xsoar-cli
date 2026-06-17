@@ -14,6 +14,7 @@ from xsoar_cli.utilities.content import (
     filter_playbooks,
     filter_scripts,
     format_detached_summary,
+    search_content,
     summarize_commands,
     summarize_playbooks,
     summarize_scripts,
@@ -367,6 +368,124 @@ class TestFilterContent:
     def test_unknown_keys_ignored(self) -> None:
         raw = {"unknown": [{"id": "1"}]}
         assert filter_content(raw) == {}
+
+
+# ===========================================================================
+# Search (search_content)
+# ===========================================================================
+
+
+# Summary-shaped data, as produced by ``filter_content``.
+_SUMMARY = {
+    "scripts": [
+        {"id": "SlackSendMessage", "comment": "Send a message to a channel."},
+        {"id": "PrintToWarRoom", "comment": "Prints text to the war room."},
+        {"id": "AccountEnrichment", "comment": "Enrich an account using Slack lookups."},
+    ],
+    "playbooks": [
+        {"id": "abc-123", "comment": "Slack notification playbook."},
+        {"id": "Phishing Response", "comment": "Investigate phishing emails."},
+    ],
+    "commands": [
+        {
+            "brand": "SlackV3",
+            "commands": [
+                {"name": "slack-send-file", "description": "Upload a file to Slack."},
+                {"name": "mirror-investigation", "description": "Mirror an investigation."},
+            ],
+        },
+        {
+            "brand": "Whois",
+            "commands": [
+                {"name": "whois", "description": "Look up domain registration."},
+                {"name": "ip", "description": "Look up IP information."},
+            ],
+        },
+    ],
+}
+
+
+class TestSearchContent:
+    def test_empty_term_returns_everything(self) -> None:
+        assert search_content(_SUMMARY, "") == _SUMMARY
+
+    def test_matches_script_by_id(self) -> None:
+        result = search_content(_SUMMARY, "PrintToWarRoom")
+        assert result["scripts"] == [{"id": "PrintToWarRoom", "comment": "Prints text to the war room."}]
+        assert "playbooks" not in result
+        assert "commands" not in result
+
+    def test_matches_script_by_comment(self) -> None:
+        result = search_content(_SUMMARY, "enrich an account")
+        ids = [s["id"] for s in result["scripts"]]
+        assert ids == ["AccountEnrichment"]
+
+    def test_case_insensitive(self) -> None:
+        lower = search_content(_SUMMARY, "slack")
+        upper = search_content(_SUMMARY, "SLACK")
+        assert lower == upper
+
+    def test_matches_scripts_across_id_and_comment(self) -> None:
+        result = search_content(_SUMMARY, "slack")
+        ids = [s["id"] for s in result["scripts"]]
+        # SlackSendMessage matches on id, AccountEnrichment on comment.
+        assert ids == ["SlackSendMessage", "AccountEnrichment"]
+
+    def test_matches_playbook_by_id_and_comment(self) -> None:
+        result = search_content(_SUMMARY, "slack")
+        ids = [p["id"] for p in result["playbooks"]]
+        assert ids == ["abc-123"]
+
+    def test_commands_keep_only_matching_within_brand(self) -> None:
+        result = search_content(_SUMMARY, "slack")
+        assert result["commands"] == [
+            {
+                "brand": "SlackV3",
+                "commands": [{"name": "slack-send-file", "description": "Upload a file to Slack."}],
+            }
+        ]
+
+    def test_commands_match_by_description(self) -> None:
+        result = search_content(_SUMMARY, "registration")
+        assert result["commands"] == [
+            {
+                "brand": "Whois",
+                "commands": [{"name": "whois", "description": "Look up domain registration."}],
+            }
+        ]
+
+    def test_brand_with_no_matching_commands_dropped(self) -> None:
+        result = search_content(_SUMMARY, "mirror")
+        brands = [g["brand"] for g in result["commands"]]
+        assert brands == ["SlackV3"]
+
+    def test_empty_type_dropped(self) -> None:
+        result = search_content(_SUMMARY, "mirror")
+        # Only a command matches; scripts and playbooks keys are omitted.
+        assert set(result.keys()) == {"commands"}
+
+    def test_no_matches_returns_empty_dict(self) -> None:
+        assert search_content(_SUMMARY, "zzzznomatch") == {}
+
+    def test_matches_by_name_field_when_present(self) -> None:
+        summary = {"scripts": [{"id": "uuid-1", "name": "Human Readable", "comment": ""}]}
+        result = search_content(summary, "human readable")
+        assert result["scripts"] == [{"id": "uuid-1", "name": "Human Readable", "comment": ""}]
+
+    def test_does_not_match_brand_name(self) -> None:
+        # Searching the brand alone should not pull in commands that do not
+        # match on name or description.
+        result = search_content(_SUMMARY, "whois")
+        # Only the 'whois' command matches by name; 'ip' does not.
+        assert result["commands"] == [
+            {
+                "brand": "Whois",
+                "commands": [{"name": "whois", "description": "Look up domain registration."}],
+            }
+        ]
+
+    def test_empty_input_dict(self) -> None:
+        assert search_content({}, "slack") == {}
 
 
 class TestFormatDetachedSummary:

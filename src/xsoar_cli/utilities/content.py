@@ -220,3 +220,56 @@ def filter_content(raw: dict) -> dict:
         result["commands"] = summarize_commands(raw["commands"])
 
     return result
+
+
+_SEARCH_FIELDS = ("id", "name", "comment", "description")
+
+
+def _item_matches(item: dict, term: str) -> bool:
+    """Return True if *term* is a substring of any searchable field on *item*.
+
+    The match is case-insensitive and checks ``id``, ``name``, ``comment``,
+    and ``description`` (whichever are present). *term* is expected to be
+    already lowercased.
+    """
+    return any(term in str(item.get(field, "")).lower() for field in _SEARCH_FIELDS)
+
+
+def search_content(summary: dict, term: str) -> dict:
+    """Filter a content summary down to items matching *term*.
+
+    *summary* is the dict produced by ``filter_content()``. The match is a
+    case-insensitive substring test against each item's ``id``, ``name``,
+    ``comment``, and ``description`` fields (whichever are present).
+
+    For scripts and playbooks, non-matching items are dropped. For commands,
+    only matching commands are kept within each brand group, and brand groups
+    left with no matching commands are dropped. Content types left with no
+    matches are omitted from the result entirely.
+
+    When *term* is empty, the summary is returned unchanged.
+    """
+    if not term:
+        return summary
+
+    needle = term.lower()
+    result: dict = {}
+
+    for content_type in ("scripts", "playbooks"):
+        items = summary.get(content_type)
+        if items is None:
+            continue
+        matches = [item for item in items if _item_matches(item, needle)]
+        if matches:
+            result[content_type] = matches
+
+    if "commands" in summary:
+        groups: list[dict] = []
+        for group in summary["commands"]:
+            matching = [cmd for cmd in group.get("commands", []) if _item_matches(cmd, needle)]
+            if matching:
+                groups.append({"brand": group.get("brand", ""), "commands": matching})
+        if groups:
+            result["commands"] = groups
+
+    return result

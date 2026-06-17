@@ -33,6 +33,7 @@ By default the output is a human-readable table. Use `--output-format json` for 
 **Options:**
 - `--environment TEXT` - Target environment (default: uses default environment from config)
 - `--type [scripts|playbooks|commands|all]` - Type of content items to list (default: all)
+- `--search TEXT` - Case-insensitive substring filter on item id, name, and description
 - `--output-format [table|json|plain]` - Output format (default: table)
 
 **Examples:**
@@ -40,6 +41,7 @@ By default the output is a human-readable table. Use `--output-format json` for 
 xsoar-cli content list
 xsoar-cli content list --environment prod
 xsoar-cli content list --type commands
+xsoar-cli content list --type commands --search slack
 xsoar-cli content list --type commands --output-format json
 xsoar-cli content list --type scripts --output-format plain
 xsoar-cli content list --type playbooks --environment dev

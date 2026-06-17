@@ -10,6 +10,75 @@ if TYPE_CHECKING:
 PLAYBOOK_YAML = "id: test-playbook\nname: Test Playbook\ncontentitemexportablefields:\n  contentitemfields:\n    packID: MyPack\n"
 PLAYBOOK_YAML_NO_PACK = "id: test-playbook\nname: Test Playbook\n"
 
+_RAW_COMMANDS = [
+    {
+        "brand": "SlackV3",
+        "name": "SlackV3_instance",
+        "commands": [
+            {"name": "slack-send-file", "description": "Upload a file to Slack.", "arguments": [], "outputs": []},
+            {"name": "mirror-investigation", "description": "Mirror an investigation.", "arguments": [], "outputs": []},
+        ],
+    },
+    {
+        "brand": "Whois",
+        "name": "Whois_instance",
+        "commands": [
+            {"name": "whois", "description": "Look up domain registration.", "arguments": [], "outputs": []},
+        ],
+    },
+]
+
+_RAW_SCRIPTS = [
+    {"id": "SlackSendMessage", "comment": "Send a message to a channel."},
+    {"id": "PrintToWarRoom", "comment": "Prints text to the war room."},
+]
+
+
+class TestContentList:
+    """Tests for ``content list``."""
+
+    def test_default_output_is_table(self, invoke: InvokeHelper, mock_content_list_env) -> None:
+        mock_content_list_env.list.return_value = _RAW_COMMANDS
+        result = invoke(["content", "list", "--type", "commands"])
+        assert result.exit_code == 0
+        assert "Command" in result.output
+        assert "Description" in result.output
+        assert "slack-send-file" in result.output
+
+    def test_json_output(self, invoke: InvokeHelper, mock_content_list_env) -> None:
+        mock_content_list_env.list.return_value = _RAW_SCRIPTS
+        result = invoke(["content", "list", "--type", "scripts", "--output-format", "json"])
+        assert result.exit_code == 0
+        assert '"id": "SlackSendMessage"' in result.output
+
+    def test_search_filters_commands(self, invoke: InvokeHelper, mock_content_list_env) -> None:
+        mock_content_list_env.list.return_value = _RAW_COMMANDS
+        result = invoke(["content", "list", "--type", "commands", "--search", "slack", "--output-format", "plain"])
+        assert result.exit_code == 0
+        assert "slack-send-file" in result.output
+        assert "mirror-investigation" not in result.output
+        assert "whois" not in result.output
+
+    def test_search_is_case_insensitive(self, invoke: InvokeHelper, mock_content_list_env) -> None:
+        mock_content_list_env.list.return_value = _RAW_COMMANDS
+        result = invoke(["content", "list", "--type", "commands", "--search", "SLACK", "--output-format", "plain"])
+        assert result.exit_code == 0
+        assert "slack-send-file" in result.output
+
+    def test_no_search_returns_all(self, invoke: InvokeHelper, mock_content_list_env) -> None:
+        mock_content_list_env.list.return_value = _RAW_COMMANDS
+        result = invoke(["content", "list", "--type", "commands", "--output-format", "plain"])
+        assert result.exit_code == 0
+        assert "slack-send-file" in result.output
+        assert "mirror-investigation" in result.output
+        assert "whois" in result.output
+
+    def test_search_no_matches_shows_message(self, invoke: InvokeHelper, mock_content_list_env) -> None:
+        mock_content_list_env.list.return_value = _RAW_COMMANDS
+        result = invoke(["content", "list", "--type", "commands", "--search", "zzzznomatch"])
+        assert result.exit_code == 0
+        assert "No content matching 'zzzznomatch' found" in result.output
+
 
 class TestContentDownloadPlaybookCommand:
     """Tests for ``content download --type playbook``."""

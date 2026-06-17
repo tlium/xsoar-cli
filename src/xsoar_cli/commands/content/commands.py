@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.content import filter_content, format_detached_summary
+from xsoar_cli.utilities.content import filter_content, format_detached_summary, search_content
 from xsoar_cli.utilities.download_content_handlers import HANDLERS, resolve_output_path
 from xsoar_cli.utilities.output import OUTPUT_FORMATS, format_content_output
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
@@ -60,6 +60,11 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
     help="Type of content items to list.",
 )
 @click.option(
+    "--search",
+    default=None,
+    help="Case-insensitive substring filter on item id, name, and description.",
+)
+@click.option(
     "--output-format",
     type=click.Choice(OUTPUT_FORMATS, case_sensitive=False),
     default="table",
@@ -69,7 +74,7 @@ def get_detached(ctx: click.Context, environment: str | None, content_type: str)
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity
-def list_content(ctx: click.Context, environment: str | None, content_type: str, output_format: str) -> None:
+def list_content(ctx: click.Context, environment: str | None, content_type: str, search: str | None, output_format: str) -> None:
     """
     List available content items. Enumerates commands, playbooks and scripts
     available on the server, primarily to facilitate better AI generated
@@ -83,6 +88,12 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
         json_blob = {content_type: json_blob}
 
     filtered = filter_content(json_blob)
+    if search:
+        filtered = search_content(filtered, search)
+        if not filtered:
+            click.echo(f"No content matching '{search}' found.")
+            return
+
     click.echo(format_content_output(filtered, output_format=output_format))
 
 
