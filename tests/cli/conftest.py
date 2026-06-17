@@ -158,6 +158,34 @@ def mock_content_list_env(mock_config_file) -> Iterator[types.SimpleNamespace]: 
 
 
 @pytest.fixture
+def mock_content_describe_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
+    """Mock environment for the ``content describe`` command.
+
+    Patches connectivity and ``Content.describe``. The ``describe`` mock is
+    exposed on the yielded namespace so tests can set its return value to the
+    raw record shape (or None for the not-found case).
+
+    Yields a ``SimpleNamespace`` with attributes:
+
+    * ``config`` -- the config file mock
+    * ``connectivity`` -- the ``Client.test_connectivity`` mock
+    * ``describe`` -- the ``Content.describe`` mock
+    """
+    import types as _types
+
+    with (
+        patch("xsoar_cli.xsoar_client.client.Client.test_connectivity", return_value=True) as mock_conn,
+        patch("xsoar_cli.xsoar_client.content.Content.describe") as mock_describe,
+    ):
+        ns = _types.SimpleNamespace(
+            config=mock_config_file,
+            connectivity=mock_conn,
+            describe=mock_describe,
+        )
+        yield ns
+
+
+@pytest.fixture
 def mock_plugin_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
     """Mock environment for ``plugins`` CLI subcommands.
 

@@ -109,6 +109,120 @@ def _plain_commands(command_groups: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def _oneline(text: str) -> str:
+    """Collapse a multi-line string into a single line."""
+    return " ".join(text.split())
+
+
+# ---------------------------------------------------------------------------
+# Describe (single-item vertical detail)
+# ---------------------------------------------------------------------------
+
+DESCRIBE_OUTPUT_FORMATS = ("table", "json")
+
+
+def format_describe(item_type: str, item: dict, *, output_format: str) -> str:
+    """Format a single content item for the ``content describe`` command.
+
+    *item* is the reduced dict produced by ``describe_item()``. *item_type*
+    is ``script``, ``playbook``, or ``command`` (singular). The ``table``
+    format is a vertical detail layout; ``json`` dumps the reduced dict.
+    """
+    if output_format == "json":
+        return json.dumps(item, indent=4)
+    if item_type == "script":
+        return _describe_script(item)
+    if item_type == "playbook":
+        return _describe_playbook(item)
+    if item_type == "command":
+        return _describe_command(item)
+    raise ValueError(f"Invalid value {item_type=}")
+
+
+def _describe_script(item: dict) -> str:
+    parts = [f"Script: {item.get('id', '')}"]
+    comment = item.get("comment", "").strip()
+    if comment:
+        parts.append(comment)
+    parts.append(_describe_section("Arguments", _argument_rows(item.get("arguments", []))))
+    return "\n\n".join(parts)
+
+
+def _describe_playbook(item: dict) -> str:
+    parts = [f"Playbook: {item.get('id', '')}"]
+    comment = item.get("comment", "").strip()
+    if comment:
+        parts.append(comment)
+    input_rows = [[inp.get("key", ""), _oneline(inp.get("description", ""))] for inp in item.get("inputs", [])]
+    parts.append(_describe_section("Inputs", input_rows))
+    parts.append(_describe_section("Outputs", _output_rows(item.get("outputs", []))))
+    return "\n\n".join(parts)
+
+
+def _describe_command(item: dict) -> str:
+    parts = [f"Command: {item.get('name', '')}", f"Brand: {item.get('brand', '')}"]
+    instance_rows = [[inst.get("name", ""), inst.get("state", "")] for inst in item.get("instances", [])]
+    parts.append(_describe_section("Instances", instance_rows))
+    description = item.get("description", "").strip()
+    if description:
+        parts.append(description)
+    parts.append(_describe_section("Arguments", _argument_rows(item.get("arguments", []))))
+    parts.append(_describe_section("Outputs", _output_rows(item.get("outputs", []))))
+    return "\n\n".join(parts)
+
+
+def _argument_rows(arguments: list[dict]) -> list[list[str]]:
+    return [
+        [
+            arg.get("name", ""),
+            "(required)" if arg.get("required") else "",
+            _oneline(arg.get("description", "")),
+        ]
+        for arg in arguments
+    ]
+
+
+def _output_rows(outputs: list[dict]) -> list[list[str]]:
+    return [
+        [
+            out.get("contextPath", ""),
+            out.get("type", "") or "",
+            _oneline(out.get("description", "")),
+        ]
+        for out in outputs
+    ]
+
+
+def _describe_section(label: str, rows: list[list[str]]) -> str:
+    """Render a labelled section with aligned, indented columns.
+
+    When *rows* is empty the section body is ``(none)``.
+    """
+    return f"{label}:\n{_aligned_columns(rows)}"
+
+
+def _aligned_columns(rows: list[list[str]], *, indent: str = "  ") -> str:
+    """Align rows into columns, indented, with no header. Empty -> ``(none)``."""
+    if not rows:
+        return f"{indent}(none)"
+
+    col_count = max(len(row) for row in rows)
+    widths = [0] * col_count
+    for row in rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(cell))
+
+    lines = []
+    for row in rows:
+        cells = []
+        for i in range(col_count):
+            cell = row[i] if i < len(row) else ""
+            # Pad every column except the last so trailing text is not padded.
+            cells.append(cell.ljust(widths[i]) if i < col_count - 1 else cell)
+        lines.append((indent + "  ".join(cells)).rstrip())
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
@@ -146,8 +260,3 @@ def _render_table(
     data_lines = ["  ".join(_fit(row[i] if i < len(row) else "", widths[i]) for i in range(col_count)).rstrip() for row in rows]
 
     return "\n".join([header_line.rstrip(), separator, *data_lines])
-
-
-def _oneline(text: str) -> str:
-    """Collapse a multi-line string into a single line."""
-    return " ".join(text.split())

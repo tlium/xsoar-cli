@@ -80,6 +80,73 @@ class TestContentList:
         assert "No content matching 'zzzznomatch' found" in result.output
 
 
+_DESCRIBE_RAW_SCRIPT = {
+    "id": "MyScript",
+    "comment": "Does a thing.",
+    "arguments": [{"name": "value", "required": True, "deprecated": False, "description": "The value"}],
+}
+
+_DESCRIBE_RAW_COMMAND = {
+    "brand": "ServiceNow v2",
+    "instances": [
+        {"name": "ServiceNow_v2_DNB", "state": "active"},
+        {"name": "ServiceNow_Pentest_RITM", "state": "disabled"},
+    ],
+    "command": {
+        "name": "servicenow-get-record",
+        "description": "Get a record.",
+        "arguments": [{"name": "table", "required": True, "deprecated": False, "description": "The table"}],
+        "outputs": [{"contextPath": "ServiceNow.Record.ID", "description": "Record ID", "type": "string"}],
+    },
+}
+
+
+class TestContentDescribe:
+    """Tests for ``content describe``."""
+
+    def test_script_table_output(self, invoke: InvokeHelper, mock_content_describe_env) -> None:
+        mock_content_describe_env.describe.return_value = _DESCRIBE_RAW_SCRIPT
+        result = invoke(["content", "describe", "--type", "script", "MyScript"])
+        assert result.exit_code == 0
+        assert "Script: MyScript" in result.output
+        assert "Does a thing." in result.output
+        assert "value" in result.output
+        mock_content_describe_env.describe.assert_called_once_with("script", "MyScript")
+
+    def test_command_table_output(self, invoke: InvokeHelper, mock_content_describe_env) -> None:
+        mock_content_describe_env.describe.return_value = _DESCRIBE_RAW_COMMAND
+        result = invoke(["content", "describe", "--type", "command", "servicenow-get-record"])
+        assert result.exit_code == 0
+        assert "Command: servicenow-get-record" in result.output
+        assert "Brand: ServiceNow v2" in result.output
+        assert "Instances:" in result.output
+        assert "ServiceNow_v2_DNB" in result.output
+        assert "disabled" in result.output
+
+    def test_json_output(self, invoke: InvokeHelper, mock_content_describe_env) -> None:
+        mock_content_describe_env.describe.return_value = _DESCRIBE_RAW_SCRIPT
+        result = invoke(["content", "describe", "--type", "script", "MyScript", "--output-format", "json"])
+        assert result.exit_code == 0
+        assert '"id": "MyScript"' in result.output
+        assert '"arguments"' in result.output
+
+    def test_not_found_exits_nonzero(self, invoke: InvokeHelper, mock_content_describe_env) -> None:
+        mock_content_describe_env.describe.return_value = None
+        result = invoke(["content", "describe", "--type", "script", "Nonexistent"])
+        assert result.exit_code == 1
+        assert "not found" in result.output.lower()
+        assert "Nonexistent" in result.output
+
+    def test_missing_type(self, invoke: InvokeHelper, mock_content_describe_env) -> None:
+        result = invoke(["content", "describe", "SomeName"])
+        assert result.exit_code != 0
+        assert "Missing option '--type'" in result.output
+
+    def test_plain_format_not_accepted(self, invoke: InvokeHelper, mock_content_describe_env) -> None:
+        result = invoke(["content", "describe", "--type", "script", "MyScript", "--output-format", "plain"])
+        assert result.exit_code != 0
+
+
 class TestContentDownloadPlaybookCommand:
     """Tests for ``content download --type playbook``."""
 

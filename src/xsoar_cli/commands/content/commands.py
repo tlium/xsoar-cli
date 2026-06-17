@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 import click
 
 from xsoar_cli.utilities.config_file import get_xsoar_config, load_config
-from xsoar_cli.utilities.content import filter_content, format_detached_summary, search_content
+from xsoar_cli.utilities.content import describe_item, filter_content, format_detached_summary, search_content
 from xsoar_cli.utilities.download_content_handlers import HANDLERS, resolve_output_path
-from xsoar_cli.utilities.output import OUTPUT_FORMATS, format_content_output
+from xsoar_cli.utilities.output import DESCRIBE_OUTPUT_FORMATS, OUTPUT_FORMATS, format_content_output, format_describe
 from xsoar_cli.utilities.validators import validate_xsoar_connectivity
 
 if TYPE_CHECKING:
@@ -102,6 +102,46 @@ def list_content(ctx: click.Context, environment: str | None, content_type: str,
 @click.option(
     "--type",
     "content_type",
+    type=click.Choice(["script", "playbook", "command"], case_sensitive=False),
+    required=True,
+    help="Type of content item to describe.",
+)
+@click.option(
+    "--output-format",
+    type=click.Choice(DESCRIBE_OUTPUT_FORMATS, case_sensitive=False),
+    default="table",
+    show_default=True,
+    help="Output format. Use 'json' for machine-readable output.",
+)
+@click.argument("name", type=str)
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity
+def describe(ctx: click.Context, environment: str | None, content_type: str, output_format: str, name: str) -> None:
+    """Describe a single content item in detail.
+
+    Looks up one script, playbook, or command by name and shows its
+    description, arguments, and inputs/outputs. Commands also show the
+    integration brand and its configured instances. Use this after
+    'content list' to get the detail needed to actually use an item.
+    """
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    raw = xsoar_client.content.describe(content_type, name)
+    if raw is None:
+        click.echo(f"Error: {content_type} '{name}' not found")
+        ctx.exit(1)
+        return
+
+    item = describe_item(content_type, raw)
+    click.echo(format_describe(content_type, item, output_format=output_format))
+
+
+@click.command()
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.option(
+    "--type",
+    "content_type",
     type=click.Choice(sorted(HANDLERS.keys()), case_sensitive=False),
     required=True,
     help="Type of content item to download.",
@@ -187,4 +227,5 @@ def download(ctx: click.Context, environment: str | None, content_type: str, out
 
 content.add_command(get_detached)
 content.add_command(list_content)
+content.add_command(describe)
 content.add_command(download)

@@ -47,6 +47,27 @@ xsoar-cli content list --type scripts --output-format plain
 xsoar-cli content list --type playbooks --environment dev
 ```
 
+## Describe
+
+Describe a single content item in detail. Looks up one script, playbook, or command by name and shows its description, arguments, and inputs/outputs. Commands also show the integration brand and its configured instances (name and state). Use this after `content list` to get the detail needed to actually use an item.
+
+The lookup is case-insensitive. Scripts match on id, playbooks match on id or name (so a custom playbook with a UUID id resolves by its human-readable name), and commands match on the command name.
+
+**Syntax:** `xsoar-cli content describe --type TYPE NAME`
+
+**Options:**
+- `--environment TEXT` - Target environment (default: uses default environment from config)
+- `--type [script|playbook|command]` - Type of content item to describe (required)
+- `--output-format [table|json]` - Output format (default: table)
+
+**Examples:**
+```
+xsoar-cli content describe --type command servicenow-get-record
+xsoar-cli content describe --type script AddDNBHostIndicatorToCase
+xsoar-cli content describe --type playbook "Phishing Investigation - Generic v2"
+xsoar-cli content describe --type command servicenow-get-record --output-format json
+```
+
 ## Download
 
 Download a content item by name from the XSOAR server.
