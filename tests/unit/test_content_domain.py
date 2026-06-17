@@ -704,3 +704,130 @@ class TestContentList:
         content = Content(mock_client)
         with pytest.raises(ValueError, match="invalid argument"):
             content.list("invalid")
+
+
+# ===========================================================================
+# Content.describe
+# ===========================================================================
+
+
+_DESCRIBE_SCRIPTS = {
+    "scripts": [
+        {"id": "AddDNBHostIndicatorToCase", "comment": "Creates a DNB Host indicator.", "arguments": []},
+        {"id": "Print", "comment": "Prints text.", "arguments": []},
+    ],
+}
+
+_DESCRIBE_PLAYBOOKS = {
+    "playbooks": [
+        {"id": "02557104-uuid", "name": "test_temp", "comment": "A temp playbook.", "inputs": [], "outputs": []},
+        {"id": "KS_Escalated", "name": "KS_Escalated", "comment": "Escalation playbook.", "inputs": [], "outputs": []},
+    ],
+}
+
+_DESCRIBE_COMMANDS = [
+    {
+        "brand": "ServiceNow v2",
+        "name": "ServiceNow_v2_DNB",
+        "state": "active",
+        "commands": [
+            {"name": "servicenow-get-record", "description": "Get a record.", "arguments": [], "outputs": []},
+        ],
+    },
+    {
+        "brand": "ServiceNow v2",
+        "name": "ServiceNow_Pentest_RITM",
+        "state": "disabled",
+        "commands": [
+            {"name": "servicenow-get-record", "description": "Get a record.", "arguments": [], "outputs": []},
+        ],
+    },
+    {
+        "brand": "Whois",
+        "name": "Whois_instance",
+        "state": "active",
+        "commands": [
+            {"name": "whois", "description": "Look up domain registration.", "arguments": [], "outputs": []},
+        ],
+    },
+]
+
+
+class TestDescribe:
+    """Tests for the Content.describe method."""
+
+    def _client_returning(self, json_value: object) -> MagicMock:
+        mock_client = MagicMock()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = json_value
+        mock_client.make_request.return_value = response
+        return mock_client
+
+    def test_script_found(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_SCRIPTS))
+        result = content.describe("script", "AddDNBHostIndicatorToCase")
+        assert result == _DESCRIBE_SCRIPTS["scripts"][0]
+
+    def test_script_case_insensitive(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_SCRIPTS))
+        result = content.describe("script", "adddnbhostindicatortocase")
+        assert result["id"] == "AddDNBHostIndicatorToCase"
+
+    def test_script_not_found(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_SCRIPTS))
+        assert content.describe("script", "Nonexistent") is None
+
+    def test_playbook_found_by_name(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_PLAYBOOKS))
+        result = content.describe("playbook", "test_temp")
+        assert result["id"] == "02557104-uuid"
+
+    def test_playbook_found_by_id(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_PLAYBOOKS))
+        result = content.describe("playbook", "02557104-uuid")
+        assert result["name"] == "test_temp"
+
+    def test_playbook_case_insensitive(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_PLAYBOOKS))
+        result = content.describe("playbook", "TEST_TEMP")
+        assert result["id"] == "02557104-uuid"
+
+    def test_playbook_not_found(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_PLAYBOOKS))
+        assert content.describe("playbook", "Nonexistent") is None
+
+    def test_command_found(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_COMMANDS))
+        result = content.describe("command", "servicenow-get-record")
+        assert result["brand"] == "ServiceNow v2"
+        assert result["command"]["name"] == "servicenow-get-record"
+        assert result["command"]["description"] == "Get a record."
+
+    def test_command_collects_all_brand_instances(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_COMMANDS))
+        result = content.describe("command", "servicenow-get-record")
+        assert result["instances"] == [
+            {"name": "ServiceNow_v2_DNB", "state": "active"},
+            {"name": "ServiceNow_Pentest_RITM", "state": "disabled"},
+        ]
+
+    def test_command_only_includes_matching_brand_instances(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_COMMANDS))
+        result = content.describe("command", "whois")
+        assert result["brand"] == "Whois"
+        assert result["instances"] == [{"name": "Whois_instance", "state": "active"}]
+
+    def test_command_case_insensitive(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_COMMANDS))
+        result = content.describe("command", "SERVICENOW-GET-RECORD")
+        assert result["command"]["name"] == "servicenow-get-record"
+
+    def test_command_not_found(self) -> None:
+        content = Content(self._client_returning(_DESCRIBE_COMMANDS))
+        assert content.describe("command", "nonexistent-command") is None
+
+    def test_invalid_type_raises(self) -> None:
+        content = Content(MagicMock())
+        with pytest.raises(ValueError, match="Invalid value"):
+            content.describe("widget", "anything")

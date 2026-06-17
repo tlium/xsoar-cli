@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from xsoar_cli.utilities.content import (
     _group_commands_by_brand,
+    describe_item,
     filter_commands,
     filter_content,
     filter_playbooks,
@@ -486,6 +487,83 @@ class TestSearchContent:
 
     def test_empty_input_dict(self) -> None:
         assert search_content({}, "slack") == {}
+
+
+# ===========================================================================
+# Describe reduction (describe_item)
+# ===========================================================================
+
+
+class TestDescribeItem:
+    def test_script(self) -> None:
+        raw = {
+            "id": "MyScript",
+            "comment": "Does a thing.",
+            "arguments": [
+                {"name": "value", "required": True, "deprecated": False, "description": "The value"},
+            ],
+            "type": "python3",
+        }
+        result = describe_item("script", raw)
+        assert result == {
+            "id": "MyScript",
+            "comment": "Does a thing.",
+            "arguments": [{"name": "value", "required": True, "deprecated": False, "description": "The value"}],
+        }
+
+    def test_playbook(self) -> None:
+        raw = {
+            "id": "uuid-1",
+            "name": "My Playbook",
+            "comment": "Investigates things.",
+            "inputs": [{"key": "Target", "value": {}, "description": "The target"}],
+            "outputs": [{"contextPath": "Result.Verdict", "description": "The verdict", "type": "string"}],
+            "tasks": {"0": {"id": "0"}},
+        }
+        result = describe_item("playbook", raw)
+        assert result == {
+            "id": "uuid-1",
+            "comment": "Investigates things.",
+            "inputs": [{"key": "Target", "description": "The target"}],
+            "outputs": [{"contextPath": "Result.Verdict", "description": "The verdict", "type": "string"}],
+        }
+
+    def test_command(self) -> None:
+        raw = {
+            "brand": "ServiceNow v2",
+            "instances": [
+                {"name": "SN_DNB", "state": "active"},
+                {"name": "SN_Pentest", "state": "disabled"},
+            ],
+            "command": {
+                "name": "servicenow-get-record",
+                "description": "Get a record.",
+                "arguments": [
+                    {"name": "table", "required": True, "deprecated": False, "description": "The table"},
+                ],
+                "outputs": [
+                    {"contextPath": "ServiceNow.Record.ID", "description": "Record ID", "type": "string"},
+                ],
+            },
+        }
+        result = describe_item("command", raw)
+        assert result == {
+            "name": "servicenow-get-record",
+            "brand": "ServiceNow v2",
+            "instances": [
+                {"name": "SN_DNB", "state": "active"},
+                {"name": "SN_Pentest", "state": "disabled"},
+            ],
+            "description": "Get a record.",
+            "arguments": [{"name": "table", "required": True, "deprecated": False, "description": "The table"}],
+            "outputs": [{"contextPath": "ServiceNow.Record.ID", "description": "Record ID", "type": "string"}],
+        }
+
+    def test_invalid_type_raises(self) -> None:
+        import pytest
+
+        with pytest.raises(ValueError, match="Invalid"):
+            describe_item("widget", {})
 
 
 class TestFormatDetachedSummary:

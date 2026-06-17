@@ -273,3 +273,31 @@ def search_content(summary: dict, term: str) -> dict:
             result["commands"] = groups
 
     return result
+
+
+def describe_item(item_type: str, raw: dict) -> dict:
+    """Reduce a single raw content item to its actionable detail.
+
+    *item_type* is ``script``, ``playbook``, or ``command`` (singular).
+    *raw* is the record returned by ``Content.describe()``. For commands the
+    raw record wraps the command in ``{brand, instances, command}``; the
+    reduced result flattens that into the command fields plus ``brand`` and
+    ``instances``.
+    """
+    if item_type == "script":
+        return filter_scripts([raw])[0]
+    if item_type == "playbook":
+        return filter_playbooks([raw])[0]
+    if item_type == "command":
+        brand = raw.get("brand", "")
+        instances = raw.get("instances", [])
+        reduced = filter_commands([{"brand": brand, "commands": [raw.get("command", {})]}])[0]["commands"][0]
+        return {
+            "name": reduced["name"],
+            "brand": brand,
+            "instances": instances,
+            "description": reduced["description"],
+            "arguments": reduced["arguments"],
+            "outputs": reduced["outputs"],
+        }
+    raise ValueError(f"Invalid value {item_type=}")
