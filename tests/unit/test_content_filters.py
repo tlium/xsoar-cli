@@ -9,11 +9,13 @@ from __future__ import annotations
 
 from xsoar_cli.utilities.content import (
     _group_commands_by_brand,
+    describe_item,
     filter_commands,
     filter_content,
     filter_playbooks,
     filter_scripts,
     format_detached_summary,
+    search_content,
     summarize_commands,
     summarize_playbooks,
     summarize_scripts,
@@ -56,6 +58,7 @@ _PLAYBOOKS = [
     {
         "id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
         "name": "Phishing Investigation - Generic v2",
+        "comment": "Investigate phishing emails using multiple integrations.",
         "inputs": [
             {"key": "EmailFrom", "value": {}, "description": "The sender email address"},
             {"key": "EmailSubject", "value": {}, "description": "The email subject line"},
@@ -71,6 +74,7 @@ _PLAYBOOKS = [
     {
         "id": "Malware_Investigation",
         "name": "Malware Investigation",
+        "comment": "",
         "inputs": [],
         "outputs": None,
         "tasks": {},
@@ -80,6 +84,7 @@ _PLAYBOOKS = [
     {
         "id": "aabbccdd-1122-3344-5566-778899aabbcc",
         "name": "Access Investigation - Generic",
+        "comment": "Investigate access-related incidents.",
         "inputs": None,
         "outputs": [],
         "tasks": {},
@@ -194,9 +199,9 @@ class TestSummarizePlaybooks:
     def test_typical_input(self) -> None:
         result = summarize_playbooks(_PLAYBOOKS)
         assert result == [
-            {"id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6", "name": "Phishing Investigation - Generic v2"},
-            {"id": "Malware_Investigation", "name": "Malware Investigation"},
-            {"id": "aabbccdd-1122-3344-5566-778899aabbcc", "name": "Access Investigation - Generic"},
+            {"id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6", "comment": "Investigate phishing emails using multiple integrations."},
+            {"id": "Malware_Investigation", "comment": ""},
+            {"id": "aabbccdd-1122-3344-5566-778899aabbcc", "comment": "Investigate access-related incidents."},
         ]
 
     def test_empty_list(self) -> None:
@@ -204,7 +209,7 @@ class TestSummarizePlaybooks:
 
     def test_missing_fields_use_defaults(self) -> None:
         result = summarize_playbooks([{}])
-        assert result == [{"id": "", "name": ""}]
+        assert result == [{"id": "", "comment": ""}]
 
 
 class TestFilterPlaybooks:
@@ -214,7 +219,7 @@ class TestFilterPlaybooks:
 
         first = result[0]
         assert first["id"] == "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6"
-        assert first["name"] == "Phishing Investigation - Generic v2"
+        assert first["comment"] == "Investigate phishing emails using multiple integrations."
         assert len(first["inputs"]) == 2
         assert first["inputs"][0] == {"key": "EmailFrom", "description": "The sender email address"}
         assert len(first["outputs"]) == 2
@@ -269,8 +274,18 @@ class TestSummarizeCommands:
     def test_typical_input(self) -> None:
         result = summarize_commands(_COMMAND_INSTANCES)
         assert len(result) == 2
-        assert result[0] == {"brand": "EWS v2", "commands": ["ews-search-mailbox"]}
-        assert result[1] == {"brand": "VirusTotal", "commands": ["vt-file-scan"]}
+        assert result[0] == {
+            "brand": "EWS v2",
+            "commands": [
+                {"name": "ews-search-mailbox", "description": "Search for items in a mailbox."},
+            ],
+        }
+        assert result[1] == {
+            "brand": "VirusTotal",
+            "commands": [
+                {"name": "vt-file-scan", "description": "Scan a file with VirusTotal."},
+            ],
+        }
 
     def test_empty_list(self) -> None:
         assert summarize_commands([]) == []
@@ -316,7 +331,7 @@ class TestFilterCommands:
 class TestFilterContent:
     def test_scripts_summary(self) -> None:
         raw = {"scripts": _SCRIPTS}
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert "scripts" in result
         assert len(result["scripts"]) == 3
         assert result["scripts"][0] == {
@@ -324,39 +339,20 @@ class TestFilterContent:
             "comment": "Set a value in context under the key you entered.",
         }
 
-    def test_scripts_detail(self) -> None:
-        raw = {"scripts": _SCRIPTS}
-        result = filter_content(raw, detail_level="extended")
-        assert "scripts" in result
-        assert "arguments" in result["scripts"][0]
-
     def test_playbooks_summary(self) -> None:
         raw = {"playbooks": _PLAYBOOKS}
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert "playbooks" in result
         assert result["playbooks"][0] == {
             "id": "22a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
-            "name": "Phishing Investigation - Generic v2",
+            "comment": "Investigate phishing emails using multiple integrations.",
         }
-
-    def test_playbooks_detail(self) -> None:
-        raw = {"playbooks": _PLAYBOOKS}
-        result = filter_content(raw, detail_level="extended")
-        assert "playbooks" in result
-        assert "inputs" in result["playbooks"][0]
-        assert "outputs" in result["playbooks"][0]
 
     def test_commands_summary(self) -> None:
         raw = {"commands": _COMMAND_INSTANCES}
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert "commands" in result
         assert len(result["commands"]) == 2
-
-    def test_commands_detail(self) -> None:
-        raw = {"commands": _COMMAND_INSTANCES}
-        result = filter_content(raw, detail_level="extended")
-        assert "commands" in result
-        assert "arguments" in result["commands"][0]["commands"][0]
 
     def test_all_types_combined(self) -> None:
         raw = {
@@ -364,7 +360,7 @@ class TestFilterContent:
             "playbooks": _PLAYBOOKS,
             "commands": _COMMAND_INSTANCES,
         }
-        result = filter_content(raw, detail_level="short")
+        result = filter_content(raw)
         assert set(result.keys()) == {"scripts", "playbooks", "commands"}
 
     def test_empty_dict(self) -> None:
@@ -373,6 +369,201 @@ class TestFilterContent:
     def test_unknown_keys_ignored(self) -> None:
         raw = {"unknown": [{"id": "1"}]}
         assert filter_content(raw) == {}
+
+
+# ===========================================================================
+# Search (search_content)
+# ===========================================================================
+
+
+# Summary-shaped data, as produced by ``filter_content``.
+_SUMMARY = {
+    "scripts": [
+        {"id": "SlackSendMessage", "comment": "Send a message to a channel."},
+        {"id": "PrintToWarRoom", "comment": "Prints text to the war room."},
+        {"id": "AccountEnrichment", "comment": "Enrich an account using Slack lookups."},
+    ],
+    "playbooks": [
+        {"id": "abc-123", "comment": "Slack notification playbook."},
+        {"id": "Phishing Response", "comment": "Investigate phishing emails."},
+    ],
+    "commands": [
+        {
+            "brand": "SlackV3",
+            "commands": [
+                {"name": "slack-send-file", "description": "Upload a file to Slack."},
+                {"name": "mirror-investigation", "description": "Mirror an investigation."},
+            ],
+        },
+        {
+            "brand": "Whois",
+            "commands": [
+                {"name": "whois", "description": "Look up domain registration."},
+                {"name": "ip", "description": "Look up IP information."},
+            ],
+        },
+    ],
+}
+
+
+class TestSearchContent:
+    def test_empty_term_returns_everything(self) -> None:
+        assert search_content(_SUMMARY, "") == _SUMMARY
+
+    def test_matches_script_by_id(self) -> None:
+        result = search_content(_SUMMARY, "PrintToWarRoom")
+        assert result["scripts"] == [{"id": "PrintToWarRoom", "comment": "Prints text to the war room."}]
+        assert "playbooks" not in result
+        assert "commands" not in result
+
+    def test_matches_script_by_comment(self) -> None:
+        result = search_content(_SUMMARY, "enrich an account")
+        ids = [s["id"] for s in result["scripts"]]
+        assert ids == ["AccountEnrichment"]
+
+    def test_case_insensitive(self) -> None:
+        lower = search_content(_SUMMARY, "slack")
+        upper = search_content(_SUMMARY, "SLACK")
+        assert lower == upper
+
+    def test_matches_scripts_across_id_and_comment(self) -> None:
+        result = search_content(_SUMMARY, "slack")
+        ids = [s["id"] for s in result["scripts"]]
+        # SlackSendMessage matches on id, AccountEnrichment on comment.
+        assert ids == ["SlackSendMessage", "AccountEnrichment"]
+
+    def test_matches_playbook_by_id_and_comment(self) -> None:
+        result = search_content(_SUMMARY, "slack")
+        ids = [p["id"] for p in result["playbooks"]]
+        assert ids == ["abc-123"]
+
+    def test_commands_keep_only_matching_within_brand(self) -> None:
+        result = search_content(_SUMMARY, "slack")
+        assert result["commands"] == [
+            {
+                "brand": "SlackV3",
+                "commands": [{"name": "slack-send-file", "description": "Upload a file to Slack."}],
+            }
+        ]
+
+    def test_commands_match_by_description(self) -> None:
+        result = search_content(_SUMMARY, "registration")
+        assert result["commands"] == [
+            {
+                "brand": "Whois",
+                "commands": [{"name": "whois", "description": "Look up domain registration."}],
+            }
+        ]
+
+    def test_brand_with_no_matching_commands_dropped(self) -> None:
+        result = search_content(_SUMMARY, "mirror")
+        brands = [g["brand"] for g in result["commands"]]
+        assert brands == ["SlackV3"]
+
+    def test_empty_type_dropped(self) -> None:
+        result = search_content(_SUMMARY, "mirror")
+        # Only a command matches; scripts and playbooks keys are omitted.
+        assert set(result.keys()) == {"commands"}
+
+    def test_no_matches_returns_empty_dict(self) -> None:
+        assert search_content(_SUMMARY, "zzzznomatch") == {}
+
+    def test_matches_by_name_field_when_present(self) -> None:
+        summary = {"scripts": [{"id": "uuid-1", "name": "Human Readable", "comment": ""}]}
+        result = search_content(summary, "human readable")
+        assert result["scripts"] == [{"id": "uuid-1", "name": "Human Readable", "comment": ""}]
+
+    def test_does_not_match_brand_name(self) -> None:
+        # Searching the brand alone should not pull in commands that do not
+        # match on name or description.
+        result = search_content(_SUMMARY, "whois")
+        # Only the 'whois' command matches by name; 'ip' does not.
+        assert result["commands"] == [
+            {
+                "brand": "Whois",
+                "commands": [{"name": "whois", "description": "Look up domain registration."}],
+            }
+        ]
+
+    def test_empty_input_dict(self) -> None:
+        assert search_content({}, "slack") == {}
+
+
+# ===========================================================================
+# Describe reduction (describe_item)
+# ===========================================================================
+
+
+class TestDescribeItem:
+    def test_script(self) -> None:
+        raw = {
+            "id": "MyScript",
+            "comment": "Does a thing.",
+            "arguments": [
+                {"name": "value", "required": True, "deprecated": False, "description": "The value"},
+            ],
+            "type": "python3",
+        }
+        result = describe_item("script", raw)
+        assert result == {
+            "id": "MyScript",
+            "comment": "Does a thing.",
+            "arguments": [{"name": "value", "required": True, "deprecated": False, "description": "The value"}],
+        }
+
+    def test_playbook(self) -> None:
+        raw = {
+            "id": "uuid-1",
+            "name": "My Playbook",
+            "comment": "Investigates things.",
+            "inputs": [{"key": "Target", "value": {}, "description": "The target"}],
+            "outputs": [{"contextPath": "Result.Verdict", "description": "The verdict", "type": "string"}],
+            "tasks": {"0": {"id": "0"}},
+        }
+        result = describe_item("playbook", raw)
+        assert result == {
+            "id": "uuid-1",
+            "comment": "Investigates things.",
+            "inputs": [{"key": "Target", "description": "The target"}],
+            "outputs": [{"contextPath": "Result.Verdict", "description": "The verdict", "type": "string"}],
+        }
+
+    def test_command(self) -> None:
+        raw = {
+            "brand": "ServiceNow v2",
+            "instances": [
+                {"name": "SN_DNB", "state": "active"},
+                {"name": "SN_Pentest", "state": "disabled"},
+            ],
+            "command": {
+                "name": "servicenow-get-record",
+                "description": "Get a record.",
+                "arguments": [
+                    {"name": "table", "required": True, "deprecated": False, "description": "The table"},
+                ],
+                "outputs": [
+                    {"contextPath": "ServiceNow.Record.ID", "description": "Record ID", "type": "string"},
+                ],
+            },
+        }
+        result = describe_item("command", raw)
+        assert result == {
+            "name": "servicenow-get-record",
+            "brand": "ServiceNow v2",
+            "instances": [
+                {"name": "SN_DNB", "state": "active"},
+                {"name": "SN_Pentest", "state": "disabled"},
+            ],
+            "description": "Get a record.",
+            "arguments": [{"name": "table", "required": True, "deprecated": False, "description": "The table"}],
+            "outputs": [{"contextPath": "ServiceNow.Record.ID", "description": "Record ID", "type": "string"}],
+        }
+
+    def test_invalid_type_raises(self) -> None:
+        import pytest
+
+        with pytest.raises(ValueError, match="Invalid"):
+            describe_item("widget", {})
 
 
 class TestFormatDetachedSummary:

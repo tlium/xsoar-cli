@@ -204,3 +204,66 @@ class Content:
         if item_type == "all":
             return {"playbooks": self._list_playbooks(), "scripts": self._list_scripts(), "commands": self._list_commands()}
         raise ValueError(f"ERROR: list command received invalid argument {item_type=}")
+
+    def _describe_script(self, name: str) -> dict | None:
+        needle = name.lower()
+        for script in self._list_scripts():
+            if script.get("id", "").lower() == needle:
+                return script
+        return None
+
+    def _describe_playbook(self, name: str) -> dict | None:
+        needle = name.lower()
+        for playbook in self._list_playbooks():
+            if playbook.get("id", "").lower() == needle or playbook.get("name", "").lower() == needle:
+                return playbook
+        return None
+
+    def _describe_command(self, name: str) -> dict | None:
+        """Find a command by name and gather its brand and instances.
+
+        Returns a dict with the matching command, its brand, and every
+        instance of that brand (name and state), or None when no command
+        matches. The command definition is identical across instances of
+        the same brand, so the first match supplies the command detail.
+        """
+        needle = name.lower()
+        instances = self._list_commands()
+        matched_command: dict | None = None
+        brand = ""
+        for instance in instances:
+            for command in instance.get("commands") or []:
+                if command.get("name", "").lower() == needle:
+                    matched_command = command
+                    brand = instance.get("brand", "")
+                    break
+            if matched_command is not None:
+                break
+
+        if matched_command is None:
+            return None
+
+        brand_instances = [
+            {"name": instance.get("name", ""), "state": instance.get("state", "")}
+            for instance in instances
+            if instance.get("brand", "") == brand
+        ]
+        return {"brand": brand, "instances": brand_instances, "command": matched_command}
+
+    def describe(self, item_type: str, name: str) -> dict | None:
+        """Return the raw record for a single content item, or None if not found.
+
+        *item_type* must be ``script``, ``playbook``, or ``command`` (singular).
+        Scripts match on ``id``, playbooks match on ``id`` or ``name``, and
+        commands match on the command name. All matches are case-insensitive.
+
+        For commands, the result also carries the integration ``brand`` and the
+        list of ``instances`` (name and state) configured for that brand.
+        """
+        if item_type == "script":
+            return self._describe_script(name)
+        if item_type == "playbook":
+            return self._describe_playbook(name)
+        if item_type == "command":
+            return self._describe_command(name)
+        raise ValueError(f"Invalid value {item_type=}")
