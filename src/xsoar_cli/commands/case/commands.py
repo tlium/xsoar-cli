@@ -25,6 +25,19 @@ def parse_string_to_dict(input_string: str | None, delimiter: str) -> dict:
     return {key.strip(): value.strip() for key, value in valid_pairs}
 
 
+def parse_entry_id(entry_id: str) -> int:
+    """Extract the numeric case ID from a full entry ID of the form '<n>@<case-id>'.
+
+    Raises ValueError if the entry ID is not in that form.
+    """
+    parts = entry_id.split("@")
+    expected_parts = 2
+    if len(parts) != expected_parts or not parts[0] or not parts[1].isdigit():
+        msg = f"invalid entry id '{entry_id}', expected the form <n>@<case-id> (e.g. 112@153483)"
+        raise ValueError(msg)
+    return int(parts[1])
+
+
 @click.group()
 def case() -> None:
     """Create, retrieve, and clone cases"""
@@ -238,22 +251,27 @@ def get_context(ctx: click.Context, casenumber: int, environment: str | None) ->
 
 
 @click.command(name="get-entry")
-@click.argument("casenumber", type=int)
 @click.argument("entry_id", type=str)
 @click.option("--environment", default=None, help="Default environment set in config file.")
 @click.pass_context
 @load_config
 @validate_xsoar_connectivity
-def get_entry(ctx: click.Context, casenumber: int, entry_id: str, environment: str | None) -> None:
+def get_entry(ctx: click.Context, entry_id: str, environment: str | None) -> None:
     """Retrieve a single War Room entry by its full ID.
 
-    CASENUMBER is the numeric case ID. ENTRY_ID is the full entry ID as shown
-    in the GUI, e.g. 112@153483. Output is the raw entry as JSON.
+    ENTRY_ID is the full entry ID as shown in the GUI, in the form
+    <n>@<case-id> (e.g. 112@153483). The case ID is taken from the entry ID, so
+    it does not need to be supplied separately. Output is the raw entry as JSON.
 
     Usage examples:
 
-    xsoar-cli case get-entry 153483 112@153483
+    xsoar-cli case get-entry 112@153483
     """
+    try:
+        casenumber = parse_entry_id(entry_id)
+    except ValueError as ex:
+        click.echo(f"Error: {ex}")
+        ctx.exit(1)
     config = get_xsoar_config(ctx)
     xsoar_client: Client = config.get_client(environment)
     try:
