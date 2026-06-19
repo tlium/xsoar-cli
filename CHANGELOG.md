@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `content list --output-format` option (choices: `table`, `json`, `plain`, default: `table`). `table` is human-readable aligned columns, `json` is machine-readable, and `plain` is tab-separated values suitable for piping to tools like `grep`.
 - `content list --search TERM` option. Filters the listed items with a case-insensitive substring match against each item's id, name, and description. Content types and integration brands with no matching items are omitted, and a `No content matching '<term>' found.` message is shown when nothing matches.
 - `content describe --type [script|playbook|command] NAME` command. Shows a single content item in detail: description, arguments, and inputs/outputs. Commands also show the integration brand and its configured instances (name and state). Supports `--output-format [table|json]` (default: `table`). See the [content README](src/xsoar_cli/commands/content/README.md) for details.
+- `case get-context CASENUMBER` command. Retrieves the investigation context tree for a case as JSON, matching `demisto.context()` at runtime. The incident record is not merged in. See the [case README](src/xsoar_cli/commands/case/README.md) for details.
+- `case get-entry CASENUMBER ENTRY_ID` command. Retrieves a single War Room entry by its full ID (e.g. `112@153483`) as JSON. Exits non-zero with a clear message when the entry is not found. See the [case README](src/xsoar_cli/commands/case/README.md) for details.
 
 ### Changed
 

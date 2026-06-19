@@ -17,6 +17,38 @@ xsoar-cli case get 312412
 xsoar-cli case get --environment prod 312412
 ```
 
+## Get Context
+
+Retrieve the investigation context tree for a single case. Output is the raw context tree as JSON, matching `demisto.context()` at runtime. The incident record is not merged in.
+
+**Syntax:** `xsoar-cli case get-context [OPTIONS] CASENUMBER`
+
+**Options:**
+- `--environment TEXT` - Target environment (default: uses default environment from config)
+
+**Examples:**
+```
+xsoar-cli case get-context 153483
+xsoar-cli case get-context --environment prod 153483
+```
+
+## Get Entry
+
+Retrieve a single War Room entry by its full ID. Output is the raw entry as JSON. The command exits non-zero with a clear message when no entry with that ID exists in the case.
+
+`ENTRY_ID` is the full entry ID as shown in the GUI, in the form `<n>@<investigation_id>` (e.g. `112@153483`).
+
+**Syntax:** `xsoar-cli case get-entry [OPTIONS] CASENUMBER ENTRY_ID`
+
+**Options:**
+- `--environment TEXT` - Target environment (default: uses default environment from config)
+
+**Examples:**
+```
+xsoar-cli case get-entry 153483 112@153483
+xsoar-cli case get-entry --environment prod 153483 112@153483
+```
+
 ## Clone
 
 Clone a case from one environment to another. Useful for copying production cases to development environment for testing.
