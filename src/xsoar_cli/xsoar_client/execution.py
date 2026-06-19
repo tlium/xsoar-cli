@@ -4,6 +4,8 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
+from .constants import INVESTIGATION_PAGE_SIZE
+
 if TYPE_CHECKING:
     from .client import Client
 
@@ -22,11 +24,6 @@ DEFAULT_SYNC_TIMEOUT = 30
 # Interval (seconds) between polls of the investigation for a sync command's
 # result entries.
 SYNC_POLL_INTERVAL = 2
-
-# Page size requested when fetching investigation entries during polling. The
-# playground accumulates history over time, so this is set high to ensure a
-# freshly created result entry is included in the response.
-INVESTIGATION_PAGE_SIZE = 1000
 
 
 def _format_arg_value(value: str) -> str:
