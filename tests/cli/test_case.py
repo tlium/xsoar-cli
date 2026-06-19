@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from tests.cli.conftest import InvokeHelper
 
@@ -51,4 +50,74 @@ class TestCaseClone:
 
     def test_clone_with_bogus_environments(self, invoke: InvokeHelper, mock_case_env) -> None:
         result = invoke(["case", "clone", "--dest", "bogus", "--source", "bogus", "152230"])
+        assert result.exit_code == 1
+
+
+class TestCaseGetContext:
+    """Tests for ``case get-context``."""
+
+    def test_get_context_success(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-context", "153483"])
+        assert result.exit_code == 0
+        mock_case_env.get_context.assert_called_once_with(153483)
+
+    def test_get_context_http_error(self, invoke: InvokeHelper, mock_case_env, make_http_error) -> None:
+        mock_case_env.get_context.side_effect = make_http_error(404, text="Not Found")
+        result = invoke(["case", "get-context", "153483"])
+        assert result.exit_code == 1
+
+
+class TestCaseGetEntry:
+    """Tests for ``case get-entry``."""
+
+    def test_get_entry_success(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entry", "112@153483"])
+        assert result.exit_code == 0
+        mock_case_env.get_entry.assert_called_once_with(153483, "112@153483")
+
+    def test_get_entry_not_found(self, invoke: InvokeHelper, mock_case_env) -> None:
+        mock_case_env.get_entry.side_effect = ValueError("Entry '999@153483' not found in case 153483")
+        result = invoke(["case", "get-entry", "999@153483"])
+        assert result.exit_code == 1
+        assert "not found" in result.output
+
+    def test_get_entry_http_error(self, invoke: InvokeHelper, mock_case_env, make_http_error) -> None:
+        mock_case_env.get_entry.side_effect = make_http_error(400, text="Bad Request")
+        result = invoke(["case", "get-entry", "112@153483"])
+        assert result.exit_code == 1
+
+    def test_get_entry_missing_entry_id_argument(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entry"])
+        assert result.exit_code == 2
+
+    def test_get_entry_malformed_entry_id(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entry", "112"])
+        assert result.exit_code == 1
+        assert "invalid entry id" in result.output
+        mock_case_env.get_entry.assert_not_called()
+
+    def test_get_entry_non_numeric_entry_number(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entry", "12INVALID21@1234"])
+        assert result.exit_code == 1
+        assert "invalid entry id" in result.output
+        mock_case_env.get_entry.assert_not_called()
+
+
+class TestCaseGetEntries:
+    """Tests for ``case get-entries``."""
+
+    def test_get_entries_success(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entries", "153483"])
+        assert result.exit_code == 0
+        mock_case_env.get_entries.assert_called_once_with(153483)
+
+    def test_get_entries_empty(self, invoke: InvokeHelper, mock_case_env) -> None:
+        mock_case_env.get_entries.return_value = []
+        result = invoke(["case", "get-entries", "153483"])
+        assert result.exit_code == 0
+        assert result.output.strip() == "[]"
+
+    def test_get_entries_http_error(self, invoke: InvokeHelper, mock_case_env, make_http_error) -> None:
+        mock_case_env.get_entries.side_effect = make_http_error(404, text="Not Found")
+        result = invoke(["case", "get-entries", "153483"])
         assert result.exit_code == 1

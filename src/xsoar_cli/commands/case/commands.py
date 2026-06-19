@@ -25,6 +25,19 @@ def parse_string_to_dict(input_string: str | None, delimiter: str) -> dict:
     return {key.strip(): value.strip() for key, value in valid_pairs}
 
 
+def parse_entry_id(entry_id: str) -> int:
+    """Extract the numeric case ID from a full entry ID of the form '<n>@<case-id>'.
+
+    Raises ValueError if the entry ID is not in that form.
+    """
+    parts = entry_id.split("@")
+    expected_parts = 2
+    if len(parts) != expected_parts or not parts[0].isdigit() or not parts[1].isdigit():
+        msg = f"invalid entry id '{entry_id}', expected the form <n>@<case-id> (e.g. 112@153483)"
+        raise ValueError(msg)
+    return int(parts[1])
+
+
 @click.group()
 def case() -> None:
     """Create, retrieve, and clone cases"""
@@ -210,6 +223,99 @@ def create(  # noqa: PLR0913
     click.echo(f"Created XSOAR case {case_id}")
 
 
+@click.command(name="get-context")
+@click.argument("casenumber", type=int)
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity
+def get_context(ctx: click.Context, casenumber: int, environment: str | None) -> None:
+    """Retrieve the investigation context tree for a single case.
+
+    CASENUMBER is the numeric case ID to look up. Output is the raw context
+    tree as JSON, matching demisto.context() at runtime.
+
+    Usage examples:
+
+    xsoar-cli case get-context 153483
+    """
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    try:
+        response = xsoar_client.cases.get_context(casenumber)
+    except HTTPError as ex:
+        handler = HTTPErrorHandler()
+        click.echo(f"Error: {handler.get_message(ex, context='case')}")
+        ctx.exit(1)
+    click.echo(json.dumps(response, indent=4))
+
+
+@click.command(name="get-entry")
+@click.argument("entry_id", type=str)
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity
+def get_entry(ctx: click.Context, entry_id: str, environment: str | None) -> None:
+    """Retrieve a single War Room entry by its full ID.
+
+    ENTRY_ID is the full entry ID as shown in the GUI, in the form
+    <n>@<case-id> (e.g. 112@153483). The case ID is taken from the entry ID, so
+    it does not need to be supplied separately. Output is the raw entry as JSON.
+
+    Usage examples:
+
+    xsoar-cli case get-entry 112@153483
+    """
+    try:
+        casenumber = parse_entry_id(entry_id)
+    except ValueError as ex:
+        click.echo(f"Error: {ex}")
+        ctx.exit(1)
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    try:
+        response = xsoar_client.cases.get_entry(casenumber, entry_id)
+    except HTTPError as ex:
+        handler = HTTPErrorHandler()
+        click.echo(f"Error: {handler.get_message(ex, context='case')}")
+        ctx.exit(1)
+    except ValueError as ex:
+        click.echo(f"Error: {ex}")
+        ctx.exit(1)
+    click.echo(json.dumps(response, indent=4))
+
+
+@click.command(name="get-entries")
+@click.argument("casenumber", type=int)
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity
+def get_entries(ctx: click.Context, casenumber: int, environment: str | None) -> None:
+    """Retrieve all War Room entries for a single case.
+
+    CASENUMBER is the numeric case ID. Output is the full list of entries as a
+    JSON array, or an empty array when the case has no entries.
+
+    Usage examples:
+
+    xsoar-cli case get-entries 153483
+    """
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    try:
+        response = xsoar_client.cases.get_entries(casenumber)
+    except HTTPError as ex:
+        handler = HTTPErrorHandler()
+        click.echo(f"Error: {handler.get_message(ex, context='case')}")
+        ctx.exit(1)
+    click.echo(json.dumps(response, indent=4))
+
+
 case.add_command(get)
 case.add_command(clone)
 case.add_command(create)
+case.add_command(get_context)
+case.add_command(get_entry)
+case.add_command(get_entries)
