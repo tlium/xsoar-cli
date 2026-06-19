@@ -22,6 +22,10 @@ class TestParseEntryId:
         with pytest.raises(ValueError, match="invalid entry id"):
             parse_entry_id("@153483")
 
+    def test_non_numeric_entry_number_raises(self) -> None:
+        with pytest.raises(ValueError, match="invalid entry id"):
+            parse_entry_id("12INVALID21@1234")
+
     def test_empty_case_id_raises(self) -> None:
         with pytest.raises(ValueError, match="invalid entry id"):
             parse_entry_id("112@")

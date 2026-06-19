@@ -96,6 +96,12 @@ class TestCaseGetEntry:
         assert "invalid entry id" in result.output
         mock_case_env.get_entry.assert_not_called()
 
+    def test_get_entry_non_numeric_entry_number(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entry", "12INVALID21@1234"])
+        assert result.exit_code == 1
+        assert "invalid entry id" in result.output
+        mock_case_env.get_entry.assert_not_called()
+
 
 class TestCaseGetEntries:
     """Tests for ``case get-entries``."""

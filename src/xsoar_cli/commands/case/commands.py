@@ -32,7 +32,7 @@ def parse_entry_id(entry_id: str) -> int:
     """
     parts = entry_id.split("@")
     expected_parts = 2
-    if len(parts) != expected_parts or not parts[0] or not parts[1].isdigit():
+    if len(parts) != expected_parts or not parts[0].isdigit() or not parts[1].isdigit():
         msg = f"invalid entry id '{entry_id}', expected the form <n>@<case-id> (e.g. 112@153483)"
         raise ValueError(msg)
     return int(parts[1])
