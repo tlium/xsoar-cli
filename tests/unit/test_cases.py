@@ -173,3 +173,127 @@ class TestCasesCreate:
         cases = Cases(mock_client)
         with pytest.raises(HTTPError, match="400 Bad Request"):
             cases.create({"name": "Bad"})
+
+
+# ===========================================================================
+# Cases.get_context
+# ===========================================================================
+
+_CONTEXT_RESPONSE = {
+    "File": [{"Name": "sample.csv"}],
+    "playbook_name": "My Playbook",
+    "Ticket": {"ID": "INC-1"},
+}
+
+
+class TestCasesGetContext:
+    def test_happy_path(self, mock_client: MagicMock) -> None:
+        mock_client.make_request.return_value = _mock_response(_CONTEXT_RESPONSE)
+
+        cases = Cases(mock_client)
+        result = cases.get_context(153483)
+
+        assert result == _CONTEXT_RESPONSE
+        mock_client.make_request.assert_called_once_with(endpoint="/investigation/153483/context", method="GET")
+
+    def test_calls_raise_for_status(self, mock_client: MagicMock) -> None:
+        mock_client.make_request.return_value = _mock_response(_CONTEXT_RESPONSE)
+
+        cases = Cases(mock_client)
+        cases.get_context(153483)
+
+        mock_client.make_request.return_value.raise_for_status.assert_called_once()
+
+    def test_returned_verbatim_without_incident_merge(self, mock_client: MagicMock) -> None:
+        """The raw context response must be returned as-is, with no incident branch added."""
+        mock_client.make_request.return_value = _mock_response(_CONTEXT_RESPONSE)
+
+        cases = Cases(mock_client)
+        result = cases.get_context(153483)
+
+        assert "incident" not in result
+
+    def test_http_error_propagates(self, mock_client: MagicMock) -> None:
+        response = MagicMock()
+        response.raise_for_status.side_effect = HTTPError("404 Not Found")
+        mock_client.make_request.return_value = response
+
+        cases = Cases(mock_client)
+        with pytest.raises(HTTPError, match="404 Not Found"):
+            cases.get_context(99999)
+
+
+# ===========================================================================
+# Cases.get_entry
+# ===========================================================================
+
+
+def _investigation_response(entries: list[dict]) -> tuple[dict, int, None]:
+    """Build a generic_request response for POST /investigation/<id>."""
+    return ({"entries": entries}, 200, None)
+
+
+class TestCasesGetEntry:
+    def test_returns_matching_entry(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response(
+            [
+                {"id": "111@153483", "contents": "first"},
+                {"id": "112@153483", "contents": "target"},
+                {"id": "113@153483", "contents": "third"},
+            ],
+        )
+
+        cases = Cases(mock_client)
+        result = cases.get_entry(153483, "112@153483")
+
+        assert result == {"id": "112@153483", "contents": "target"}
+
+    def test_issues_bulk_history_request(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response(
+            [{"id": "112@153483", "contents": "target"}],
+        )
+
+        cases = Cases(mock_client)
+        cases.get_entry(153483, "112@153483")
+
+        mock_client.demisto_py_instance.generic_request.assert_called_once_with(
+            path="/investigation/153483",
+            method="POST",
+            body={"pageSize": 1000},
+            content_type="application/json",
+            response_type=object,
+        )
+
+    def test_returns_entry_verbatim(self, mock_client: MagicMock) -> None:
+        """The full entry dict is returned unchanged, not a filtered subset."""
+        entry = {"id": "112@153483", "type": 1, "contents": {"a": 1}, "parentId": "", "tags": ["x"]}
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response([entry])
+
+        cases = Cases(mock_client)
+        result = cases.get_entry(153483, "112@153483")
+
+        assert result == entry
+
+    def test_not_found_raises_value_error(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response(
+            [{"id": "111@153483", "contents": "other"}],
+        )
+
+        cases = Cases(mock_client)
+        with pytest.raises(ValueError, match="Entry '112@153483' not found in case 153483"):
+            cases.get_entry(153483, "112@153483")
+
+    def test_empty_history_raises_value_error(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response([])
+
+        cases = Cases(mock_client)
+        with pytest.raises(ValueError, match="not found"):
+            cases.get_entry(153483, "112@153483")
+
+    def test_missing_entries_key_raises_value_error(self, mock_client: MagicMock) -> None:
+        """A response with no 'entries' key is treated as no entries, not a crash."""
+        mock_client.demisto_py_instance.generic_request.return_value = ({}, 200, None)
+
+        cases = Cases(mock_client)
+        with pytest.raises(ValueError, match="not found"):
+            cases.get_entry(153483, "112@153483")
