@@ -29,11 +29,14 @@ class Cases:
     def get_context(self, case_id: int) -> dict:
         """Fetches the investigation context tree for a case, verbatim.
 
-        Returns the raw GET /investigation/<id>/context response, which matches
+        Returns the raw POST /investigation/<id>/context response, which matches
         demisto.context() at runtime. The incident record is not merged in.
+
+        The body query '${.}' is a DT expression meaning "the entire context
+        root", so the full context tree is returned.
         """
         endpoint = f"/investigation/{case_id}/context"
-        response = self.client.make_request(endpoint=endpoint, method="GET")
+        response = self.client.make_request(endpoint=endpoint, method="POST", json={"query": "${.}"})
         response.raise_for_status()
         return response.json()
 

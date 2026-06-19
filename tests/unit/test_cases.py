@@ -194,7 +194,11 @@ class TestCasesGetContext:
         result = cases.get_context(153483)
 
         assert result == _CONTEXT_RESPONSE
-        mock_client.make_request.assert_called_once_with(endpoint="/investigation/153483/context", method="GET")
+        mock_client.make_request.assert_called_once_with(
+            endpoint="/investigation/153483/context",
+            method="POST",
+            json={"query": "${.}"},
+        )
 
     def test_calls_raise_for_status(self, mock_client: MagicMock) -> None:
         mock_client.make_request.return_value = _mock_response(_CONTEXT_RESPONSE)
