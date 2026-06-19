@@ -47,6 +47,27 @@ class Cases:
         via POST /investigation/<id> and the entry with the matching id is
         returned verbatim. Raises ValueError if no entry with that id exists.
         """
+        for entry in self._fetch_entries(case_id):
+            if entry.get("id") == entry_id:
+                return entry
+        msg = f"Entry '{entry_id}' not found in case {case_id}"
+        raise ValueError(msg)
+
+    def get_entries(self, case_id: int) -> list[dict]:
+        """Fetches all War Room entries for a case, verbatim.
+
+        Returns the full entries list from POST /investigation/<id>. An empty
+        list is returned when the case has no entries.
+        """
+        return self._fetch_entries(case_id)
+
+    def _fetch_entries(self, case_id: int) -> list[dict]:
+        """Fetches the full War Room entry history for a case.
+
+        XSOAR has no per-entry endpoint, so the whole history is retrieved with
+        a single POST /investigation/<id> call and the entries list is returned
+        verbatim.
+        """
         data, _, _ = self.client.demisto_py_instance.generic_request(
             path=f"/investigation/{case_id}",
             method="POST",
@@ -54,9 +75,4 @@ class Cases:
             content_type="application/json",
             response_type=object,
         )
-        entries = data.get("entries") or []
-        for entry in entries:
-            if entry.get("id") == entry_id:
-                return entry
-        msg = f"Entry '{entry_id}' not found in case {case_id}"
-        raise ValueError(msg)
+        return data.get("entries") or []

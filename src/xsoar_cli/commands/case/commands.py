@@ -268,8 +268,36 @@ def get_entry(ctx: click.Context, casenumber: int, entry_id: str, environment: s
     click.echo(json.dumps(response, indent=4))
 
 
+@click.command(name="get-entries")
+@click.argument("casenumber", type=int)
+@click.option("--environment", default=None, help="Default environment set in config file.")
+@click.pass_context
+@load_config
+@validate_xsoar_connectivity
+def get_entries(ctx: click.Context, casenumber: int, environment: str | None) -> None:
+    """Retrieve all War Room entries for a single case.
+
+    CASENUMBER is the numeric case ID. Output is the full list of entries as a
+    JSON array, or an empty array when the case has no entries.
+
+    Usage examples:
+
+    xsoar-cli case get-entries 153483
+    """
+    config = get_xsoar_config(ctx)
+    xsoar_client: Client = config.get_client(environment)
+    try:
+        response = xsoar_client.cases.get_entries(casenumber)
+    except HTTPError as ex:
+        handler = HTTPErrorHandler()
+        click.echo(f"Error: {handler.get_message(ex, context='case')}")
+        ctx.exit(1)
+    click.echo(json.dumps(response, indent=4))
+
+
 case.add_command(get)
 case.add_command(clone)
 case.add_command(create)
 case.add_command(get_context)
 case.add_command(get_entry)
+case.add_command(get_entries)
