@@ -89,3 +89,23 @@ class TestCaseGetEntry:
     def test_get_entry_missing_entry_id_argument(self, invoke: InvokeHelper, mock_case_env) -> None:
         result = invoke(["case", "get-entry", "153483"])
         assert result.exit_code == 2
+
+
+class TestCaseGetEntries:
+    """Tests for ``case get-entries``."""
+
+    def test_get_entries_success(self, invoke: InvokeHelper, mock_case_env) -> None:
+        result = invoke(["case", "get-entries", "153483"])
+        assert result.exit_code == 0
+        mock_case_env.get_entries.assert_called_once_with(153483)
+
+    def test_get_entries_empty(self, invoke: InvokeHelper, mock_case_env) -> None:
+        mock_case_env.get_entries.return_value = []
+        result = invoke(["case", "get-entries", "153483"])
+        assert result.exit_code == 0
+        assert result.output.strip() == "[]"
+
+    def test_get_entries_http_error(self, invoke: InvokeHelper, mock_case_env, make_http_error) -> None:
+        mock_case_env.get_entries.side_effect = make_http_error(404, text="Not Found")
+        result = invoke(["case", "get-entries", "153483"])
+        assert result.exit_code == 1

@@ -272,10 +272,10 @@ def mock_execute_env(mock_config_file) -> Iterator[types.SimpleNamespace]:  # no
 def mock_case_env(mock_config_file, make_case_response, make_case_create_response) -> Iterator[types.SimpleNamespace]:  # noqa: ANN001
     """Mock environment for ``case`` commands.
 
-    Patches ``Cases.get``, ``Cases.create``, ``Cases.get_context``, and
-    ``Cases.get_entry`` with default success responses. The mocks are exposed
-    on the yielded namespace so tests can override return values or side
-    effects as needed.
+    Patches ``Cases.get``, ``Cases.create``, ``Cases.get_context``,
+    ``Cases.get_entry``, and ``Cases.get_entries`` with default success
+    responses. The mocks are exposed on the yielded namespace so tests can
+    override return values or side effects as needed.
     """
     import types as _types
 
@@ -285,11 +285,13 @@ def mock_case_env(mock_config_file, make_case_response, make_case_create_respons
         patch("xsoar_cli.xsoar_client.cases.Cases.create") as mock_create,
         patch("xsoar_cli.xsoar_client.cases.Cases.get_context") as mock_get_context,
         patch("xsoar_cli.xsoar_client.cases.Cases.get_entry") as mock_get_entry,
+        patch("xsoar_cli.xsoar_client.cases.Cases.get_entries") as mock_get_entries,
     ):
         mock_get.return_value = make_case_response()
         mock_create.return_value = make_case_create_response()
         mock_get_context.return_value = {"playbook_name": "My Playbook", "File": []}
         mock_get_entry.return_value = {"id": "112@153483", "contents": "entry data"}
+        mock_get_entries.return_value = [{"id": "112@153483", "contents": "entry data"}]
         ns = _types.SimpleNamespace(
             config=mock_config_file,
             connectivity=mock_conn,
@@ -297,5 +299,6 @@ def mock_case_env(mock_config_file, make_case_response, make_case_create_respons
             create=mock_create,
             get_context=mock_get_context,
             get_entry=mock_get_entry,
+            get_entries=mock_get_entries,
         )
         yield ns

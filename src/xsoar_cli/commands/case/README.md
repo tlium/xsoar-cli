@@ -49,6 +49,21 @@ xsoar-cli case get-entry 153483 112@153483
 xsoar-cli case get-entry --environment prod 153483 112@153483
 ```
 
+## Get Entries
+
+Retrieve all War Room entries for a single case. Output is the full list of entries as a JSON array, or an empty array when the case has no entries.
+
+**Syntax:** `xsoar-cli case get-entries [OPTIONS] CASENUMBER`
+
+**Options:**
+- `--environment TEXT` - Target environment (default: uses default environment from config)
+
+**Examples:**
+```
+xsoar-cli case get-entries 153483
+xsoar-cli case get-entries --environment prod 153483
+```
+
 ## Clone
 
 Clone a case from one environment to another. Useful for copying production cases to development environment for testing.

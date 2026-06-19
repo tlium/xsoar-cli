@@ -301,3 +301,53 @@ class TestCasesGetEntry:
         cases = Cases(mock_client)
         with pytest.raises(ValueError, match="not found"):
             cases.get_entry(153483, "112@153483")
+
+
+# ===========================================================================
+# Cases.get_entries
+# ===========================================================================
+
+
+class TestCasesGetEntries:
+    def test_returns_all_entries_verbatim(self, mock_client: MagicMock) -> None:
+        entries = [
+            {"id": "111@153483", "contents": "first"},
+            {"id": "112@153483", "contents": "second"},
+        ]
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response(entries)
+
+        cases = Cases(mock_client)
+        result = cases.get_entries(153483)
+
+        assert result == entries
+
+    def test_issues_bulk_history_request(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response([])
+
+        cases = Cases(mock_client)
+        cases.get_entries(153483)
+
+        mock_client.demisto_py_instance.generic_request.assert_called_once_with(
+            path="/investigation/153483",
+            method="POST",
+            body={"pageSize": 1000},
+            content_type="application/json",
+            response_type=object,
+        )
+
+    def test_empty_history_returns_empty_list(self, mock_client: MagicMock) -> None:
+        mock_client.demisto_py_instance.generic_request.return_value = _investigation_response([])
+
+        cases = Cases(mock_client)
+        result = cases.get_entries(153483)
+
+        assert result == []
+
+    def test_missing_entries_key_returns_empty_list(self, mock_client: MagicMock) -> None:
+        """A response with no 'entries' key yields an empty list, not a crash."""
+        mock_client.demisto_py_instance.generic_request.return_value = ({}, 200, None)
+
+        cases = Cases(mock_client)
+        result = cases.get_entries(153483)
+
+        assert result == []
