@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `manifest update` no longer crashes with `ValueError: max() iterable argument is empty` when a custom pack is installed on the XSOAR server but has no artifacts in the configured artifact repository. The command now skips such packs (they are already reported in the pre-existing "installed but not found in artifacts repo" warning) and continues updating the remaining packs. As part of the fix, `S3ArtifactProvider.get_latest_version()` and `AzureArtifactProvider.get_latest_version()` now return `None` instead of raising when the pack has no versions in the repo.
 - `content get-detached` now returns only the content items that are actually detached. The previous query returned all system items, so the command reported every system script (or playbook) as detached instead of just the detached ones. Results are now filtered on each item's `detached` field.
 
 ## [2.3.0] - 2026-06-04

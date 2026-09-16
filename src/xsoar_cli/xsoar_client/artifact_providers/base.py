@@ -22,8 +22,14 @@ class BaseArtifactProvider(ABC):
         ...
 
     @abstractmethod
-    def get_latest_version(self, pack_id: str) -> str:
-        """Get the latest version of a pack."""
+    def get_latest_version(self, pack_id: str) -> str | None:
+        """Get the latest version of a pack.
+
+        Returns the highest available version string, or None if the pack has
+        no artifacts in the storage backend. Callers must handle the None case
+        (typically a pack installed on the server but missing from the artifact
+        repository).
+        """
         ...
 
     def get_pack_path(self, pack_id: str, pack_version: str) -> str:

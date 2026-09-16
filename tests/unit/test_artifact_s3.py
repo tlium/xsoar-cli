@@ -214,7 +214,7 @@ class TestGetLatestVersion:
 
         assert result == "1.0.0"
 
-    def test_no_versions_raises(self) -> None:
+    def test_no_versions_returns_none(self) -> None:
         provider = _make_provider()
         mock_session = MagicMock()
         mock_client = MagicMock()
@@ -222,8 +222,17 @@ class TestGetLatestVersion:
         mock_session.client.return_value = mock_client
         provider._session = mock_session
 
-        with pytest.raises(ValueError):
-            provider.get_latest_version("MyPack")
+        assert provider.get_latest_version("MyPack") is None
+
+    def test_empty_common_prefixes_returns_none(self) -> None:
+        provider = _make_provider()
+        mock_session = MagicMock()
+        mock_client = MagicMock()
+        mock_client.list_objects_v2.return_value = {"CommonPrefixes": []}
+        mock_session.client.return_value = mock_client
+        provider._session = mock_session
+
+        assert provider.get_latest_version("MyPack") is None
 
     def test_respects_verify_ssl(self) -> None:
         provider = _make_provider(verify_ssl=False)
