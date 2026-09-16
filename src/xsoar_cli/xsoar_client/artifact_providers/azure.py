@@ -58,9 +58,14 @@ class AzureArtifactProvider(BaseArtifactProvider):
         download_stream = self.container_client.download_blob(blob=key_name)
         return download_stream.readall()
 
-    def get_latest_version(self, pack_id: str) -> str:
-        """Fetch the latest version of a Pack"""
+    def get_latest_version(self, pack_id: str) -> str | None:
+        """Fetch the latest version of a Pack.
+
+        Returns None if the pack has no artifacts in the container.
+        """
         prefix = f"content/packs/{pack_id}/"
         iter_names = self.container_client.list_blob_names(name_starts_with=prefix)
         version_list = [x.split("/")[3] for x in list(iter_names)]
+        if not version_list:
+            return None
         return str(max(version_list, key=version.parse))

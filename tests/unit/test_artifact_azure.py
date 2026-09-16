@@ -225,11 +225,10 @@ class TestGetLatestVersion:
 
         assert result == "1.0.0"
 
-    def test_raises_on_empty_listing(self) -> None:
+    def test_empty_listing_returns_none(self) -> None:
         provider = _make_provider()
         mock_container = MagicMock()
         mock_container.list_blob_names.return_value = []
         provider._container_client = mock_container
 
-        with pytest.raises(ValueError):
-            provider.get_latest_version("NonExistent")
+        assert provider.get_latest_version("NonExistent") is None

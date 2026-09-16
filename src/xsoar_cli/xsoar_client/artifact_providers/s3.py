@@ -49,8 +49,11 @@ class S3ArtifactProvider(BaseArtifactProvider):
         response = obj.get()
         return response["Body"].read()
 
-    def get_latest_version(self, pack_id: str) -> str:
-        """Fetch the latest version of a Pack."""
+    def get_latest_version(self, pack_id: str) -> str | None:
+        """Fetch the latest version of a Pack.
+
+        Returns None if the pack has no artifacts in the S3 bucket.
+        """
         client = self.session.client("s3", verify=self.verify_ssl)
         result = client.list_objects_v2(
             Bucket=self.bucket_name,
@@ -58,4 +61,6 @@ class S3ArtifactProvider(BaseArtifactProvider):
             Delimiter="/",
         )
         version_list = [x["Prefix"].split("/")[3] for x in result.get("CommonPrefixes", [])]
+        if not version_list:
+            return None
         return str(max(version_list, key=version.parse))
