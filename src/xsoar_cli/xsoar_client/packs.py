@@ -136,9 +136,8 @@ class Packs:
             if pack["author"] in self.custom_pack_authors:
                 if not self.client.artifact_provider:
                     raise RuntimeError("No artifact provider configured")
-                try:
-                    latest_version = self.client.artifact_provider.get_latest_version(pack["id"])
-                except ValueError:
+                latest_version = self.client.artifact_provider.get_latest_version(pack["id"])
+                if latest_version is None:
                     logger.warning("Custom pack '%s' installed on XSOAR server, but cannot find pack in artifacts repo", pack["id"])
                     skipped.append(pack["id"])
                     continue
@@ -164,8 +163,11 @@ class Packs:
 
         return OutdatedResult(outdated=update_available, skipped=skipped)
 
-    def get_latest_custom_version(self, pack_id: str) -> str:
-        """Gets the latest version of a custom pack from the artifacts repository."""
+    def get_latest_custom_version(self, pack_id: str) -> str | None:
+        """Gets the latest version of a custom pack from the artifacts repository.
+
+        Returns None if the pack has no artifacts in the repository.
+        """
         if not self.client.artifact_provider:
             raise RuntimeError("No artifact provider configured")
         return self.client.artifact_provider.get_latest_version(pack_id)
