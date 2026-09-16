@@ -454,7 +454,7 @@ class TestGetOutdated:
         mock_client.make_request.return_value = _mock_response(_INSTALLED_EXPIRED)
 
         provider = MagicMock()
-        provider.get_latest_version.side_effect = ValueError("Pack not found")
+        provider.get_latest_version.return_value = None
         mock_client.artifact_provider = provider
 
         packs = Packs(mock_client, custom_pack_authors=["MyOrg"])
