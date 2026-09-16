@@ -190,12 +190,33 @@ def update(ctx: click.Context, environment: str | None, manifest: str) -> None:
             click.echo(f"  - {pack_id}", err=True)
 
     changes_made = False
+    skipped_custom_packs = set(result.skipped)
     for key in MANIFEST_KEYS:
         custom = key == "custom_packs"
         pack_type = "Custom" if custom else "Marketplace"
         for index, manifest_pack in enumerate(manifest_data[key]):
             if custom:
+                if manifest_pack["id"] in skipped_custom_packs:
+                    # Pack is installed on the server but has no artifacts in the repo.
+                    # Already surfaced to the user via the warning above.
+                    logger.debug(
+                        "%s pack '%s' skipped: not found in artifacts repo",
+                        pack_type,
+                        manifest_pack["id"],
+                    )
+                    continue
                 latest = xsoar_client.artifact_provider.get_latest_version(manifest_pack["id"])  # ty: ignore[unresolved-attribute]
+                if latest is None:
+                    # Defensive guard: the artifact provider reports no versions for this
+                    # pack. This overlaps with the skipped_custom_packs check above, but
+                    # keeps update() safe if a pack is missing from the repo without
+                    # having been flagged by get_outdated().
+                    logger.debug(
+                        "%s pack '%s' skipped: no versions returned by artifact provider",
+                        pack_type,
+                        manifest_pack["id"],
+                    )
+                    continue
             else:
                 pack = next((item for item in outdated_installed_packs if item["id"] == manifest_pack["id"]), None)
                 if not pack:
